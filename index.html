@@ -1,129 +1,459 @@
 <!doctype html>
 <html lang="fr">
 <head>
-  <!-- Définit l'encodage des caractères. -->
+  <!-- Définit l’encodage des caractères de la page. -->
   <meta charset="utf-8">
-  <!-- Adapte l'interface aux différents écrans. -->
+  <!-- Adapte l’interface aux ordinateurs, tablettes et téléphones. -->
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!-- Définit le titre de l'onglet. -->
-  <title>TechnoQuest – Jardin connecté</title>
-  <!-- Charge les styles du projet. -->
+  <!-- Décrit la ressource pour les moteurs de recherche et les ENT. -->
+  <meta name="description" content="TechnoQuest – Jardin connecté : séquence de technologie pour la classe de 4e, conforme au programme 2024 du cycle 4.">
+  <!-- Définit le titre affiché dans l’onglet du navigateur. -->
+  <title>TechnoQuest – Jardin connecté – Cycle 4</title>
+  <!-- Charge la feuille de styles principale. -->
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Présente le projet et la note. -->
-  <header>
+  <!-- Présente le projet, le niveau et la progression de l’élève. -->
+  <header class="site-header">
+    <!-- Regroupe le titre et le sous-titre. -->
     <div>
-      <p class="label">TECHNOQUEST · CYCLE 4</p>
+      <!-- Situe clairement la ressource dans le programme. -->
+      <p class="label">TECHNOQUEST · TECHNOLOGIE · 4e · CYCLE 4</p>
+      <!-- Donne le nom du défi pédagogique. -->
       <h1>Mission Jardin connecté</h1>
-      <p>Une pratique alternée : simuler, câbler, programmer, tester et améliorer.</p>
+      <!-- Résume la démarche suivie pendant la séquence. -->
+      <p>Observer, analyser, simuler, câbler, programmer, tester et améliorer.</p>
     </div>
-    <aside class="score">
+    <!-- Affiche la note et le nombre de missions validées. -->
+    <aside class="score" aria-label="Progression de l’élève">
+      <!-- Introduit la note actuelle. -->
       <span>Note actuelle</span>
+      <!-- Affiche le total obtenu sur vingt. -->
       <strong id="score">0 / 20</strong>
+      <!-- Affiche le nombre de missions terminées. -->
       <small id="progress">0 mission validée</small>
     </aside>
   </header>
 
-  <!-- Contient la navigation entre les huit missions. -->
-  <nav id="missions" aria-label="Missions"></nav>
+  <!-- Introduit la situation déclenchante et la problématique. -->
+  <section class="intro-grid" aria-labelledby="problemTitle">
+    <!-- Présente le contexte réel du jardin pédagogique. -->
+    <article class="intro-card alert-card">
+      <!-- Identifie la situation déclenchante. -->
+      <p class="eyebrow">Situation déclenchante</p>
+      <!-- Décrit le problème observé dans un collège antillais. -->
+      <h2 id="problemTitle">Le jardin du collège manque d’eau</h2>
+      <!-- Explique le besoin à satisfaire. -->
+      <p>Lors des périodes chaudes en Guadeloupe ou en Martinique, un arrosage manuel peut être oublié ou gaspiller de l’eau. Le collège souhaite maintenir ses plantes en bonne santé tout en limitant la consommation d’eau et d’énergie.</p>
+    </article>
+    <!-- Formule la problématique centrale de la séquence. -->
+    <article class="intro-card problem-card">
+      <!-- Identifie la question de départ. -->
+      <p class="eyebrow">Problématique</p>
+      <!-- Formule la question à résoudre. -->
+      <h2>Comment arroser uniquement lorsque cela est nécessaire&nbsp;?</h2>
+      <!-- Précise les contraintes du système. -->
+      <p>Le système devra mesurer l’humidité, surveiller le réservoir, commander une pompe en très basse tension, avertir l’utilisateur et rester sûr, réparable et économe.</p>
+    </article>
+  </section>
 
-  <!-- Organise la simulation et le travail de l'élève. -->
+  <!-- Affiche les compétences, les définitions de signaux et les chaînes fonctionnelles. -->
+  <section class="knowledge-strip" aria-label="Repères de connaissances">
+    <!-- Présente l’ancrage dans le programme de technologie. -->
+    <details open>
+      <!-- Donne le titre cliquable du panneau. -->
+      <summary>Repères du programme 2024 et connaissances essentielles</summary>
+      <!-- Organise les contenus en trois colonnes. -->
+      <div class="knowledge-grid">
+        <!-- Définit le signal analogique. -->
+        <article>
+          <!-- Donne le titre de la notion. -->
+          <h3>Signal analogique</h3>
+          <!-- Donne une définition adaptée au cycle 4. -->
+          <p>Un signal analogique peut prendre une multitude de valeurs qui évoluent de façon continue. Dans ce TP, le capteur d’humidité fournit une tension convertie en une valeur de 0 à 100&nbsp;%.</p>
+          <!-- Donne des exemples concrets. -->
+          <p class="examples"><strong>Exemples :</strong> humidité du sol, luminosité, température.</p>
+        </article>
+        <!-- Définit le signal logique ou numérique. -->
+        <article>
+          <!-- Donne le titre de la notion. -->
+          <h3>Signal logique ou numérique</h3>
+          <!-- Explique les deux niveaux logiques. -->
+          <p>Un signal logique ne possède que deux états. Sur une carte Arduino, on les représente généralement par <strong>LOW = 0</strong> et <strong>HIGH = 1</strong>. Dans ce TP, la sortie D6 commande le relais : arrêt ou marche.</p>
+          <!-- Donne des exemples concrets. -->
+          <p class="examples"><strong>Exemples :</strong> bouton relâché/appuyé, LED éteinte/allumée, relais ouvert/fermé.</p>
+        </article>
+        <!-- Résume les chaînes d’information et d’énergie. -->
+        <article>
+          <!-- Donne le titre de la notion. -->
+          <h3>Chaînes du système</h3>
+          <!-- Présente la chaîne d’information. -->
+          <p><strong>Information :</strong> acquérir → traiter → communiquer.</p>
+          <!-- Présente la chaîne d’énergie. -->
+          <p><strong>Énergie :</strong> alimenter → distribuer → convertir → transmettre → agir.</p>
+          <!-- Relie les notions au montage. -->
+          <p class="examples">Capteurs → Arduino → alerte ; alimentation → relais → pompe → tuyau → sol.</p>
+        </article>
+      </div>
+    </details>
+  </section>
+
+  <!-- Recueille l’identité scolaire et le niveau d’aide choisi. -->
+  <section class="identity-bar" aria-label="Identification de l’élève et différenciation">
+    <!-- Demande le nom de l’élève. -->
+    <label>Nom et prénom
+      <!-- Enregistre localement l’identité de l’élève. -->
+      <input id="studentName" type="text" autocomplete="name" placeholder="Ex. : Chloé Séraline">
+    </label>
+    <!-- Demande la classe. -->
+    <label>Classe
+      <!-- Enregistre localement la classe. -->
+      <input id="studentClass" type="text" placeholder="Ex. : 4e A">
+    </label>
+    <!-- Demande le numéro ou le nom de l’îlot. -->
+    <label>Équipe / îlot
+      <!-- Enregistre localement le groupe de travail. -->
+      <input id="studentTeam" type="text" placeholder="Ex. : Îlot 3">
+    </label>
+    <!-- Permet de choisir le niveau d’accompagnement. -->
+    <label>Niveau d’aide
+      <!-- Propose trois niveaux pour différencier le travail. -->
+      <select id="difficultyMode">
+        <!-- Fournit un programme presque complet. -->
+        <option value="guided">Guidé</option>
+        <!-- Fournit un programme à compléter. -->
+        <option value="intermediate">Intermédiaire</option>
+        <!-- Fournit seulement l’objectif et les contraintes. -->
+        <option value="expert">Expert</option>
+      </select>
+    </label>
+  </section>
+
+  <!-- Contient la navigation entre les huit missions. -->
+  <nav id="missions" aria-label="Missions de la séquence"></nav>
+
+  <!-- Organise le jumeau numérique et le travail de l’élève. -->
   <main>
-    <!-- Affiche le jumeau numérique du jardin. -->
-    <section class="panel">
+    <!-- Affiche le jumeau numérique, les paramètres et l’historique. -->
+    <section class="panel simulation-panel">
+      <!-- Affiche le titre et l’état de la pompe. -->
       <div class="panel-title">
+        <!-- Donne le titre du panneau. -->
         <h2>Jumeau numérique</h2>
+        <!-- Affiche l’état de l’actionneur. -->
         <span id="pumpBadge" class="badge">Pompe arrêtée</span>
       </div>
-      <div class="garden" aria-label="Schéma du jardin connecté">
-        <div class="sun"></div>
-        <div id="plant" class="plant">✿</div>
-        <div id="soil" class="soil"></div>
-        <div class="tank">
+
+      <!-- Représente visuellement le jardin connecté. -->
+      <div class="garden" aria-label="Schéma animé du jardin connecté">
+        <!-- Représente le soleil. -->
+        <div class="sun" aria-hidden="true"></div>
+        <!-- Représente la plante. -->
+        <div id="plant" class="plant" aria-label="État de la plante">✿</div>
+        <!-- Représente le sol. -->
+        <div id="soil" class="soil" aria-hidden="true"></div>
+        <!-- Représente le réservoir. -->
+        <div class="tank" aria-label="Niveau du réservoir">
+          <!-- Représente la hauteur d’eau. -->
           <div id="water" class="water"></div>
+          <!-- Affiche le nom du réservoir. -->
           <span>Réservoir</span>
         </div>
-        <div id="pump" class="pump">POMPE</div>
+        <!-- Représente la pompe. -->
+        <div id="pump" class="pump" aria-label="État de la pompe">POMPE</div>
       </div>
+
+      <!-- Permet de modifier les valeurs des trois capteurs. -->
       <div class="sensors">
+        <!-- Commande la valeur d’humidité. -->
         <label>Humidité du sol
+          <!-- Simule la grandeur analogique du capteur A0. -->
           <input id="humidity" type="range" min="0" max="100" value="28">
+          <!-- Affiche la valeur choisie. -->
           <output id="humidityValue">28 %</output>
         </label>
+        <!-- Commande la valeur du réservoir. -->
         <label>Niveau du réservoir
+          <!-- Simule la grandeur analogique du capteur A2. -->
           <input id="reservoir" type="range" min="0" max="100" value="75">
+          <!-- Affiche la valeur choisie. -->
           <output id="reservoirValue">75 %</output>
         </label>
+        <!-- Commande la valeur de luminosité. -->
         <label>Luminosité
+          <!-- Simule la grandeur analogique du capteur A1. -->
           <input id="light" type="range" min="0" max="100" value="62">
+          <!-- Affiche la valeur choisie. -->
           <output id="lightValue">62 %</output>
         </label>
       </div>
+
+      <!-- Permet de paramétrer les seuils du système automatisé. -->
+      <section class="threshold-box" aria-labelledby="thresholdTitle">
+        <!-- Donne le titre du paramétrage. -->
+        <div class="panel-title compact">
+          <!-- Introduit les seuils réglables. -->
+          <h3 id="thresholdTitle">Paramètres du système</h3>
+          <!-- Explique le rôle des seuils. -->
+          <span class="badge gold">Seuils modifiables</span>
+        </div>
+        <!-- Organise les trois paramètres. -->
+        <div class="threshold-grid">
+          <!-- Règle le seuil d’humidité. -->
+          <label>Sol sec sous
+            <!-- Saisit la valeur de référence. -->
+            <input id="humidityThreshold" type="number" min="10" max="70" value="35">
+            <!-- Affiche l’unité. -->
+            <span>%</span>
+          </label>
+          <!-- Règle le seuil minimal du réservoir. -->
+          <label>Réservoir minimal
+            <!-- Saisit la valeur de sécurité. -->
+            <input id="reservoirThreshold" type="number" min="0" max="80" value="20">
+            <!-- Affiche l’unité. -->
+            <span>%</span>
+          </label>
+          <!-- Règle le seuil de luminosité. -->
+          <label>Lumière maximale
+            <!-- Saisit la valeur utilisée par la décision multicritère. -->
+            <input id="lightThreshold" type="number" min="20" max="100" value="70">
+            <!-- Affiche l’unité. -->
+            <span>%</span>
+          </label>
+        </div>
+        <!-- Propose d’insérer les valeurs dans le programme. -->
+        <button id="applyThresholds" type="button">Insérer les seuils dans le programme</button>
+      </section>
+
+      <!-- Affiche l’évolution de l’humidité au fil des essais. -->
+      <section class="chart-box" aria-labelledby="chartTitle">
+        <!-- Organise le titre et la commande d’effacement. -->
+        <div class="panel-title compact">
+          <!-- Donne le titre du graphique. -->
+          <h3 id="chartTitle">Historique des essais</h3>
+          <!-- Efface seulement l’historique du graphique. -->
+          <button id="clearChart" type="button">Effacer la courbe</button>
+        </div>
+        <!-- Dessine la courbe sans bibliothèque externe. -->
+        <canvas id="historyChart" width="680" height="260" aria-label="Courbe de l’humidité et du seuil"></canvas>
+        <!-- Explique les informations représentées. -->
+        <p class="chart-legend"><span class="legend-line humidity-line"></span> Humidité mesurée <span class="legend-line threshold-line"></span> Seuil d’arrosage <span class="legend-dot pump-dot"></span> Pompe active</p>
+      </section>
     </section>
 
-    <!-- Affiche la mission active et l'éditeur. -->
-    <section class="panel">
+    <!-- Affiche la mission active et ses outils. -->
+    <section class="panel mission-panel">
+      <!-- Affiche le titre et le barème de la mission. -->
       <div class="panel-title">
+        <!-- Affiche le titre de la mission. -->
         <h2 id="missionTitle">Mission</h2>
+        <!-- Affiche les points disponibles. -->
         <span id="points" class="badge gold">2 points</span>
       </div>
+
+      <!-- Affiche le contexte narratif de la mission. -->
       <p id="story" class="story"></p>
+      <!-- Affiche l’objectif opérationnel. -->
       <p class="objective"><strong>Objectif :</strong> <span id="objective"></span></p>
 
-      <!-- Permet de basculer entre les trois formes de pratique. -->
-      <div class="tabs">
-        <button data-tab="simulation" class="active">1. Simuler</button>
-        <button data-tab="hardware">2. Arduino/Grove</button>
-        <button data-tab="analysis">3. Analyser</button>
+      <!-- Affiche les compétences mobilisées. -->
+      <section class="competency-box" aria-labelledby="competencyTitle">
+        <!-- Donne le titre du bloc. -->
+        <h3 id="competencyTitle">Compétences travaillées</h3>
+        <!-- Reçoit les compétences de la mission active. -->
+        <div id="competencies" class="chips"></div>
+      </section>
+
+      <!-- Affiche les critères de réussite avant le travail. -->
+      <section class="criteria-box" aria-labelledby="criteriaTitle">
+        <!-- Donne le titre du bloc. -->
+        <h3 id="criteriaTitle">Critères de réussite</h3>
+        <!-- Reçoit les critères et leur état. -->
+        <ul id="criteria"></ul>
+      </section>
+
+      <!-- Permet de basculer entre simulation, matériel et analyse. -->
+      <div class="tabs" role="tablist" aria-label="Étapes de la mission">
+        <!-- Ouvre l’éditeur et la simulation. -->
+        <button data-tab="simulation" class="active" role="tab">1. Simuler</button>
+        <!-- Ouvre le protocole matériel. -->
+        <button data-tab="hardware" role="tab">2. Arduino/Grove</button>
+        <!-- Ouvre l’analyse fonctionnelle et la trace écrite. -->
+        <button data-tab="analysis" role="tab">3. Analyser</button>
       </div>
 
-      <!-- Contient l'activité de programmation simulée. -->
+      <!-- Contient l’activité de programmation simulée. -->
       <div id="simulation" class="tab-content">
+        <!-- Identifie l’éditeur. -->
         <label for="code"><strong>Programme Python pédagogique</strong></label>
-        <textarea id="code" spellcheck="false"></textarea>
-        <p class="help">Commandes reconnues : <code>lire_humidite()</code>, <code>lire_reservoir()</code>, <code>lire_lumiere()</code>, <code>arroser(n)</code>, <code>stop()</code> et <code>alerter(...)</code>.</p>
+        <!-- Permet de compléter ou modifier le programme. -->
+        <textarea id="code" spellcheck="false" aria-describedby="commandHelp"></textarea>
+        <!-- Liste les commandes reconnues par le simulateur. -->
+        <p id="commandHelp" class="help">Commandes reconnues : <code>lire_humidite()</code>, <code>lire_reservoir()</code>, <code>lire_lumiere()</code>, <code>afficher(...)</code>, <code>arroser(n)</code>, <code>stop()</code> et <code>alerter(...)</code>.</p>
+        <!-- Regroupe les actions de programmation. -->
         <div class="actions">
-          <button id="run" class="primary">▶ Exécuter</button>
-          <button id="validate">✓ Valider</button>
-          <button id="hint">💡 Indice</button>
-          <button id="reset">↺ Réinitialiser</button>
+          <!-- Exécute le programme dans le jumeau numérique. -->
+          <button id="run" class="primary" type="button">▶ Exécuter</button>
+          <!-- Vérifie l’ensemble des critères. -->
+          <button id="validate" type="button">✓ Valider</button>
+          <!-- Affiche une aide progressive. -->
+          <button id="hint" type="button">💡 Indice</button>
+          <!-- Réinitialise la mission active. -->
+          <button id="reset" type="button">↺ Réinitialiser</button>
         </div>
       </div>
 
-      <!-- Contient la manipulation réelle. -->
+      <!-- Contient la manipulation réelle et les règles de sécurité. -->
       <div id="hardware" class="tab-content hidden">
-        <h3>Manipulation réelle</h3>
+        <!-- Donne le titre de la partie matérielle. -->
+        <h3>Manipulation réelle en très basse tension</h3>
+        <!-- Représente le câblage de référence. -->
+        <div class="wiring-diagram" aria-label="Schéma fonctionnel de câblage">
+          <!-- Représente les capteurs analogiques. -->
+          <div class="wire-block sensor-block">Capteur humidité<br><strong>A0</strong></div>
+          <!-- Représente le capteur de lumière. -->
+          <div class="wire-block sensor-block">Capteur lumière<br><strong>A1</strong></div>
+          <!-- Représente le capteur de niveau. -->
+          <div class="wire-block sensor-block">Capteur niveau<br><strong>A2</strong></div>
+          <!-- Représente le microcontrôleur. -->
+          <div class="wire-arrow">→</div>
+          <!-- Représente la carte Arduino. -->
+          <div class="wire-block controller-block">Arduino Uno R4 Minima<br><strong>Traitement</strong></div>
+          <!-- Représente la commande logique. -->
+          <div class="wire-arrow">→ D6 →</div>
+          <!-- Représente le relais. -->
+          <div class="wire-block relay-block">Relais Grove<br><strong>Distribution</strong></div>
+          <!-- Représente la commande de la pompe. -->
+          <div class="wire-arrow">→</div>
+          <!-- Représente la pompe alimentée séparément. -->
+          <div class="wire-block pump-block">Pompe basse tension<br><strong>Alimentation séparée</strong></div>
+        </div>
+        <!-- Affiche les étapes propres à la mission. -->
         <ol id="hardwareSteps"></ol>
-        <label class="check"><input id="hardwareDone" type="checkbox"> Montage vérifié hors tension puis testé avec le professeur.</label>
+        <!-- Affiche la liste de contrôle de sécurité commune. -->
+        <fieldset class="safety-checklist">
+          <!-- Donne le titre du groupe de cases. -->
+          <legend>Contrôle obligatoire avant mise sous tension</legend>
+          <!-- Vérifie que le câblage est réalisé hors tension. -->
+          <label><input class="safetyCheck" data-safety="powerOff" type="checkbox"> L’alimentation est coupée pendant toute modification du câblage.</label>
+          <!-- Vérifie que la pompe n’est pas branchée sur une broche. -->
+          <label><input class="safetyCheck" data-safety="separateSupply" type="checkbox"> La pompe possède une alimentation séparée et n’est jamais alimentée par une broche Arduino.</label>
+          <!-- Vérifie la protection contre les projections d’eau. -->
+          <label><input class="safetyCheck" data-safety="retentionTray" type="checkbox"> Le montage est placé en hauteur et le circuit d’eau est dans un bac de rétention.</label>
+          <!-- Vérifie la validation par l’enseignant. -->
+          <label><input class="safetyCheck" data-safety="teacherCheck" type="checkbox"> Le professeur a vérifié le montage avant l’essai.</label>
+        </fieldset>
+        <!-- Confirme l’achèvement de l’étape matérielle. -->
+        <label class="check"><input id="hardwareDone" type="checkbox"> Les mesures et essais matériels demandés pour cette mission ont été réalisés.</label>
       </div>
 
-      <!-- Contient la trace écrite. -->
+      <!-- Contient l’analyse fonctionnelle, les signaux et la trace écrite. -->
       <div id="analysis" class="tab-content hidden">
-        <label for="answer"><strong id="question"></strong></label>
-        <textarea id="answer" rows="6" placeholder="Rédiger une réponse argumentée."></textarea>
-        <button id="saveAnswer">Enregistrer la trace écrite</button>
+        <!-- Présente le mini-défi sur les signaux. -->
+        <section class="analysis-challenge">
+          <!-- Donne le titre du mini-défi. -->
+          <h3>Mini-défi 1 – Reconnaître les signaux</h3>
+          <!-- Organise les trois questions. -->
+          <div class="challenge-grid">
+            <!-- Demande la nature du signal d’humidité. -->
+            <label>Capteur d’humidité A0
+              <!-- Propose les deux natures de signal. -->
+              <select id="signalHumidity">
+                <!-- Demande d’abord un choix. -->
+                <option value="">Choisir</option>
+                <!-- Propose la bonne réponse. -->
+                <option value="analogique">Analogique</option>
+                <!-- Propose un distracteur. -->
+                <option value="logique">Logique</option>
+              </select>
+            </label>
+            <!-- Demande la nature de la sortie du relais. -->
+            <label>Commande du relais D6
+              <!-- Propose les deux natures de signal. -->
+              <select id="signalRelay">
+                <!-- Demande d’abord un choix. -->
+                <option value="">Choisir</option>
+                <!-- Propose un distracteur. -->
+                <option value="analogique">Analogique</option>
+                <!-- Propose la bonne réponse. -->
+                <option value="logique">Logique</option>
+              </select>
+            </label>
+            <!-- Demande les niveaux logiques utilisés. -->
+            <label>Niveaux logiques Arduino
+              <!-- Propose plusieurs écritures. -->
+              <select id="logicLevels">
+                <!-- Demande d’abord un choix. -->
+                <option value="">Choisir</option>
+                <!-- Propose la bonne réponse. -->
+                <option value="low-high">LOW = 0 et HIGH = 1</option>
+                <!-- Propose un distracteur. -->
+                <option value="percent">0 % et 100 % uniquement</option>
+              </select>
+            </label>
+          </div>
+          <!-- Valide le mini-défi sur les signaux. -->
+          <button id="validateSignals" type="button">Valider les signaux</button>
+          <!-- Affiche le résultat de la validation. -->
+          <p id="signalFeedback" class="feedback" aria-live="polite"></p>
+        </section>
+
+        <!-- Présente le mini-défi sur les chaînes fonctionnelles. -->
+        <section class="analysis-challenge">
+          <!-- Donne le titre du mini-défi. -->
+          <h3>Mini-défi 2 – Associer chaque constituant à sa fonction</h3>
+          <!-- Reçoit les lignes interactives créées en JavaScript. -->
+          <div id="chainChallenge" class="chain-challenge"></div>
+          <!-- Valide l’ensemble des associations. -->
+          <button id="validateChains" type="button">Valider les chaînes</button>
+          <!-- Affiche le résultat du mini-défi. -->
+          <p id="chainFeedback" class="feedback" aria-live="polite"></p>
+        </section>
+
+        <!-- Demande la trace écrite propre à la mission. -->
+        <section class="written-analysis">
+          <!-- Affiche la question de la mission. -->
+          <label for="answer"><strong id="question"></strong></label>
+          <!-- Permet de rédiger une réponse argumentée. -->
+          <textarea id="answer" rows="7" placeholder="Rédiger une réponse argumentée en utilisant le vocabulaire de technologie."></textarea>
+          <!-- Enregistre la réponse dans le navigateur. -->
+          <button id="saveAnswer" type="button">Enregistrer la trace écrite</button>
+        </section>
       </div>
 
-      <!-- Affiche le résultat d'exécution et les conseils. -->
+      <!-- Affiche le résultat d’exécution et les conseils. -->
       <pre id="console" aria-live="polite">Prêt.</pre>
     </section>
   </main>
 
-  <!-- Affiche le suivi de toutes les missions. -->
-  <section class="dashboard">
-    <h2>Tableau de bord de l'élève</h2>
+  <!-- Affiche le suivi détaillé des missions et les outils de l’enseignant. -->
+  <section class="dashboard" aria-labelledby="dashboardTitle">
+    <!-- Organise le titre et la vue professeur. -->
+    <div class="panel-title">
+      <!-- Donne le titre du tableau de bord. -->
+      <h2 id="dashboardTitle">Tableau de bord de l’élève</h2>
+      <!-- Active ou masque les détails utiles à l’enseignant. -->
+      <label class="teacher-toggle"><input id="teacherView" type="checkbox"> Vue professeur</label>
+    </div>
+    <!-- Reçoit les cartes de progression. -->
     <div id="report" class="report"></div>
+    <!-- Regroupe les actions d’export et d’impression. -->
     <div class="actions">
-      <button id="export">Exporter les résultats en CSV</button>
-      <button id="clear" class="danger">Effacer la progression</button>
+      <!-- Exporte une synthèse compatible avec Excel et LibreOffice Calc. -->
+      <button id="export" type="button">Exporter les résultats en CSV</button>
+      <!-- Exporte toutes les preuves dans un fichier JSON. -->
+      <button id="exportJson" type="button">Exporter les preuves en JSON</button>
+      <!-- Lance l’impression ou l’enregistrement en PDF. -->
+      <button id="printReport" type="button">Imprimer / Enregistrer en PDF</button>
+      <!-- Efface toute la progression locale. -->
+      <button id="clear" class="danger" type="button">Effacer la progression</button>
     </div>
   </section>
 
-  <!-- Affiche les informations de licence et de sécurité. -->
-  <footer>Projet libre · Très basse tension uniquement · Code MIT · Documents CC BY 4.0</footer>
+  <!-- Affiche les informations de sécurité, de licence et de version. -->
+  <footer>Projet libre · Très basse tension uniquement · Programme de technologie du cycle 4 – BO n° 9 du 29 février 2024 · Code MIT · Documents CC BY 4.0</footer>
 
-  <!-- Charge la logique après la structure de la page. -->
+  <!-- Charge la logique de l’application après la structure de la page. -->
   <script src="app.js"></script>
 </body>
 </html>
