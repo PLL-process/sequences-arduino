@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <!-- Définit l'encodage des caractères. -->
+  <meta charset="utf-8">
+  <!-- Adapte l'interface aux différents écrans. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Définit le titre de l'onglet. -->
+  <title>TechnoQuest – Jardin connecté</title>
+  <!-- Charge les styles du projet. -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Présente le projet et la note. -->
+  <header>
+    <div>
+      <p class="label">TECHNOQUEST · CYCLE 4</p>
+      <h1>Mission Jardin connecté</h1>
+      <p>Une pratique alternée : simuler, câbler, programmer, tester et améliorer.</p>
+    </div>
+    <aside class="score">
+      <span>Note actuelle</span>
+      <strong id="score">0 / 20</strong>
+      <small id="progress">0 mission validée</small>
+    </aside>
+  </header>
+
+  <!-- Contient la navigation entre les huit missions. -->
+  <nav id="missions" aria-label="Missions"></nav>
+
+  <!-- Organise la simulation et le travail de l'élève. -->
+  <main>
+    <!-- Affiche le jumeau numérique du jardin. -->
+    <section class="panel">
+      <div class="panel-title">
+        <h2>Jumeau numérique</h2>
+        <span id="pumpBadge" class="badge">Pompe arrêtée</span>
+      </div>
+      <div class="garden" aria-label="Schéma du jardin connecté">
+        <div class="sun"></div>
+        <div id="plant" class="plant">✿</div>
+        <div id="soil" class="soil"></div>
+        <div class="tank">
+          <div id="water" class="water"></div>
+          <span>Réservoir</span>
+        </div>
+        <div id="pump" class="pump">POMPE</div>
+      </div>
+      <div class="sensors">
+        <label>Humidité du sol
+          <input id="humidity" type="range" min="0" max="100" value="28">
+          <output id="humidityValue">28 %</output>
+        </label>
+        <label>Niveau du réservoir
+          <input id="reservoir" type="range" min="0" max="100" value="75">
+          <output id="reservoirValue">75 %</output>
+        </label>
+        <label>Luminosité
+          <input id="light" type="range" min="0" max="100" value="62">
+          <output id="lightValue">62 %</output>
+        </label>
+      </div>
+    </section>
+
+    <!-- Affiche la mission active et l'éditeur. -->
+    <section class="panel">
+      <div class="panel-title">
+        <h2 id="missionTitle">Mission</h2>
+        <span id="points" class="badge gold">2 points</span>
+      </div>
+      <p id="story" class="story"></p>
+      <p class="objective"><strong>Objectif :</strong> <span id="objective"></span></p>
+
+      <!-- Permet de basculer entre les trois formes de pratique. -->
+      <div class="tabs">
+        <button data-tab="simulation" class="active">1. Simuler</button>
+        <button data-tab="hardware">2. Arduino/Grove</button>
+        <button data-tab="analysis">3. Analyser</button>
+      </div>
+
+      <!-- Contient l'activité de programmation simulée. -->
+      <div id="simulation" class="tab-content">
+        <label for="code"><strong>Programme Python pédagogique</strong></label>
+        <textarea id="code" spellcheck="false"></textarea>
+        <p class="help">Commandes reconnues : <code>lire_humidite()</code>, <code>lire_reservoir()</code>, <code>lire_lumiere()</code>, <code>arroser(n)</code>, <code>stop()</code> et <code>alerter(...)</code>.</p>
+        <div class="actions">
+          <button id="run" class="primary">▶ Exécuter</button>
+          <button id="validate">✓ Valider</button>
+          <button id="hint">💡 Indice</button>
+          <button id="reset">↺ Réinitialiser</button>
+        </div>
+      </div>
+
+      <!-- Contient la manipulation réelle. -->
+      <div id="hardware" class="tab-content hidden">
+        <h3>Manipulation réelle</h3>
+        <ol id="hardwareSteps"></ol>
+        <label class="check"><input id="hardwareDone" type="checkbox"> Montage vérifié hors tension puis testé avec le professeur.</label>
+      </div>
+
+      <!-- Contient la trace écrite. -->
+      <div id="analysis" class="tab-content hidden">
+        <label for="answer"><strong id="question"></strong></label>
+        <textarea id="answer" rows="6" placeholder="Rédiger une réponse argumentée."></textarea>
+        <button id="saveAnswer">Enregistrer la trace écrite</button>
+      </div>
+
+      <!-- Affiche le résultat d'exécution et les conseils. -->
+      <pre id="console" aria-live="polite">Prêt.</pre>
+    </section>
+  </main>
+
+  <!-- Affiche le suivi de toutes les missions. -->
+  <section class="dashboard">
+    <h2>Tableau de bord de l'élève</h2>
+    <div id="report" class="report"></div>
+    <div class="actions">
+      <button id="export">Exporter les résultats en CSV</button>
+      <button id="clear" class="danger">Effacer la progression</button>
+    </div>
+  </section>
+
+  <!-- Affiche les informations de licence et de sécurité. -->
+  <footer>Projet libre · Très basse tension uniquement · Code MIT · Documents CC BY 4.0</footer>
+
+  <!-- Charge la logique après la structure de la page. -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+/* Définit les couleurs communes du projet. */
+:root { --bg:#061813; --panel:#0d2b23; --soft:#153c31; --text:#f4fff9; --muted:#b9d5c9; --green:#63db8d; --yellow:#ffd166; --red:#ff7b72; --border:#2f6553; }
+/* Applique un calcul de largeur prévisible. */
+* { box-sizing:border-box; }
+/* Configure la page générale. */
+body { margin:0; min-height:100vh; font-family:Verdana,Arial,sans-serif; color:var(--text); background:radial-gradient(circle at top,#174639,var(--bg) 55%); }
+/* Organise l'en-tête. */
+header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; padding:2rem clamp(1rem,5vw,5rem) 1rem; }
+/* Met en forme le petit intitulé. */
+.label { color:var(--yellow); font-weight:bold; letter-spacing:.16em; font-size:.78rem; }
+/* Adapte la taille du titre. */
+h1 { margin:.2rem 0; font-size:clamp(2rem,5vw,3.8rem); }
+/* Colore les textes secondaires. */
+header p,.story,.help { color:var(--muted); }
+/* Met en forme la carte de score. */
+.score { display:grid; gap:.25rem; min-width:190px; padding:1rem 1.2rem; border:1px solid var(--border); border-radius:18px; background:var(--panel); box-shadow:0 16px 45px #0007; }
+/* Agrandit la note. */
+.score strong { color:var(--yellow); font-size:1.8rem; }
+/* Organise la navigation. */
+nav { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:.6rem; padding:0 clamp(1rem,5vw,5rem) 1rem; }
+/* Configure tous les boutons. */
+button { padding:.7rem .9rem; border:1px solid var(--border); border-radius:10px; color:var(--text); background:var(--soft); font:inherit; cursor:pointer; transition:.15s; }
+/* Signale le survol et le focus. */
+button:hover,button:focus-visible { transform:translateY(-2px); border-color:var(--green); outline:none; }
+/* Met en évidence une action principale. */
+button.primary { color:#062015; background:var(--green); font-weight:bold; }
+/* Signale une action destructive. */
+button.danger { border-color:var(--red); color:#ffd8d3; }
+/* Met en évidence la mission active. */
+.mission.active { border-color:var(--yellow); box-shadow:inset 0 0 0 1px var(--yellow); }
+/* Signale une mission terminée. */
+.mission.done { background:#1d684b; }
+/* Organise les deux panneaux principaux. */
+main { display:grid; grid-template-columns:minmax(320px,.95fr) minmax(370px,1.2fr); gap:1.2rem; padding:0 clamp(1rem,5vw,5rem) 1.5rem; }
+/* Met en forme les panneaux et le tableau de bord. */
+.panel,.dashboard { padding:1.2rem; border:1px solid var(--border); border-radius:20px; background:#0d2b23ee; box-shadow:0 18px 50px #0006; }
+/* Organise le titre des panneaux. */
+.panel-title { display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+/* Met en forme les badges. */
+.badge { padding:.4rem .7rem; border-radius:999px; color:#ddffec; background:#1d6248; font-size:.8rem; }
+/* Différencie le badge des points. */
+.badge.gold { color:#fff3bd; background:#715814; }
+/* Dessine la scène du jardin. */
+.garden { position:relative; overflow:hidden; min-height:330px; border:1px solid #76a99a; border-radius:18px; background:linear-gradient(#62b8ca 0 58%,#4e9149 58% 72%,#704d34 72%); }
+/* Dessine le soleil. */
+.sun { position:absolute; top:28px; right:38px; width:62px; height:62px; border-radius:50%; background:#ffd45c; box-shadow:0 0 35px #ffe69d; }
+/* Dessine la plante. */
+.plant { position:absolute; left:34%; bottom:67px; z-index:2; color:#ff8fb3; font-size:120px; text-shadow:0 4px #963d5a; transform-origin:bottom; transition:.3s; }
+/* Signale une plante en manque d'eau. */
+.plant.dry { filter:saturate(.5); transform:rotate(8deg) scale(.9); }
+/* Dessine la terre. */
+.soil { position:absolute; left:10%; bottom:28px; width:62%; height:72px; border-radius:50% 50% 14px 14px; background:#5c3926; transition:.3s; }
+/* Dessine le réservoir. */
+.tank { position:absolute; right:25px; bottom:42px; width:95px; height:145px; overflow:hidden; border:5px solid #e4f4f8; border-radius:12px; background:#ffffff2c; }
+/* Positionne l'étiquette du réservoir. */
+.tank span { position:absolute; z-index:2; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-90deg); font-weight:bold; text-shadow:0 1px 4px #000; }
+/* Dessine l'eau du réservoir. */
+.water { position:absolute; left:0; bottom:0; width:100%; height:75%; background:#35abe6d9; transition:.3s; }
+/* Dessine la pompe. */
+.pump { position:absolute; right:135px; bottom:48px; padding:.65rem; border:3px solid #91a8bb; border-radius:10px; background:#303944; font-size:.72rem; }
+/* Signale le fonctionnement de la pompe. */
+.pump.on { background:#28814d; box-shadow:0 0 24px #78f0a4; }
+/* Organise les capteurs. */
+.sensors { display:grid; grid-template-columns:repeat(3,1fr); gap:.7rem; margin-top:1rem; }
+/* Met en forme une carte de capteur. */
+.sensors label { display:grid; gap:.45rem; padding:.75rem; border:1px solid var(--border); border-radius:12px; background:var(--soft); }
+/* Met en évidence la valeur d'un capteur. */
+output { color:var(--yellow); font-weight:bold; }
+/* Met en forme l'objectif. */
+.objective { padding:.9rem; border-left:5px solid var(--yellow); background:#ffd16612; }
+/* Organise les onglets. */
+.tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:.5rem; margin:1rem 0; }
+/* Met en évidence l'onglet actif. */
+.tabs button.active { background:#1c6b4b; border-color:var(--green); }
+/* Cache les contenus inactifs. */
+.hidden { display:none!important; }
+/* Met en forme les zones de texte. */
+textarea { width:100%; margin:.55rem 0; padding:.85rem; border:1px solid var(--border); border-radius:12px; color:#eafff2; background:#06130f; resize:vertical; line-height:1.5; }
+/* Spécialise l'éditeur de code. */
+#code { min-height:235px; font-family:Consolas,"Courier New",monospace; }
+/* Organise les actions. */
+.actions { display:flex; flex-wrap:wrap; gap:.6rem; margin-top:.8rem; }
+/* Met en forme la console. */
+pre { min-height:90px; padding:1rem; border:1px solid #285544; border-radius:12px; color:#bfffd6; background:#030e0b; white-space:pre-wrap; }
+/* Met en forme la validation matérielle. */
+.check { display:block; padding:1rem; border-radius:12px; background:var(--soft); }
+/* Met en forme le tableau de bord. */
+.dashboard { margin:0 clamp(1rem,5vw,5rem) 2rem; }
+/* Organise les cartes de résultat. */
+.report { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:.7rem; }
+/* Met en forme chaque carte. */
+.report article { padding:.8rem; border:1px solid var(--border); border-radius:12px; background:var(--soft); }
+/* Met en forme le pied de page. */
+footer { padding:1rem 2rem 2.5rem; text-align:center; color:var(--muted); font-size:.82rem; }
+/* Adapte l'interface aux écrans plus étroits. */
+@media(max-width:980px) { main { grid-template-columns:1fr; } }
+/* Adapte les grilles aux téléphones. */
+@media(max-width:620px) { .sensors,.tabs { grid-template-columns:1fr; } }
