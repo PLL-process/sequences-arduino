@@ -187,3 +187,8 @@
     });
   }
 })();
+
+/* Charge les améliorations du jumeau numérique après la bibliothèque visuelle. */
+const simulationEnhancements = document.createElement("script");
+simulationEnhancements.src = "simulation-enhancements.js";
+document.body.appendChild(simulationEnhancements);
