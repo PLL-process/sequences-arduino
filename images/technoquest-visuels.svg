@@ -1,0 +1,259 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" aria-hidden="true">
+<style>
+  .bg{fill:#08251d}.card{fill:#123d31;stroke:#4f8f78;stroke-width:2}.soil{fill:#6f472f}.water{fill:#3eb5e8}.plant{fill:#62d88c}.sun{fill:#ffd166}.warn{fill:#ff7b72}.ok{fill:#63db8d}.info{fill:#6fd3ff}.energy{fill:#ff9f43}.board{fill:#1d6b61;stroke:#9ee8d0;stroke-width:3}.pin{fill:#d8b75d}.wire{fill:none;stroke:#ffd166;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}.wire2{fill:none;stroke:#6fd3ff;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}.line{fill:none;stroke:#eafff2;stroke-width:3}.dash{fill:none;stroke:#b9d5c9;stroke-width:3;stroke-dasharray:10 8}.title{font:700 25px Verdana,Arial,sans-serif;fill:#f4fff9}.label{font:700 17px Verdana,Arial,sans-serif;fill:#f4fff9}.small{font:14px Verdana,Arial,sans-serif;fill:#d8eee5}.tiny{font:12px Verdana,Arial,sans-serif;fill:#d8eee5}.code{font:15px Consolas,monospace;fill:#eafff2}.boxtext{font:700 15px Verdana,Arial,sans-serif;fill:#062015}.arrow{fill:#ffd166}.stroke{stroke:#f4fff9;stroke-width:3}.thin{stroke:#f4fff9;stroke-width:2}</style>
+<defs>
+  <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#ffd166"/></marker>
+  <marker id="arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0L10 5L0 10z" fill="#6fd3ff"/></marker>
+</defs>
+
+<symbol id="v01" viewBox="0 0 640 360">
+<title>Situation déclenchante : jardin trop sec et jardin trop arrosé</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">1. Situation déclenchante</text>
+<rect x="25" y="70" width="285" height="250" rx="18" class="card"/>
+<rect x="330" y="70" width="285" height="250" rx="18" class="card"/>
+<circle cx="250" cy="112" r="28" class="sun"/>
+<rect x="45" y="235" width="245" height="58" rx="12" class="soil"/>
+<path d="M165 238v-72m0 25l-35-35m35 20l38-44" class="line"/>
+<path d="M130 156q-26 15-12 35q26 4 39-11M203 132q28 12 19 34q-28 8-43-5" class="plant"/>
+<path d="M80 218l12-22l12 22l12-22l12 22" class="warn"/>
+<text x="92" y="314" class="label">Sol trop sec</text>
+<path d="M475 102c25 34 38 51 38 72a38 38 0 1 1-76 0c0-21 13-38 38-72z" class="water"/>
+<rect x="350" y="235" width="245" height="58" rx="12" fill="#486a58"/>
+<path d="M470 238v-78m0 28l-38-30m38 10l42-36" class="line"/>
+<circle cx="405" cy="260" r="12" class="water"/><circle cx="548" cy="276" r="9" class="water"/>
+<text x="397" y="314" class="label">Trop d’eau</text>
+</symbol>
+
+<symbol id="v02" viewBox="0 0 640 360">
+<title>Prototype final attendu du jardin connecté</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">2. Prototype final attendu</text>
+<rect x="25" y="65" width="590" height="265" rx="18" class="card"/>
+<rect x="55" y="112" width="120" height="150" rx="14" class="board"/>
+<text x="73" y="145" class="label">Arduino</text><text x="73" y="170" class="small">Uno R4</text>
+<circle cx="79" cy="222" r="7" class="pin"/><circle cx="104" cy="222" r="7" class="pin"/><circle cx="129" cy="222" r="7" class="pin"/>
+<rect x="232" y="112" width="88" height="65" rx="12" fill="#715814" class="stroke"/><text x="249" y="150" class="label">Relais</text>
+<rect x="373" y="104" width="94" height="120" rx="12" fill="#2c4653" class="stroke"/><text x="389" y="157" class="label">Pompe</text>
+<rect x="510" y="92" width="74" height="170" rx="12" fill="#ffffff20" class="stroke"/><rect x="517" y="160" width="60" height="94" rx="8" class="water"/><text x="517" y="286" class="small">Réservoir</text>
+<path d="M175 145H232M320 145H373M467 166H510" class="wire" marker-end="url(#arr)"/>
+<path d="M420 224v58H278" class="wire2" marker-end="url(#arrb)"/>
+<rect x="210" y="278" width="135" height="35" rx="18" class="soil"/>
+<path d="M276 280v-42m0 10l-20-16m20 7l23-18" class="line"/>
+<text x="55" y="294" class="small">Capteurs A0 · A1 · A2</text>
+</symbol>
+
+<symbol id="v03" viewBox="0 0 640 360">
+<title>Cycle naturel de l’eau dans le jardin</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">3. Cycle de l’eau</text>
+<circle cx="115" cy="105" r="40" class="sun"/>
+<path d="M340 95q35-48 75 0q48-10 55 34q-8 40-55 30h-110q-40-4-34-39q9-32 49-25q8-15 20-20z" fill="#dff4ff"/>
+<path d="M350 175l-18 45M395 175l-18 45M440 175l-18 45" class="wire2"/>
+<rect x="40" y="265" width="560" height="55" rx="14" class="soil"/>
+<path d="M180 267v-70m0 20l-35-28m35 10l36-34" class="line"/>
+<path d="M185 256q30-45 58-7q20 30-15 44h-80q-34-15-10-43q20-21 47 6z" fill="#3eb5e850"/>
+<path d="M235 246q0-70 50-95" class="dash" marker-end="url(#arrb)"/>
+<path d="M510 245q30-72 0-126" class="dash" marker-end="url(#arrb)"/>
+<text x="238" y="143" class="small">Évaporation</text><text x="418" y="239" class="small">Infiltration</text><text x="356" y="198" class="small">Pluie</text>
+</symbol>
+
+<symbol id="v04" viewBox="0 0 640 360">
+<title>Cahier des charges et contraintes du système</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">4. Besoin et contraintes</text>
+<g transform="translate(35 75)"><rect width="265" height="100" rx="18" class="card"/><circle cx="45" cy="50" r="24" class="water"/><text x="82" y="43" class="label">Arroser au bon moment</text><text x="82" y="69" class="small">Éviter le gaspillage</text></g>
+<g transform="translate(340 75)"><rect width="265" height="100" rx="18" class="card"/><rect x="20" y="27" width="48" height="48" rx="8" class="warn"/><text x="82" y="43" class="label">Protéger la pompe</text><text x="82" y="69" class="small">Interdire la marche à vide</text></g>
+<g transform="translate(35 200)"><rect width="265" height="100" rx="18" class="card"/><path d="M42 24c26 20 29 44 0 60c-28-18-27-42 0-60z" class="plant"/><text x="82" y="43" class="label">Être réparable</text><text x="82" y="69" class="small">Composants réutilisables</text></g>
+<g transform="translate(340 200)"><rect width="265" height="100" rx="18" class="card"/><path d="M28 58l28-42l-8 30h28L43 84l10-26z" class="energy"/><text x="82" y="43" class="label">Très basse tension</text><text x="82" y="69" class="small">Sécurité des élèves</text></g>
+</symbol>
+
+<symbol id="v05" viewBox="0 0 640 360">
+<title>Vue des composants Arduino et Grove</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">5. Composants du système</text>
+<rect x="40" y="78" width="180" height="120" rx="16" class="board"/><text x="67" y="124" class="label">Arduino Uno R4</text><text x="67" y="152" class="small">Traiter</text>
+<g transform="translate(255 75)"><rect width="150" height="58" rx="14" class="card"/><text x="18" y="36" class="label">Humidité A0</text></g>
+<g transform="translate(255 145)"><rect width="150" height="58" rx="14" class="card"/><text x="18" y="36" class="label">Lumière A1</text></g>
+<g transform="translate(255 215)"><rect width="150" height="58" rx="14" class="card"/><text x="18" y="36" class="label">Niveau A2</text></g>
+<rect x="445" y="85" width="130" height="62" rx="14" fill="#715814" class="stroke"/><text x="480" y="123" class="label">Relais D6</text>
+<rect x="445" y="175" width="130" height="62" rx="14" fill="#2c4653" class="stroke"/><text x="485" y="213" class="label">Pompe</text>
+<path d="M220 135H255M405 115H445M405 245H445" class="wire"/>
+<text x="48" y="235" class="small">Base Shield Grove</text><circle cx="78" cy="280" r="10" class="pin"/><circle cx="108" cy="280" r="10" class="pin"/><circle cx="138" cy="280" r="10" class="pin"/>
+</symbol>
+
+<symbol id="v06" viewBox="0 0 640 360">
+<title>Architecture fonctionnelle du jardin connecté</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">6. Architecture fonctionnelle</text>
+<g transform="translate(25 120)"><rect width="120" height="90" rx="15" class="card"/><text x="25" y="38" class="label">Capteurs</text><text x="19" y="66" class="small">Humidité · niveau</text></g>
+<g transform="translate(180 120)"><rect width="120" height="90" rx="15" class="board"/><text x="24" y="42" class="label">Arduino</text><text x="25" y="68" class="small">Décider</text></g>
+<g transform="translate(335 120)"><rect width="110" height="90" rx="15" fill="#715814" class="stroke"/><text x="24" y="42" class="label">Relais</text><text x="21" y="68" class="small">Distribuer</text></g>
+<g transform="translate(480 120)"><rect width="130" height="90" rx="15" fill="#2c4653" class="stroke"/><text x="34" y="42" class="label">Pompe</text><text x="24" y="68" class="small">Déplacer l’eau</text></g>
+<path d="M145 165H180M300 165H335M445 165H480" class="wire" marker-end="url(#arr)"/>
+<text x="45" y="255" class="small">Mesurer</text><text x="205" y="255" class="small">Traiter</text><text x="360" y="255" class="small">Commander</text><text x="515" y="255" class="small">Agir</text>
+</symbol>
+
+<symbol id="v07" viewBox="0 0 640 360">
+<title>Chaîne d’information du système</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">7. Chaîne d’information</text>
+<g transform="translate(35 115)"><rect width="160" height="100" rx="20" fill="#163f59" class="stroke"/><text x="32" y="42" class="label">ACQUÉRIR</text><text x="20" y="70" class="small">Capteurs Grove</text></g>
+<g transform="translate(240 115)"><rect width="160" height="100" rx="20" class="board"/><text x="42" y="42" class="label">TRAITER</text><text x="35" y="70" class="small">Programme Arduino</text></g>
+<g transform="translate(445 115)"><rect width="160" height="100" rx="20" fill="#4d3565" class="stroke"/><text x="20" y="42" class="label">COMMUNIQUER</text><text x="36" y="70" class="small">Alerte · LCD</text></g>
+<path d="M195 165H240M400 165H445" class="wire2" marker-end="url(#arrb)"/>
+<text x="105" y="263" class="small">Grandeurs physiques</text><text x="286" y="263" class="small">Décision</text><text x="495" y="263" class="small">Information utilisateur</text>
+</symbol>
+
+<symbol id="v08" viewBox="0 0 640 360">
+<title>Chaîne d’énergie du système</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">8. Chaîne d’énergie</text>
+<g transform="translate(20 120)"><rect width="105" height="85" rx="16" fill="#814f22" class="stroke"/><text x="14" y="38" class="label">Alimenter</text><text x="18" y="62" class="tiny">Batterie</text></g>
+<g transform="translate(145 120)"><rect width="105" height="85" rx="16" fill="#715814" class="stroke"/><text x="11" y="38" class="label">Distribuer</text><text x="26" y="62" class="tiny">Relais</text></g>
+<g transform="translate(270 120)"><rect width="105" height="85" rx="16" fill="#2c4653" class="stroke"/><text x="14" y="38" class="label">Convertir</text><text x="25" y="62" class="tiny">Moteur</text></g>
+<g transform="translate(395 120)"><rect width="105" height="85" rx="16" fill="#1f5b72" class="stroke"/><text x="7" y="38" class="label">Transmettre</text><text x="30" y="62" class="tiny">Tuyau</text></g>
+<g transform="translate(520 120)"><rect width="100" height="85" rx="16" fill="#27623f" class="stroke"/><text x="26" y="38" class="label">Agir</text><text x="19" y="62" class="tiny">Sol arrosé</text></g>
+<path d="M125 162H145M250 162H270M375 162H395M500 162H520" class="wire" marker-end="url(#arr)"/>
+<text x="42" y="258" class="small">Énergie électrique → énergie mécanique → déplacement de l’eau</text>
+</symbol>
+
+<symbol id="v09" viewBox="0 0 640 360">
+<title>Entrées, traitement et sortie du microcontrôleur</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">9. Entrées · traitement · sortie</text>
+<g transform="translate(35 92)"><rect width="150" height="52" rx="14" class="card"/><text x="22" y="33" class="label">A0 Humidité</text></g>
+<g transform="translate(35 154)"><rect width="150" height="52" rx="14" class="card"/><text x="24" y="33" class="label">A1 Lumière</text></g>
+<g transform="translate(35 216)"><rect width="150" height="52" rx="14" class="card"/><text x="28" y="33" class="label">A2 Niveau</text></g>
+<rect x="250" y="105" width="160" height="150" rx="20" class="board"/><text x="283" y="158" class="label">ARDUINO</text><text x="280" y="190" class="small">Comparer aux seuils</text><text x="300" y="218" class="small">Décider</text>
+<rect x="475" y="140" width="130" height="80" rx="18" fill="#715814" class="stroke"/><text x="505" y="176" class="label">D6</text><text x="490" y="202" class="small">Relais</text>
+<path d="M185 118H250M185 180H250M185 242H250M410 180H475" class="wire2" marker-end="url(#arrb)"/>
+</symbol>
+
+<symbol id="v10" viewBox="0 0 640 360">
+<title>Branchement du capteur d’humidité Grove sur A0</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">10. Capteur d’humidité → A0</text>
+<rect x="70" y="100" width="150" height="150" rx="18" class="board"/><text x="96" y="155" class="label">Base Shield</text><rect x="95" y="190" width="100" height="35" rx="8" fill="#0c1c18" class="stroke"/><text x="128" y="214" class="label">A0</text>
+<rect x="395" y="105" width="140" height="125" rx="18" class="card"/><path d="M465 130v76" class="line"/><path d="M430 207h70" class="thin"/><text x="410" y="257" class="label">Humidité</text>
+<path d="M220 208C290 208 315 165 395 165" class="wire2" marker-end="url(#arrb)"/>
+<circle cx="275" cy="208" r="9" class="pin"/><text x="235" y="286" class="small">Câble Grove : signal analogique</text>
+</symbol>
+
+<symbol id="v11" viewBox="0 0 640 360">
+<title>Branchement du capteur de luminosité Grove sur A1</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">11. Capteur de lumière → A1</text>
+<rect x="70" y="100" width="150" height="150" rx="18" class="board"/><text x="96" y="155" class="label">Base Shield</text><rect x="95" y="190" width="100" height="35" rx="8" fill="#0c1c18" class="stroke"/><text x="128" y="214" class="label">A1</text>
+<rect x="395" y="105" width="140" height="125" rx="18" class="card"/><circle cx="465" cy="164" r="28" class="sun"/><path d="M465 118v-18M465 228v-18M419 164h-18M529 164h-18" class="wire"/>
+<text x="410" y="257" class="label">Lumière</text>
+<path d="M220 208C290 208 315 165 395 165" class="wire2" marker-end="url(#arrb)"/>
+</symbol>
+
+<symbol id="v12" viewBox="0 0 640 360">
+<title>Branchement du capteur de niveau d’eau Grove sur A2</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">12. Capteur de niveau → A2</text>
+<rect x="70" y="100" width="150" height="150" rx="18" class="board"/><text x="96" y="155" class="label">Base Shield</text><rect x="95" y="190" width="100" height="35" rx="8" fill="#0c1c18" class="stroke"/><text x="128" y="214" class="label">A2</text>
+<rect x="405" y="88" width="120" height="170" rx="16" fill="#ffffff20" class="stroke"/><rect x="415" y="160" width="100" height="88" rx="10" class="water"/><path d="M465 111v72" class="line"/><circle cx="465" cy="184" r="10" class="pin"/>
+<path d="M220 208C300 208 325 180 405 180" class="wire2" marker-end="url(#arrb)"/>
+<text x="407" y="286" class="label">Réservoir</text>
+</symbol>
+
+<symbol id="v13" viewBox="0 0 640 360">
+<title>Branchement du relais Grove sur la sortie D6</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">13. Relais Grove → D6</text>
+<rect x="65" y="100" width="170" height="150" rx="18" class="board"/><text x="102" y="155" class="label">Arduino</text><rect x="95" y="190" width="110" height="35" rx="8" fill="#0c1c18" class="stroke"/><text x="133" y="214" class="label">D6</text>
+<rect x="390" y="105" width="150" height="130" rx="18" fill="#715814" class="stroke"/><circle cx="430" cy="170" r="22" fill="#15231d" class="stroke"/><path d="M465 150h42M465 190h42" class="thin"/><text x="410" y="268" class="label">Relais</text>
+<path d="M235 208C300 208 325 170 390 170" class="wire" marker-end="url(#arr)"/>
+<text x="240" y="300" class="small">Sortie logique : LOW / HIGH</text>
+</symbol>
+
+<symbol id="v14" viewBox="0 0 640 360">
+<title>Montage complet Arduino Grove du jardin connecté</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">14. Montage final complet</text>
+<rect x="235" y="105" width="170" height="150" rx="18" class="board"/><text x="272" y="150" class="label">Arduino</text><text x="266" y="178" class="small">A0 · A1 · A2 · D6</text>
+<rect x="35" y="82" width="130" height="55" rx="14" class="card"/><text x="55" y="116" class="label">Humidité A0</text>
+<rect x="35" y="153" width="130" height="55" rx="14" class="card"/><text x="60" y="187" class="label">Lumière A1</text>
+<rect x="35" y="224" width="130" height="55" rx="14" class="card"/><text x="65" y="258" class="label">Niveau A2</text>
+<rect x="470" y="85" width="125" height="60" rx="14" fill="#715814" class="stroke"/><text x="498" y="122" class="label">Relais D6</text>
+<rect x="470" y="180" width="125" height="60" rx="14" fill="#2c4653" class="stroke"/><text x="510" y="217" class="label">Pompe</text>
+<path d="M165 109H235M165 180H235M165 251H235M405 140H470M532 145v35" class="wire2" marker-end="url(#arrb)"/>
+<path d="M532 240v50H320" class="wire" marker-end="url(#arr)"/>
+<rect x="250" y="292" width="140" height="30" rx="15" class="soil"/>
+</symbol>
+
+<symbol id="v15" viewBox="0 0 640 360">
+<title>Comparaison d’un branchement dangereux et d’un branchement correct avec relais</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">15. Erreur fréquente : la pompe</text>
+<rect x="25" y="75" width="280" height="235" rx="18" class="card"/><text x="70" y="110" class="label">DANGEREUX / INCORRECT</text>
+<rect x="65" y="145" width="90" height="80" rx="12" class="board"/><text x="78" y="190" class="small">Arduino</text>
+<rect x="205" y="145" width="70" height="80" rx="12" fill="#2c4653" class="stroke"/><text x="219" y="190" class="small">Pompe</text>
+<path d="M155 185H205" class="warn stroke"/><path d="M110 250l90-100M110 150l90 100" class="warn stroke"/>
+<rect x="335" y="75" width="280" height="235" rx="18" class="card"/><text x="420" y="110" class="label">CORRECT</text>
+<rect x="360" y="145" width="80" height="80" rx="12" class="board"/><text x="371" y="190" class="small">Arduino</text>
+<rect x="465" y="145" width="60" height="80" rx="12" fill="#715814" class="stroke"/><text x="476" y="190" class="tiny">Relais</text>
+<rect x="550" y="145" width="45" height="80" rx="12" fill="#2c4653" class="stroke"/><text x="556" y="190" class="tiny">Pompe</text>
+<path d="M440 185H465M525 185H550" class="ok stroke"/><circle cx="585" cy="265" r="22" class="ok"/><path d="M574 265l8 9l16-20" class="line"/>
+</symbol>
+
+<symbol id="v16" viewBox="0 0 640 360">
+<title>Représentation d’un signal analogique continu</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">16. Signal analogique</text>
+<path d="M75 275V85M75 275H585" class="line"/>
+<path d="M80 235C135 220 145 115 205 130S285 260 350 210S430 85 500 135S550 215 580 165" fill="none" stroke="#6fd3ff" stroke-width="7"/>
+<line x1="75" y1="190" x2="585" y2="190" class="dash"/>
+<text x="88" y="110" class="small">Valeur élevée</text><text x="88" y="260" class="small">Valeur faible</text><text x="425" y="305" class="label">Temps</text>
+<circle cx="205" cy="130" r="9" class="sun"/><circle cx="350" cy="210" r="9" class="sun"/>
+<text x="250" y="75" class="small">Une multitude de valeurs possibles</text>
+</symbol>
+
+<symbol id="v17" viewBox="0 0 640 360">
+<title>Représentation d’un signal logique LOW et HIGH</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">17. Signal logique</text>
+<path d="M75 275V85M75 275H585" class="line"/>
+<path d="M80 245H170V120H285V245H390V120H510V245H580" fill="none" stroke="#ffd166" stroke-width="7" stroke-linejoin="round"/>
+<text x="90" y="112" class="label">HIGH = 1</text><text x="90" y="266" class="label">LOW = 0</text><text x="425" y="305" class="label">Temps</text>
+<rect x="300" y="85" width="220" height="42" rx="20" class="card"/><text x="326" y="112" class="small">Deux états seulement</text>
+</symbol>
+
+<symbol id="v18" viewBox="0 0 640 360">
+<title>De la mesure analogique à la décision puis à l’action</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">18. Mesure → seuil → décision → action</text>
+<g transform="translate(20 125)"><rect width="120" height="90" rx="16" fill="#163f59" class="stroke"/><text x="22" y="35" class="label">MESURE</text><text x="35" y="66" class="label">28 %</text></g>
+<g transform="translate(175 125)"><rect width="120" height="90" rx="16" fill="#4d3565" class="stroke"/><text x="29" y="35" class="label">SEUIL</text><text x="28" y="66" class="label">28 &lt; 35</text></g>
+<g transform="translate(330 125)"><rect width="120" height="90" rx="16" fill="#715814" class="stroke"/><text x="21" y="35" class="label">DÉCISION</text><text x="38" y="66" class="label">VRAI</text></g>
+<g transform="translate(485 125)"><rect width="135" height="90" rx="16" fill="#27623f" class="stroke"/><text x="33" y="35" class="label">ACTION</text><text x="24" y="66" class="label">Pompe ON</text></g>
+<path d="M140 170H175M295 170H330M450 170H485" class="wire" marker-end="url(#arr)"/>
+<text x="70" y="270" class="small">Analogique</text><text x="348" y="270" class="small">Logique</text><text x="514" y="270" class="small">Énergie</text>
+</symbol>
+
+<symbol id="v19" viewBox="0 0 640 360">
+<title>Algorigramme de l’arrosage automatique</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">19. Algorigramme</text>
+<ellipse cx="95" cy="180" rx="58" ry="34" fill="#27623f" class="stroke"/><text x="65" y="186" class="label">Début</text>
+<rect x="185" y="145" width="125" height="70" rx="12" class="card"/><text x="203" y="176" class="label">Lire les</text><text x="208" y="200" class="label">capteurs</text>
+<path d="M395 130l80 50l-80 50l-80-50z" fill="#4d3565" class="stroke"/><text x="350" y="174" class="small">Sol sec ET</text><text x="347" y="196" class="small">réservoir OK ?</text>
+<rect x="510" y="105" width="105" height="65" rx="12" fill="#27623f" class="stroke"/><text x="530" y="145" class="label">Arroser</text>
+<rect x="510" y="220" width="105" height="65" rx="12" fill="#6a2e2e" class="stroke"/><text x="532" y="260" class="label">Arrêter</text>
+<path d="M153 180H185M310 180H315M475 160H510M475 200L510 245" class="wire" marker-end="url(#arr)"/>
+<text x="476" y="145" class="small">Oui</text><text x="475" y="225" class="small">Non</text>
+</symbol>
+
+<symbol id="v20" viewBox="0 0 640 360">
+<title>Code Arduino final annoté par fonctions</title>
+<rect width="640" height="360" rx="24" class="bg"/>
+<text x="28" y="42" class="title">20. Code final annoté</text>
+<rect x="35" y="70" width="570" height="255" rx="16" fill="#030e0b" stroke="#2f6553" stroke-width="2"/>
+<rect x="52" y="88" width="536" height="52" rx="10" fill="#163f5938"/><text x="65" y="111" class="code">humidite = analogRead(A0);</text><text x="65" y="132" class="tiny">1 · ACQUÉRIR</text>
+<rect x="52" y="148" width="536" height="70" rx="10" fill="#4d356538"/><text x="65" y="172" class="code">if (reservoir &lt; 20) stop();</text><text x="65" y="196" class="code">else if (humidite &lt; 35) arroser();</text><text x="65" y="214" class="tiny">2 · TRAITER ET PROTÉGER</text>
+<rect x="52" y="226" width="536" height="78" rx="10" fill="#27623f38"/><text x="65" y="252" class="code">digitalWrite(D6, HIGH);</text><text x="65" y="278" class="code">delay(2000); digitalWrite(D6, LOW);</text><text x="65" y="298" class="tiny">3 · COMMANDER ET ARRÊTER</text>
+</symbol>
+</svg>
