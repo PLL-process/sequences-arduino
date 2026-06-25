@@ -1,10 +1,10 @@
-/* Charge séquentiellement le moteur, le rosier et le schéma matériel du jumeau numérique. */
+/* Charge séquentiellement le moteur, les visuels matériels et les aides pédagogiques. */
 "use strict";
 
 (() => {
   const loadScript = src => new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `${src}?v=13`;
+    script.src = `${src}?v=14`;
     script.onload = resolve;
     script.onerror = () => reject(new Error(`Impossible de charger ${src}`));
     document.body.appendChild(script);
@@ -17,5 +17,7 @@
     .then(() => loadScript("hydraulic-layout-fix.js"))
     .then(() => loadScript("reservoir-label-fix.js"))
     .then(() => loadScript("cleanup-legacy-water.js"))
+    .then(() => loadScript("pedagogical-corrections-data.js"))
+    .then(() => loadScript("pedagogical-corrections.js"))
     .catch(error => console.error("TechnoQuest :", error));
 })();
