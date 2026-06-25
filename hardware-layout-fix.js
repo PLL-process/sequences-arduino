@@ -52,6 +52,24 @@
       font-size:10px;
       font-weight:700;
     }
+    .hardware-foreground-overlay .level-callout-title {
+      fill:#ffffff;
+      font-size:12px;
+      font-weight:800;
+      stroke:none;
+    }
+    .hardware-foreground-overlay .level-callout-caption {
+      fill:#d8eef8;
+      font-size:9px;
+      font-weight:700;
+      stroke:none;
+    }
+    .hardware-foreground-overlay .level-callout-badge {
+      fill:#f5edff;
+      font-size:10px;
+      font-weight:900;
+      stroke:none;
+    }
     .hardware-foreground-overlay .fg-wire {
       fill:none;
       stroke-width:4;
@@ -81,6 +99,8 @@
     @media(max-width:460px){
       .hardware-foreground-overlay .fg-title{font-size:10px}
       .hardware-foreground-overlay .fg-caption{font-size:8px}
+      .hardware-foreground-overlay .level-callout-title{font-size:10px}
+      .hardware-foreground-overlay .level-callout-caption{font-size:7.5px}
     }
     @media(prefers-reduced-motion:reduce){
       .hardware-foreground-overlay *{animation:none!important;transition:none!important}
@@ -118,6 +138,17 @@
     </g>
     <path class="fg-wire fg-wire-a0" d="M122 266 C132 228 159 203 196 185 C220 173 241 152 264 137"/>
 
+    <!-- Cartouche lisible placé dans le ciel, entre le soleil et le réservoir -->
+    <g filter="url(#frontHardwareShadow)">
+      <rect x="418" y="112" width="158" height="58" rx="11" fill="#0d2b23" fill-opacity=".94" stroke="#e7f0f2" stroke-width="2.5"/>
+      <line x1="574" y1="116" x2="574" y2="166" stroke="#b78cff" stroke-width="6" stroke-linecap="round"/>
+      <rect x="535" y="123" width="28" height="20" rx="6" fill="#6d3da8" stroke="#d9c3ff" stroke-width="1.5"/>
+      <text class="level-callout-badge" x="542" y="137">A2</text>
+      <text class="level-callout-title" x="429" y="136">Capteur de niveau d’eau</text>
+      <text class="level-callout-caption" x="429" y="154">Réservoir → entrée analogique A2</text>
+      <path d="M500 170 C516 195 526 220 531 257" fill="none" stroke="#b78cff" stroke-width="3" stroke-linecap="round" stroke-dasharray="7 6"/>
+    </g>
+
     <!-- Capteur de niveau d'eau visible dans le réservoir -->
     <g filter="url(#frontHardwareShadow)">
       <rect x="526" y="260" width="15" height="96" rx="6" fill="#dce7ea" stroke="#526971" stroke-width="2"/>
@@ -130,8 +161,6 @@
         <circle cx="533.5" cy="270" r="3" fill="#fff3bd"/>
       </g>
       <circle class="fg-halo" cx="533" cy="270" r="25" stroke="#b78cff"/>
-      <text class="fg-title" x="451" y="232">Capteur de niveau d’eau</text>
-      <text class="fg-caption" x="451" y="246">Mesure du réservoir → entrée A2</text>
     </g>
     <path class="fg-wire fg-wire-a2" d="M526 260 C492 215 444 201 384 197 C344 194 315 191 290 189"/>
   `;
