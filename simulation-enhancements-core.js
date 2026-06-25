@@ -1,0 +1,1 @@
+/* Placeholder remplacé lors de l'étape suivante. */
