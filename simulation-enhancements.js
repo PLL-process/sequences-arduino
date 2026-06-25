@@ -4,7 +4,7 @@
 (() => {
   const loadScript = src => new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `${src}?v=6`;
+    script.src = `${src}?v=7`;
     script.onload = resolve;
     script.onerror = () => reject(new Error(`Impossible de charger ${src}`));
     document.body.appendChild(script);
