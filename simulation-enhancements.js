@@ -4,7 +4,7 @@
 (() => {
   const loadScript = src => new Promise((resolve, reject) => {
     const script = document.createElement("script");
-    script.src = `${src}?v=17`;
+    script.src = `${src}?v=18`;
     script.onload = resolve;
     script.onerror = () => reject(new Error(`Impossible de charger ${src}`));
     document.body.appendChild(script);
@@ -22,5 +22,6 @@
     .then(() => loadScript("visual-caption-fix.js"))
     .then(() => loadScript("acronym-learning.js"))
     .then(() => loadScript("board-adaptation.js"))
+    .then(() => loadScript("digital-twin-clean-layout.js"))
     .catch(error => console.error("TechnoQuest :", error));
 })();
