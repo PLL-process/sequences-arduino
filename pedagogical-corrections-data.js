@@ -3,7 +3,7 @@
 window.TECHNOQUEST_CORRECTIONS = {
   instructions: [
     "Complète le programme pour lire l’humidité du sol, afficher la mesure puis maintenir la pompe à l’arrêt. Exécute-le et réussis ensuite le mini-défi sur les signaux.",
-    "Choisis un seuil à partir de mesures en sol sec et humide. Complète le programme pour comparer l’humidité à ce seuil et afficher l’état du sol.",
+    "Complète le tableau ADC, convertis les valeurs numériques en tensions, réalise cinq mesures en sol sec et cinq en sol humide, puis choisis et justifie un seuil situé entre les deux groupes.",
     "Commande la pompe pendant trois secondes lorsque le sol est trop sec, puis associe chaque constituant à sa fonction dans les deux chaînes.",
     "Autorise l’arrosage seulement si le sol est sec et si le réservoir contient assez d’eau. Prévois un arrêt et une alerte de sécurité.",
     "Programme deux seuils d’humidité afin d’éviter les démarrages répétés. Limite l’arrosage et explique l’hystérésis.",
@@ -13,7 +13,7 @@ window.TECHNOQUEST_CORRECTIONS = {
   ],
   explanations: [
     ["lire_humidite() acquiert la mesure du capteur A0.","afficher(humidite) communique la valeur observée.","stop() conserve D6 à LOW : relais et pompe arrêtés."],
-    ["seuil_humidite est une valeur de référence issue de la calibration.","La condition humidite < seuil_humidite détecte un sol sec.","if/else traite les deux situations et stop() garantit l’arrêt."],
+    ["L’ADC convertit la tension analogique du capteur en un nombre numérique.","La tension se retrouve avec V ≈ valeur ADC ÷ (2ⁿ − 1) × Vref.","Le seuil doit se situer entre les groupes de mesures sèches et humides, puis être vérifié par de nouveaux essais.","seuil_humidite est la valeur de référence utilisée par la condition if/else."],
     ["La mesure est comparée au seuil dans if/else.","arroser(3) active la pompe trois secondes si le sol est sec.","else puis stop() imposent un état sûr si la condition est fausse."],
     ["Deux mesures sont acquises : humidité et niveau du réservoir.","and impose que les deux conditions soient vraies.","alerter() informe l’utilisateur et stop() protège la pompe contre la marche à vide."],
     ["Le seuil bas déclenche l’arrosage et le seuil haut confirme l’humidification.","L’écart entre les seuils est l’hystérésis.","Elle réduit les commutations, la consommation d’eau et l’usure."],
@@ -23,7 +23,7 @@ window.TECHNOQUEST_CORRECTIONS = {
   ],
   answers: [
     "L’humidité du sol est une grandeur physique qui varie progressivement. Le capteur produit une tension analogique, puis l’ADC de l’Arduino transforme cette tension en un nombre numérique, ensuite calibré en pourcentage. La commande du relais est logique : LOW maintient la pompe arrêtée et HIGH l’active. La mesure peut donc prendre de nombreuses valeurs, tandis que D6 ne prend que les états 0 ou 1.",
-    "Le seuil se choisit après plusieurs mesures en sol sec et humide. On compare les moyennes, les minima et les maxima, puis on place le seuil entre les deux groupes. Par exemple, si les mesures sèches restent sous 30 % et les mesures humides au-dessus de 40 %, un seuil de 35 % peut être testé. Il faut ensuite le vérifier, car il dépend du capteur, du sol et de la calibration.",
+    "Le capteur fournit une tension analogique. L’ADC la transforme en un nombre compris entre 0 et 2ⁿ − 1. Pour retrouver la tension, on utilise V ≈ valeur ADC ÷ (2ⁿ − 1) × Vref. Par exemple, 600 sur 1023 avec Vref = 5 V donne environ 2,93 V. Pour calibrer le seuil, on réalise plusieurs mesures en sol sec et humide, on calcule les moyennes et on choisit une valeur située entre les deux groupes. Ce choix doit ensuite être vérifié sur de nouveaux essais, car le sens de variation et les valeurs dépendent du capteur et du sol.",
     "Chaîne d’information : le capteur acquiert, l’Arduino traite et l’écran ou l’alerte communique. Chaîne d’énergie : l’alimentation alimente, le relais distribue, la pompe convertit l’énergie électrique en énergie hydraulique, le tuyau transmet l’eau et l’arrosage agit sur le sol. Le relais sépare la commande logique du circuit de puissance de la pompe.",
     "La sécurité évite la marche à vide, qui peut échauffer et endommager la pompe. L’opérateur and est indispensable : le sol doit être trop sec ET le niveau du réservoir doit être suffisant. Si l’une des conditions est fausse, stop() maintient la pompe à l’arrêt et une alerte peut demander le remplissage du réservoir.",
     "L’hystérésis utilise deux seuils : par exemple démarrage sous 30 % et confirmation d’arrêt au-dessus de 42 %. Entre les deux, le système évite de changer continuellement d’état. Cela diminue les démarrages du relais et de la pompe, limite leur usure et réduit la consommation d’eau et d’énergie.",
