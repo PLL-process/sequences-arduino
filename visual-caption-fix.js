@@ -41,53 +41,36 @@
             <stop offset="1" stop-color="#effaff"/>
           </linearGradient>
         </defs>
-
         <rect x="0" y="0" width="210" height="180" fill="url(#drySkyIntro)"/>
         <rect x="210" y="0" width="210" height="180" fill="url(#wetSkyIntro)"/>
         <line x1="210" y1="12" x2="210" y2="168" stroke="#14352d" stroke-width="2" opacity=".32"/>
-
-        <!-- Manque d'eau -->
         <circle cx="171" cy="29" r="20" fill="#ffd166"/>
         <rect x="0" y="114" width="210" height="66" fill="#75492e"/>
         <path d="M26 145 l19 -11 17 12 22 -15 25 14 18 -12 20 13" fill="none" stroke="#d59a67" stroke-width="4"/>
         <path d="M78 124 C80 95 87 71 98 48" stroke="#438b54" stroke-width="8" fill="none"/>
         <path d="M94 74 C68 61 55 69 55 87 C74 91 86 85 94 74Z" fill="#5aa268"/>
-        <g fill="#d94767">
-          <circle cx="99" cy="42" r="13"/>
-          <circle cx="89" cy="51" r="10"/>
-          <circle cx="110" cy="52" r="10"/>
-        </g>
+        <g fill="#d94767"><circle cx="99" cy="42" r="13"/><circle cx="89" cy="51" r="10"/><circle cx="110" cy="52" r="10"/></g>
         <text x="18" y="25" fill="#7c2d12" font-size="17" font-weight="900">Trop sec</text>
         <text x="18" y="47" fill="#63341f" font-size="12" font-weight="700">La plante se flétrit.</text>
         <text x="18" y="65" fill="#63341f" font-size="12">Les racines manquent d’eau.</text>
-
-        <!-- Excès d'eau -->
         <rect x="210" y="114" width="210" height="66" fill="#5b493c"/>
         <rect x="210" y="126" width="210" height="54" fill="#54c7e8" opacity=".72"/>
         <path d="M210 127 Q235 120 260 127 T310 127 T360 127 T420 127" fill="none" stroke="#dff9ff" stroke-width="4"/>
         <path d="M313 124 C312 94 306 70 296 48" stroke="#6c8d54" stroke-width="8" fill="none"/>
         <path d="M302 76 C327 63 340 72 339 89 C322 91 309 86 302 76Z" fill="#8ca66a"/>
-        <g fill="#b56f79">
-          <circle cx="295" cy="43" r="13"/>
-          <circle cx="284" cy="52" r="10"/>
-          <circle cx="306" cy="53" r="10"/>
-        </g>
+        <g fill="#b56f79"><circle cx="295" cy="43" r="13"/><circle cx="284" cy="52" r="10"/><circle cx="306" cy="53" r="10"/></g>
         <path d="M286 137 C300 145 308 151 313 163 M320 137 C309 145 304 153 302 166" fill="none" stroke="#6b4a35" stroke-width="4"/>
         <circle cx="239" cy="145" r="4" fill="#e7fbff" opacity=".75"/>
         <circle cx="365" cy="155" r="5" fill="#e7fbff" opacity=".72"/>
         <text x="228" y="25" fill="#075985" font-size="17" font-weight="900">Trop arrosé</text>
         <text x="228" y="47" fill="#164e63" font-size="12" font-weight="700">Les racines s’asphyxient.</text>
         <text x="228" y="65" fill="#164e63" font-size="12">Elles peuvent pourrir.</text>
-
         <rect x="82" y="150" width="256" height="23" rx="11.5" fill="#0d2b23" stroke="#ffffff" stroke-width="1.5"/>
-        <text x="210" y="166" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="900">Dans les deux cas, la plante peut mourir.</text>
-      `;
+        <text x="210" y="166" text-anchor="middle" fill="#ffffff" font-size="12" font-weight="900">Dans les deux cas, la plante peut mourir.</text>`;
     }
 
     const figcaption = card.querySelector("figcaption");
-    if (figcaption) {
-      figcaption.innerHTML = `<strong>1. Trouver le juste arrosage</strong>Une plante peut mourir si elle manque d’eau, mais également si elle est trop arrosée : l’excès d’eau chasse l’air du sol, prive les racines d’oxygène et peut favoriser leur pourrissement. Le système doit donc arroser uniquement lorsque c’est nécessaire.`;
-    }
+    if (figcaption) figcaption.innerHTML = `<strong>1. Trouver le juste arrosage</strong>Une plante peut mourir si elle manque d’eau, mais également si elle est trop arrosée : l’excès d’eau chasse l’air du sol, prive les racines d’oxygène et peut favoriser leur pourrissement. Le système doit donc arroser uniquement lorsque c’est nécessaire.`;
   };
 
   const improveFilmCaption = root => {
@@ -115,4 +98,90 @@
       if (node.nodeType === Node.ELEMENT_NODE) applyAll(node);
     }));
   }).observe(document.body, {childList:true, subtree:true});
+})();
+
+/* Mission 3 : explique le rôle des fils juste avant l'étude des chaînes. */
+(() => {
+  const chainChallenge = document.getElementById("chainChallenge");
+  const challengeSection = chainChallenge?.closest(".analysis-challenge");
+  if (!chainChallenge || !challengeSection || document.getElementById("wireFunctionalNote")) return;
+
+  const style = document.createElement("style");
+  style.id = "technoquest-wire-functional-note-styles";
+  style.textContent = `
+    .wire-functional-note{margin:.8rem 0 1rem;border:1px solid var(--border);border-left:5px solid var(--blue);border-radius:14px;background:#092832;color:var(--text)}
+    .wire-functional-note[hidden]{display:none!important}.wire-functional-note summary{cursor:pointer;padding:.85rem 1rem;color:#dff7ff;font-weight:900}
+    .wire-functional-content{padding:0 1rem 1rem;line-height:1.55}.wire-functional-rule{padding:.75rem;border-radius:11px;background:#061813;color:#fff}
+    .wire-functional-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.7rem;margin:.75rem 0}
+    .wire-functional-grid article{padding:.75rem;border:1px solid var(--border);border-radius:11px;background:var(--soft)}
+    .wire-functional-grid h4{margin:.05rem 0 .4rem;color:var(--yellow)}.wire-functional-grid p{margin:.25rem 0;color:var(--muted)}
+    .wire-functional-path{margin:.45rem 0;padding:.55rem;border-radius:8px;background:#04110d;font-family:Consolas,monospace;color:#eafff3}
+    .wire-functional-nuance{padding:.75rem;border:1px solid #ffd16677;border-radius:11px;background:#352b0c;color:#fff1bd}
+    .wire-functional-check{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6rem;align-items:end;margin-top:.8rem}
+    .wire-functional-check label{display:grid;gap:.35rem;color:var(--muted)}.wire-functional-feedback{min-height:1.4rem;margin:.55rem 0 0;font-weight:800}
+    @media(max-width:700px){.wire-functional-grid{grid-template-columns:1fr}.wire-functional-check{grid-template-columns:1fr}}
+  `;
+  document.head.appendChild(style);
+
+  const note = document.createElement("details");
+  note.id = "wireFunctionalNote";
+  note.className = "wire-functional-note";
+  note.open = true;
+  note.innerHTML = `
+    <summary>🔌 Question fréquente — Pourquoi les fils ne sont-ils pas des blocs de la chaîne ?</summary>
+    <div class="wire-functional-content">
+      <p class="wire-functional-rule"><strong>À retenir :</strong> la chaîne fonctionnelle montre principalement <em>ce que fait</em> le système. Le schéma de câblage montre <em>comment les constituants sont reliés</em>.</p>
+      <div class="wire-functional-grid">
+        <article>
+          <h4>Dans une chaîne fonctionnelle</h4>
+          <p>Les rectangles représentent les fonctions ou les constituants qui les réalisent. Les flèches représentent les flux et les liaisons.</p>
+          <div class="wire-functional-path">Capteur → Arduino → relais</div>
+          <p>La flèche peut correspondre physiquement à un ou plusieurs fils transportant une information ou une commande.</p>
+        </article>
+        <article>
+          <h4>Dans un schéma de câblage</h4>
+          <p>Les fils sont dessinés précisément : couleur, broche, polarité et destination.</p>
+          <div class="wire-functional-path">A0 bleu · A1 jaune · A2 violet · D6 orange</div>
+          <p>Ce schéma sert à réaliser et à vérifier le montage réel.</p>
+        </article>
+      </div>
+      <p class="wire-functional-nuance"><strong>Nuance importante :</strong> un fil transporte bien de l’énergie électrique ou une information. Cependant, dans une chaîne simplifiée, il est généralement représenté par une <strong>liaison ou une flèche</strong>, et non par un bloc séparé. Il peut apparaître comme constituant si l’objectif de l’étude porte précisément sur la connexion, les pertes, la sécurité ou le câblage.</p>
+      <div class="wire-functional-check">
+        <label>Dans une chaîne fonctionnelle simplifiée, un fil est le plus souvent représenté par :
+          <select id="wireRoleAnswer">
+            <option value="">Choisir</option>
+            <option value="block">un bloc fonctionnel obligatoire</option>
+            <option value="link">une liaison ou une flèche entre deux blocs</option>
+            <option value="nothing">rien du tout, car il ne transporte rien</option>
+          </select>
+        </label>
+        <button id="wireRoleValidate" type="button">Vérifier</button>
+      </div>
+      <p id="wireRoleFeedback" class="wire-functional-feedback" aria-live="polite"></p>
+    </div>`;
+
+  challengeSection.querySelector("h3")?.insertAdjacentElement("afterend", note);
+
+  const answer = document.getElementById("wireRoleAnswer");
+  const feedback = document.getElementById("wireRoleFeedback");
+  document.getElementById("wireRoleValidate")?.addEventListener("click", () => {
+    const correct = answer.value === "link";
+    feedback.textContent = correct
+      ? "✅ Exact : le fil existe physiquement, tandis que la chaîne simplifiée le représente généralement par une liaison ou une flèche."
+      : "❌ Relis la différence entre chaîne fonctionnelle et schéma de câblage.";
+    feedback.style.color = correct ? "#9ff2b9" : "#ffaaa2";
+  });
+
+  const refresh = () => {
+    try {
+      note.hidden = typeof current === "undefined" || current !== 2;
+    } catch (error) {
+      note.hidden = true;
+    }
+  };
+
+  document.getElementById("missions")?.addEventListener("click", () => window.setTimeout(refresh, 0));
+  const missionTitle = document.getElementById("missionTitle");
+  if (missionTitle) new MutationObserver(() => window.setTimeout(refresh, 0)).observe(missionTitle, {childList:true, subtree:true});
+  refresh();
 })();
