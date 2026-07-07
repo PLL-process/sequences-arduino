@@ -45,6 +45,7 @@
   const points = values.reduce((sum, item) => sum + item.score, 0);
   const average = points / 8;
   const next = values.find(item => !item.done) || values[7];
+  const spritePositions = [0,14.286,28.571,42.857,57.143,71.429,85.714,100];
 
   hero.innerHTML = `
     <div class="hub-hero-copy">
@@ -61,8 +62,10 @@
         <a class="btn" href="index.html">Voir la présentation générale</a>
       </div>
     </div>
-    <figure class="hub-hero-visual">
-      <img src="images/hero-jardin-connecte.svg?v=2" width="1280" height="720" alt="Jardin connecté : capteurs A0, A1 et A2, Arduino, relais, alimentation séparée, pompe placée à côté du pot, réservoir et plante">
+    <figure class="hub-hero-visual" aria-label="Aperçu réaliste des huit séances">
+      <div class="hero-real-grid">
+        ${titles.map((title,index)=>`<div class="hero-real-thumb" style="--x:${spritePositions[index]}%" data-label="S${index+1} · ${title}"></div>`).join("")}
+      </div>
     </figure>`;
 
   const timeline = document.createElement("section");
