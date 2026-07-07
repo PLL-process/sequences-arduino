@@ -62,7 +62,7 @@
       </div>
     </div>
     <figure class="hub-hero-visual">
-      <img src="images/hero-jardin-connecte.svg?v=1" width="1280" height="720" alt="Jardin connecté : capteurs A0, A1 et A2, Arduino, relais, alimentation séparée, pompe, réservoir et plante">
+      <img src="images/hero-jardin-connecte.svg?v=2" width="1280" height="720" alt="Jardin connecté : capteurs A0, A1 et A2, Arduino, relais, alimentation séparée, pompe placée à côté du pot, réservoir et plante">
     </figure>`;
 
   const timeline = document.createElement("section");
