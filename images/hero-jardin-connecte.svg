@@ -1,201 +1,150 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="heroJardinTitle heroJardinDesc" preserveAspectRatio="xMidYMid meet">
-  <title id="heroJardinTitle">TechnoQuest — Jardin connecté</title>
-  <desc id="heroJardinDesc">Illustration pédagogique d’un jardin connecté. Les capteurs A0, A1 et A2 transmettent leurs mesures à une carte Arduino. La sortie D6 commande un relais. Une alimentation séparée en très basse tension fournit l’énergie à la pompe. L’eau circule du réservoir vers la pompe puis vers la plante.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" role="img" aria-labelledby="heroTitle heroDesc" preserveAspectRatio="xMidYMid meet">
+  <title id="heroTitle">TechnoQuest — Jardin connecté</title>
+  <desc id="heroDesc">Illustration d'un système d'arrosage automatique : plante, capteur d'humidité, photorésistance LDR (Light-Dependent Resistor), capteur de niveau, carte Arduino UNO, relais, alimentation TBT (très basse tension) séparée, pompe et réservoir reliés par un circuit d'eau. Des flèches indiquent la chaîne d'information et la chaîne d'énergie. Version corrigée avec connexion D6 réaliste, couleurs distinctes par capteur, pompe placée à côté du pot, composants électroniques déplacés en zone sèche, cartouches supplémentaires et identifiants SVG harmonisés.</desc>
 
   <defs>
-    <linearGradient id="heroJardinSky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#dff5ff"/>
-      <stop offset="0.62" stop-color="#f5fcff"/>
-      <stop offset="1" stop-color="#e8f7ef"/>
+    <linearGradient id="gradient-sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#EAF4FF"/>
+      <stop offset="1" stop-color="#F7FBFF"/>
     </linearGradient>
-    <linearGradient id="heroJardinWater" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#8be7ff"/>
-      <stop offset="1" stop-color="#089fc9"/>
+    <linearGradient id="gradient-soil" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6B4A2B"/>
+      <stop offset="1" stop-color="#3E2A18"/>
     </linearGradient>
-    <linearGradient id="heroJardinBoard" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#16b8a9"/>
-      <stop offset="1" stop-color="#08655e"/>
+    <linearGradient id="gradient-water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#7FE0FF"/>
+      <stop offset="1" stop-color="#00A8D6"/>
     </linearGradient>
-    <linearGradient id="heroJardinLeaf" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#6ce6a7"/>
-      <stop offset="1" stop-color="#15915b"/>
+    <linearGradient id="gradient-leaf" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5EE3A1"/>
+      <stop offset="1" stop-color="#00A65E"/>
     </linearGradient>
-    <linearGradient id="heroJardinSoil" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#745033"/>
-      <stop offset="1" stop-color="#3a2618"/>
+    <linearGradient id="gradient-arduino" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#00A99D"/>
+      <stop offset="1" stop-color="#006F68"/>
     </linearGradient>
-    <filter id="heroJardinShadow" x="-10%" y="-10%" width="120%" height="125%">
-      <feDropShadow dx="0" dy="7" stdDeviation="6" flood-color="#0b2430" flood-opacity="0.22"/>
-    </filter>
-    <marker id="heroArrowA0" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-      <path d="M0 0 L10 4 L0 8 Z" fill="#2d6aff"/>
-    </marker>
-    <marker id="heroArrowA1" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-      <path d="M0 0 L10 4 L0 8 Z" fill="#e5b800"/>
-    </marker>
-    <marker id="heroArrowA2" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-      <path d="M0 0 L10 4 L0 8 Z" fill="#9b5de5"/>
-    </marker>
-    <marker id="heroArrowD6" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-      <path d="M0 0 L10 4 L0 8 Z" fill="#ff7a00"/>
-    </marker>
-    <marker id="heroArrowPower" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-      <path d="M0 0 L10 4 L0 8 Z" fill="#ef4444"/>
-    </marker>
-    <marker id="heroArrowWater" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
-      <path d="M0 0 L10 4 L0 8 Z" fill="#06b6d4"/>
-    </marker>
+    <radialGradient id="gradient-sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFE680"/>
+      <stop offset="1" stop-color="#FFD600" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 
-  <rect width="1280" height="720" fill="url(#heroJardinSky)"/>
-  <circle cx="1120" cy="112" r="58" fill="#ffd54a" opacity="0.96"/>
-  <circle cx="1120" cy="112" r="92" fill="none" stroke="#ffd54a" stroke-width="18" opacity="0.22"/>
+  <rect width="1280" height="720" fill="url(#gradient-sky)"/>
+  <circle cx="1080" cy="140" r="140" fill="url(#gradient-sun)"/>
+  <circle cx="1080" cy="140" r="52" fill="#FFD600"/>
+  <path d="M0 560 Q 640 520 1280 560 L 1280 720 L 0 720 Z" fill="url(#gradient-soil)"/>
+  <path d="M0 560 Q 640 520 1280 560" fill="none" stroke="#2A1B0E" stroke-width="2" opacity="0.35"/>
 
-  <path d="M0 572 Q640 536 1280 572 L1280 720 L0 720 Z" fill="url(#heroJardinSoil)"/>
-  <path d="M0 572 Q640 536 1280 572" fill="none" stroke="#25170e" stroke-width="3" opacity="0.3"/>
-  <g fill="#9a7657" opacity="0.5">
-    <circle cx="70" cy="626" r="4"/><circle cx="205" cy="665" r="5"/><circle cx="680" cy="612" r="4"/><circle cx="1185" cy="653" r="5"/>
+  <g id="group-reservoir">
+    <rect x="90" y="330" width="180" height="220" rx="14" fill="#D9EEF7" stroke="#0D3B4F" stroke-width="3"/>
+    <rect x="102" y="410" width="156" height="130" rx="6" fill="url(#gradient-water)"/>
+    <path d="M102 430 Q 180 415 258 430 L 258 440 Q 180 425 102 440 Z" fill="#FFFFFF" opacity="0.35"/>
+    <rect x="170" y="340" width="20" height="120" rx="4" fill="#F5F5F7" stroke="#0D3B4F" stroke-width="2"/>
+    <circle cx="180" cy="455" r="7" fill="#9B59B6" stroke="#5A2E99" stroke-width="2"/>
+    <line x1="180" y1="340" x2="180" y2="300" stroke="#9B59B6" stroke-width="3"/>
+    <text x="180" y="315" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#5A2E99" text-anchor="middle" paint-order="stroke fill" stroke="#FFFFFF" stroke-width="3">A2</text>
+    <rect x="105" y="558" width="150" height="26" rx="6" fill="#FFFFFF" stroke="#0D3B4F" stroke-width="1.5"/>
+    <text x="180" y="576" font-family="system-ui, sans-serif" font-size="15" font-weight="600" fill="#0D3B4F" text-anchor="middle">Réservoir</text>
   </g>
 
-  <!-- Cartouche de titre -->
-  <g filter="url(#heroJardinShadow)">
-    <rect x="38" y="34" width="390" height="88" rx="18" fill="#ffffff" fill-opacity="0.95" stroke="#163b4a" stroke-width="2"/>
-    <circle cx="82" cy="78" r="23" fill="#19b979"/>
-    <path d="M71 79 L79 87 L94 68" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
-    <text x="120" y="72" font-family="system-ui, sans-serif" font-size="24" font-weight="800" fill="#103443">TechnoQuest</text>
-    <text x="120" y="101" font-family="system-ui, sans-serif" font-size="18" font-weight="650" fill="#315869">Jardin connecté</text>
+  <g id="group-alimentation">
+    <rect x="90" y="100" width="180" height="70" rx="10" fill="#2E2E38" stroke="#111" stroke-width="2"/>
+    <circle cx="120" cy="135" r="6" fill="#00D47F"/>
+    <rect x="140" y="120" width="110" height="30" rx="4" fill="#FFFFFF"/>
+    <text x="195" y="140" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#111" text-anchor="middle">Alim. TBT</text>
   </g>
 
-  <!-- Plateforme sèche pour l’électronique -->
-  <g filter="url(#heroJardinShadow)">
-    <rect x="390" y="446" width="520" height="48" rx="14" fill="#d9e4e9" stroke="#536c76" stroke-width="3"/>
-    <rect x="420" y="494" width="20" height="70" rx="7" fill="#788e96"/>
-    <rect x="860" y="494" width="20" height="70" rx="7" fill="#788e96"/>
-    <rect x="516" y="502" width="260" height="34" rx="12" fill="#ffffff" stroke="#78909c" stroke-width="2"/>
-    <text x="646" y="525" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" font-weight="750" fill="#284650">Zone sèche surélevée</text>
+  <g id="group-pompe" transform="translate(440 0)">
+    <circle cx="380" cy="620" r="42" fill="#F5F5F7" stroke="#0D3B4F" stroke-width="3"/>
+    <circle cx="380" cy="620" r="26" fill="#DDE7EF" stroke="#0D3B4F" stroke-width="2"/>
+    <path d="M380 604 L 396 620 L 380 636 L 364 620 Z" fill="#00A8D6"/>
+    <rect x="335" y="666" width="90" height="18" rx="4" fill="#FFFFFF" stroke="#0D3B4F" stroke-width="1.5"/>
+    <text x="380" y="680" font-family="system-ui, sans-serif" font-size="13" font-weight="600" fill="#0D3B4F" text-anchor="middle">Pompe</text>
   </g>
 
-  <!-- Réservoir et capteur A2 -->
-  <g id="heroJardinReservoir" filter="url(#heroJardinShadow)">
-    <rect x="70" y="256" width="208" height="288" rx="20" fill="#dff3fa" stroke="#16485c" stroke-width="4"/>
-    <rect x="86" y="363" width="176" height="165" rx="12" fill="url(#heroJardinWater)"/>
-    <path d="M86 382 Q174 365 262 382 L262 394 Q174 377 86 394 Z" fill="#ffffff" opacity="0.33"/>
-    <rect x="168" y="278" width="18" height="182" rx="7" fill="#eef3f6" stroke="#4f6670" stroke-width="2"/>
-    <circle cx="177" cy="450" r="10" fill="#9b5de5" stroke="#562d88" stroke-width="3"/>
-    <line x1="177" y1="278" x2="177" y2="224" stroke="#9b5de5" stroke-width="5"/>
-    <rect x="132" y="192" width="90" height="38" rx="10" fill="#ffffff" stroke="#9b5de5" stroke-width="2"/>
-    <text x="177" y="218" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" font-weight="800" fill="#6d35a4">A2</text>
-    <rect x="91" y="552" width="166" height="34" rx="9" fill="#ffffff" stroke="#16485c" stroke-width="2"/>
-    <text x="174" y="575" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" font-weight="750" fill="#16485c">Réservoir d’eau</text>
+  <path d="M258 480 Q 520 500 780 600" fill="none" stroke="#00A8D6" stroke-width="10" stroke-linecap="round" opacity="0.85"/>
+  <path d="M258 480 Q 520 500 780 600" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <path d="M860 610 Q 892 580 920 595" fill="none" stroke="#00A8D6" stroke-width="10" stroke-linecap="round" opacity="0.85"/>
+  <path d="M860 610 Q 892 580 920 595" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
+  <path d="M912 582 Q 908 598 918 598 Q 926 598 922 582 Z" fill="#00A8D6"/>
+
+  <g id="group-relais">
+    <rect x="510" y="330" width="150" height="90" rx="10" fill="#1B2540" stroke="#0B1226" stroke-width="3"/>
+    <rect x="524" y="346" width="122" height="58" rx="6" fill="#2A3A66"/>
+    <circle cx="548" cy="375" r="8" fill="#FF7A00"/>
+    <rect x="568" y="360" width="70" height="30" rx="4" fill="#FFFFFF"/>
+    <text x="603" y="381" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#111" text-anchor="middle">Relais</text>
   </g>
 
-  <!-- Arduino -->
-  <g id="heroJardinArduino" filter="url(#heroJardinShadow)">
-    <rect x="700" y="230" width="254" height="176" rx="18" fill="url(#heroJardinBoard)" stroke="#034b46" stroke-width="4"/>
-    <rect x="714" y="246" width="226" height="13" rx="3" fill="#e9f1f3"/>
-    <rect x="714" y="377" width="226" height="13" rx="3" fill="#e9f1f3"/>
-    <rect x="778" y="285" width="92" height="48" rx="7" fill="#182329" stroke="#05090b" stroke-width="2"/>
-    <rect x="718" y="286" width="43" height="30" rx="5" fill="#dfe8eb"/>
-    <circle cx="891" cy="304" r="6" fill="#ffd633"/>
-    <circle cx="909" cy="304" r="6" fill="#4ade80"/>
-    <text x="827" y="358" text-anchor="middle" font-family="system-ui, sans-serif" font-size="23" font-weight="850" fill="#ffffff">Arduino UNO</text>
-    <circle cx="930" cy="253" r="8" fill="#ff7a00" stroke="#733100" stroke-width="2"/>
-    <rect x="916" y="195" width="72" height="36" rx="9" fill="#ffffff" stroke="#ff7a00" stroke-width="2"/>
-    <text x="952" y="219" text-anchor="middle" font-family="system-ui, sans-serif" font-size="19" font-weight="850" fill="#b44d00">D6</text>
-    <circle cx="724" cy="251" r="7" fill="#2d6aff"/><circle cx="750" cy="251" r="7" fill="#e5b800"/><circle cx="776" cy="251" r="7" fill="#9b5de5"/>
+  <g id="group-arduino">
+    <rect x="750" y="320" width="240" height="140" rx="12" fill="url(#gradient-arduino)" stroke="#004845" stroke-width="3"/>
+    <g fill="#F5F5F7"><rect x="762" y="332" width="216" height="10" rx="2"/><rect x="762" y="440" width="216" height="10" rx="2"/></g>
+    <rect x="830" y="370" width="80" height="40" rx="4" fill="#111" stroke="#000" stroke-width="1"/>
+    <circle cx="800" cy="392" r="5" fill="#FFD600"/><circle cx="815" cy="392" r="5" fill="#00D47F"/>
+    <text x="870" y="480" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF" text-anchor="middle" paint-order="stroke fill" stroke="#004845" stroke-width="2">Arduino UNO</text>
+    <circle cx="960" cy="337" r="6" fill="#FF7A00" stroke="#7A3A00" stroke-width="2"/>
+    <text x="980" y="342" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#FF7A00" paint-order="stroke fill" stroke="#FFFFFF" stroke-width="3">D6</text>
   </g>
 
-  <!-- Relais -->
-  <g id="heroJardinRelais" filter="url(#heroJardinShadow)">
-    <rect x="482" y="276" width="158" height="118" rx="16" fill="#23345a" stroke="#101a30" stroke-width="4"/>
-    <rect x="499" y="294" width="124" height="77" rx="9" fill="#334b7c"/>
-    <circle cx="521" cy="332" r="9" fill="#ff7a00"/>
-    <rect x="545" y="313" width="64" height="39" rx="7" fill="#ffffff"/>
-    <text x="577" y="339" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" font-weight="800" fill="#17213b">Relais</text>
-    <rect x="503" y="402" width="116" height="31" rx="8" fill="#ffffff" stroke="#344967" stroke-width="2"/>
-    <text x="561" y="423" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="750" fill="#263a50">Commande D6</text>
+  <g id="group-plante">
+    <path d="M900 610 L 1080 610 L 1060 700 L 920 700 Z" fill="#C86A3B" stroke="#5A2E12" stroke-width="3"/>
+    <rect x="895" y="600" width="190" height="18" rx="4" fill="#E48F5A" stroke="#5A2E12" stroke-width="3"/>
+    <rect x="905" y="612" width="170" height="14" fill="#3E2A18"/>
+    <path d="M990 612 Q 985 520 995 440" fill="none" stroke="#2E7D32" stroke-width="6" stroke-linecap="round"/>
+    <path d="M995 470 Q 1060 445 1080 400 Q 1030 410 995 470 Z" fill="url(#gradient-leaf)" stroke="#0F5F3A" stroke-width="2"/>
+    <path d="M990 500 Q 930 480 910 435 Q 960 445 990 500 Z" fill="url(#gradient-leaf)" stroke="#0F5F3A" stroke-width="2"/>
+    <path d="M993 540 Q 1050 525 1075 490 Q 1030 490 993 540 Z" fill="url(#gradient-leaf)" stroke="#0F5F3A" stroke-width="2"/>
+    <rect x="945" y="605" width="14" height="70" rx="3" fill="#F5F5F7" stroke="#0D3B4F" stroke-width="2"/>
+    <line x1="948" y1="675" x2="948" y2="695" stroke="#0D3B4F" stroke-width="2"/>
+    <line x1="956" y1="675" x2="956" y2="695" stroke="#0D3B4F" stroke-width="2"/>
+    <line x1="952" y1="605" x2="952" y2="560" stroke="#2D6AFF" stroke-width="3"/>
+    <text x="952" y="552" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#2D6AFF" text-anchor="middle" paint-order="stroke fill" stroke="#FFFFFF" stroke-width="3">A0</text>
   </g>
 
-  <!-- Alimentation séparée TBT -->
-  <g id="heroJardinAlimentation" filter="url(#heroJardinShadow)">
-    <rect x="410" y="344" width="170" height="86" rx="15" fill="#292d38" stroke="#101219" stroke-width="3"/>
-    <circle cx="438" cy="386" r="8" fill="#40d98c"/>
-    <rect x="458" y="365" width="105" height="42" rx="7" fill="#ffffff"/>
-    <text x="511" y="383" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="800" fill="#17212b">Alimentation</text>
-    <text x="511" y="401" text-anchor="middle" font-family="system-ui, sans-serif" font-size="14" font-weight="750" fill="#17212b">séparée TBT</text>
+  <g id="group-ldr">
+    <line x1="1160" y1="600" x2="1160" y2="470" stroke="#0D3B4F" stroke-width="4"/>
+    <circle cx="1160" cy="460" r="22" fill="#FFE680" stroke="#7A5A00" stroke-width="3"/>
+    <path d="M1148 460 Q 1160 448 1172 460 Q 1160 472 1148 460 Z" fill="none" stroke="#7A5A00" stroke-width="2"/>
+    <path d="M1150 452 L 1170 468 M1170 452 L 1150 468" stroke="#7A5A00" stroke-width="2"/>
+    <line x1="1160" y1="482" x2="1160" y2="420" stroke="#FFB800" stroke-width="3"/>
+    <text x="1160" y="412" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#B58600" text-anchor="middle" paint-order="stroke fill" stroke="#FFFFFF" stroke-width="3">A1</text>
+    <text x="1160" y="628" font-family="system-ui, sans-serif" font-size="14" font-weight="700" fill="#0D3B4F" text-anchor="middle">LDR</text>
   </g>
 
-  <!-- Pompe sur bac de rétention -->
-  <g id="heroJardinPompe" filter="url(#heroJardinShadow)">
-    <rect x="300" y="522" width="205" height="48" rx="14" fill="#b9d5df" stroke="#4b6b76" stroke-width="3"/>
-    <text x="402" y="553" text-anchor="middle" font-family="system-ui, sans-serif" font-size="15" font-weight="750" fill="#27434d">Bac de rétention</text>
-    <rect x="344" y="455" width="118" height="74" rx="28" fill="#e9f0f2" stroke="#214b5a" stroke-width="4"/>
-    <circle cx="380" cy="492" r="24" fill="#54727d" stroke="#214b5a" stroke-width="3"/>
-    <path d="M380 473 L398 492 L380 511 L362 492 Z" fill="#3dd7e6"/>
-    <text x="430" y="486" text-anchor="middle" font-family="system-ui, sans-serif" font-size="18" font-weight="850" fill="#183a47">POMPE</text>
-    <text x="430" y="507" text-anchor="middle" font-family="system-ui, sans-serif" font-size="13" font-weight="700" fill="#3b5964">Actionneur</text>
+  <g id="group-arrows-info" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+    <path d="M952 500 Q 900 420 870 390" stroke="#2D6AFF" stroke-width="3" stroke-dasharray="6 6"/>
+    <path d="M1160 400 Q 1080 360 990 360" stroke="#FFB800" stroke-width="3" stroke-dasharray="6 6"/>
+    <path d="M180 300 Q 400 260 750 340" stroke="#9B59B6" stroke-width="3" stroke-dasharray="6 6"/>
+  </g>
+  <g><polygon points="866,384 878,388 872,398" fill="#2D6AFF"/><polygon points="986,354 998,358 992,368" fill="#FFB800"/><polygon points="746,336 758,340 752,350" fill="#9B59B6"/></g>
+
+  <path d="M960 337 Q 850 305 660 365" fill="none" stroke="#FF7A00" stroke-width="4.5" stroke-linecap="round"/>
+  <polygon points="660,365 672,358 675,372" fill="#FF7A00"/>
+  <circle cx="548" cy="375" r="5" fill="#FF7A00" stroke="#FFFFFF" stroke-width="1.5"/>
+
+  <g stroke="#FF4A4A" stroke-width="4" fill="none" stroke-linecap="round">
+    <path d="M180 155 Q 320 260 530 365"/>
+    <path d="M585 380 Q 700 500 860 610"/>
+  </g>
+  <polygon points="530,365 518,359 528,351" fill="#FF4A4A"/>
+  <polygon points="860,610 848,603 856,595" fill="#FF4A4A"/>
+
+  <g id="group-cartouche">
+    <rect x="40" y="40" width="360" height="70" rx="14" fill="#FFFFFF" opacity="0.92" stroke="#0D3B4F" stroke-width="2"/>
+    <circle cx="80" cy="75" r="18" fill="#00D47F"/>
+    <path d="M72 75 L 78 82 L 90 68" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="110" y="70" font-family="system-ui, sans-serif" font-size="18" font-weight="700" fill="#0D3B4F">TechnoQuest</text>
+    <text x="110" y="94" font-family="system-ui, sans-serif" font-size="14" fill="#0D3B4F">Jardin connecté</text>
   </g>
 
-  <!-- Plante et capteur A0 -->
-  <g id="heroJardinPlante" filter="url(#heroJardinShadow)">
-    <path d="M980 604 L1174 604 L1152 704 L1002 704 Z" fill="#c97342" stroke="#6c3217" stroke-width="4"/>
-    <rect x="972" y="590" width="210" height="24" rx="6" fill="#e6925d" stroke="#6c3217" stroke-width="4"/>
-    <rect x="986" y="612" width="182" height="16" fill="#3a2618"/>
-    <path d="M1073 595 Q1066 500 1080 392" fill="none" stroke="#277a3e" stroke-width="8" stroke-linecap="round"/>
-    <path d="M1079 444 Q1140 414 1176 363 Q1112 372 1079 444 Z" fill="url(#heroJardinLeaf)" stroke="#14623d" stroke-width="3"/>
-    <path d="M1072 482 Q1008 454 970 407 Q1030 414 1072 482 Z" fill="url(#heroJardinLeaf)" stroke="#14623d" stroke-width="3"/>
-    <path d="M1072 531 Q1132 515 1164 472 Q1112 474 1072 531 Z" fill="url(#heroJardinLeaf)" stroke="#14623d" stroke-width="3"/>
-    <rect x="1018" y="604" width="18" height="76" rx="5" fill="#eef3f5" stroke="#284c5b" stroke-width="3"/>
-    <line x1="1022" y1="680" x2="1022" y2="705" stroke="#284c5b" stroke-width="3"/>
-    <line x1="1032" y1="680" x2="1032" y2="705" stroke="#284c5b" stroke-width="3"/>
-    <line x1="1027" y1="604" x2="1027" y2="545" stroke="#2d6aff" stroke-width="5"/>
-    <rect x="983" y="508" width="88" height="38" rx="10" fill="#ffffff" stroke="#2d6aff" stroke-width="2"/>
-    <text x="1027" y="534" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" font-weight="850" fill="#174dc4">A0</text>
-  </g>
-
-  <!-- LDR A1 -->
-  <g id="heroJardinLdr" filter="url(#heroJardinShadow)">
-    <line x1="1213" y1="592" x2="1213" y2="434" stroke="#284b58" stroke-width="6"/>
-    <circle cx="1213" cy="420" r="29" fill="#ffe680" stroke="#7d6000" stroke-width="4"/>
-    <path d="M1197 420 Q1213 404 1229 420 Q1213 436 1197 420 Z" fill="none" stroke="#7d6000" stroke-width="3"/>
-    <path d="M1198 407 L1228 433 M1228 407 L1198 433" stroke="#7d6000" stroke-width="3"/>
-    <line x1="1213" y1="391" x2="1213" y2="342" stroke="#e5b800" stroke-width="5"/>
-    <rect x="1169" y="305" width="88" height="38" rx="10" fill="#ffffff" stroke="#e5b800" stroke-width="2"/>
-    <text x="1213" y="331" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" font-weight="850" fill="#9b7900">A1</text>
-    <rect x="1171" y="607" width="84" height="34" rx="9" fill="#ffffff" stroke="#284b58" stroke-width="2"/>
-    <text x="1213" y="630" text-anchor="middle" font-family="system-ui, sans-serif" font-size="17" font-weight="800" fill="#284b58">LDR</text>
-  </g>
-
-  <!-- Chaîne d’information : A0/A1/A2 vers Arduino -->
-  <path d="M1027 545 Q970 474 900 406 Q810 320 724 251" fill="none" stroke="#2d6aff" stroke-width="5" stroke-linecap="round" stroke-dasharray="10 8" marker-end="url(#heroArrowA0)"/>
-  <path d="M1213 342 Q1090 280 940 268 Q835 258 750 251" fill="none" stroke="#e5b800" stroke-width="5" stroke-linecap="round" stroke-dasharray="10 8" marker-end="url(#heroArrowA1)"/>
-  <path d="M177 224 Q360 165 550 190 Q664 204 776 251" fill="none" stroke="#9b5de5" stroke-width="5" stroke-linecap="round" stroke-dasharray="10 8" marker-end="url(#heroArrowA2)"/>
-
-  <!-- Commande logique D6 vers le relais -->
-  <path d="M930 253 Q796 174 670 224 Q615 246 622 296" fill="none" stroke="#ff7a00" stroke-width="6" stroke-linecap="round" marker-end="url(#heroArrowD6)"/>
-
-  <!-- Chaîne d’énergie : alimentation séparée -> relais -> pompe -->
-  <path d="M580 387 Q601 387 612 371" fill="none" stroke="#ef4444" stroke-width="7" stroke-linecap="round" marker-end="url(#heroArrowPower)"/>
-  <path d="M530 394 Q500 444 456 470" fill="none" stroke="#ef4444" stroke-width="7" stroke-linecap="round" marker-end="url(#heroArrowPower)"/>
-
-  <!-- Circuit hydraulique : réservoir -> pompe -> plante -->
-  <path d="M263 476 Q318 476 344 490" fill="none" stroke="#06b6d4" stroke-width="13" stroke-linecap="round" marker-end="url(#heroArrowWater)"/>
-  <path d="M462 493 Q718 485 974 596" fill="none" stroke="#06b6d4" stroke-width="13" stroke-linecap="round" marker-end="url(#heroArrowWater)"/>
-  <path d="M263 476 Q318 476 344 490" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
-  <path d="M462 493 Q718 485 974 596" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" opacity="0.55"/>
-  <path d="M970 595 Q966 612 976 612 Q986 612 982 595 Z" fill="#06b6d4"/>
-
-  <!-- Légende contrastée -->
-  <g filter="url(#heroJardinShadow)">
-    <rect x="34" y="622" width="862" height="70" rx="16" fill="#ffffff" fill-opacity="0.96" stroke="#183f4e" stroke-width="2"/>
-    <line x1="58" y1="646" x2="120" y2="646" stroke="#2d6aff" stroke-width="5" stroke-dasharray="10 8"/>
-    <text x="132" y="652" font-family="system-ui, sans-serif" font-size="16" font-weight="750" fill="#183f4e">Information capteurs → Arduino</text>
-    <line x1="356" y1="646" x2="418" y2="646" stroke="#ff7a00" stroke-width="6"/>
-    <text x="430" y="652" font-family="system-ui, sans-serif" font-size="16" font-weight="750" fill="#183f4e">Commande D6 → relais</text>
-    <line x1="622" y1="646" x2="684" y2="646" stroke="#ef4444" stroke-width="7"/>
-    <text x="696" y="652" font-family="system-ui, sans-serif" font-size="16" font-weight="750" fill="#183f4e">Énergie TBT → pompe</text>
-    <line x1="58" y1="676" x2="120" y2="676" stroke="#06b6d4" stroke-width="10"/>
-    <text x="132" y="682" font-family="system-ui, sans-serif" font-size="16" font-weight="750" fill="#183f4e">Eau : réservoir → pompe → plante</text>
-    <text x="696" y="682" font-family="system-ui, sans-serif" font-size="14" font-weight="650" fill="#486873">TBT : très basse tension</text>
+  <g id="group-legend">
+    <rect x="40" y="230" width="380" height="95" rx="12" fill="#FFFFFF" opacity="0.96" stroke="#0D3B4F" stroke-width="2"/>
+    <text x="60" y="252" font-family="system-ui, sans-serif" font-size="15" font-weight="700" fill="#0D3B4F">Légende des flux</text>
+    <line x1="60" y1="270" x2="95" y2="270" stroke="#2D6AFF" stroke-width="3.5" stroke-dasharray="5 3"/>
+    <text x="105" y="274" font-family="system-ui, sans-serif" font-size="12" fill="#0D3B4F">Information capteurs (A0/A1/A2) → Arduino</text>
+    <line x1="60" y1="288" x2="95" y2="288" stroke="#FF7A00" stroke-width="3.5"/>
+    <text x="105" y="292" font-family="system-ui, sans-serif" font-size="12" fill="#0D3B4F">Commande D6 (Arduino → Relais)</text>
+    <line x1="60" y1="306" x2="95" y2="306" stroke="#FF4A4A" stroke-width="3.5"/>
+    <text x="105" y="310" font-family="system-ui, sans-serif" font-size="12" fill="#0D3B4F">Alimentation énergie (Alim → Relais → Pompe)</text>
   </g>
 </svg>
