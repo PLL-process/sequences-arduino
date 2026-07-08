@@ -116,6 +116,10 @@
   state.sessions = state.sessions || {};
   state.sessions[session.id] = state.sessions[session.id] || {code:session.code,answer:"",tests:[],scores:[0,0,0,0,0],correction:false};
   const current = state.sessions[session.id];
+  current.tests = Array.isArray(current.tests) ? current.tests : [];
+  current.scores = Array.isArray(current.scores) ? current.scores : [0,0,0,0,0];
+  current.answer = current.answer || "";
+  current.code = current.code || session.code;
   if(session.codeVersion && current.codeVersion !== session.codeVersion && !current.saved){
     current.code = session.code;
     current.codeVersion = session.codeVersion;

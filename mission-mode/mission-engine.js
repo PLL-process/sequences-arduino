@@ -21,13 +21,13 @@
 
   const STATES = [...SETUP_STATES, ...LOOP_STATES];
 
-  function createEngine({ onState, onStop } = {}) {
+  function createEngine({ onState, onStop, setupStates = SETUP_STATES, loopStates = LOOP_STATES } = {}) {
     let index = 0;
     let timer = 0;
     let running = false;
     let paused = false;
     let setupDone = false;
-    let sequence = SETUP_STATES;
+    let sequence = setupStates;
     let loopCycle = 0;
     let speed = "normal";
     const durations = { normal: 1150, slow: 2100 };
@@ -46,9 +46,9 @@
         action,
         phase: setupDone ? "loop" : "setup",
         index,
-        loopIndex: setupDone ? index % LOOP_STATES.length : -1,
+        loopIndex: setupDone ? index % loopStates.length : -1,
         loopNumber: loopNumber(),
-        loopPercent: setupDone ? Math.round(((index % LOOP_STATES.length) / LOOP_STATES.length) * 100) : 0,
+        loopPercent: setupDone ? Math.round(((index % loopStates.length) / loopStates.length) * 100) : 0,
         running,
         paused,
         speed
@@ -61,14 +61,14 @@
     };
 
     const advance = () => {
-      if (!setupDone && index >= SETUP_STATES.length - 1) {
+      if (!setupDone && index >= setupStates.length - 1) {
         setupDone = true;
-        sequence = LOOP_STATES;
+        sequence = loopStates;
         index = 0;
         loopCycle = 1;
         return;
       }
-      if (setupDone && index >= LOOP_STATES.length - 1) {
+      if (setupDone && index >= loopStates.length - 1) {
         index = 0;
         loopCycle += 1;
         return;
@@ -90,7 +90,7 @@
       run() {
         index = 0;
         setupDone = false;
-        sequence = SETUP_STATES;
+        sequence = setupStates;
         loopCycle = 0;
         running = true;
         paused = false;
@@ -113,7 +113,7 @@
         running = false;
         paused = false;
         setupDone = false;
-        sequence = SETUP_STATES;
+        sequence = setupStates;
         loopCycle = 0;
         index = 0;
         clearTimer();
