@@ -1,0 +1,17 @@
+/* Jumeau numérique v5 — séparation visuelle de l’eau et du circuit électrique. */
+.twin-current-wire,.twin-current-flow,.twin-water-pipe-v5,.twin-water-flow-v5{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.twin-current-wire{stroke:#7f1d1d;stroke-width:10;opacity:.9}
+.twin-current-return-wire{stroke:#1e3a5f}
+.twin-current-flow{stroke:#fb7185;stroke-width:4;stroke-dasharray:10 12;animation:twinCurrentMove .9s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 4px rgba(251,113,133,.75))}
+.twin-current-flow.return{stroke:#60a5fa;filter:drop-shadow(0 0 4px rgba(96,165,250,.65))}
+.twin-water-pipe-v5{stroke:#475569;stroke-width:14}
+.twin-water-flow-v5{stroke:#67e8f9;stroke-width:7;stroke-dasharray:15 13;animation:twinWaterMove 1.05s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 4px rgba(103,232,249,.65))}
+.twin-stage.running .twin-current-flow,.twin-stage.running .twin-water-flow-v5{animation-play-state:running}
+.twin-power-label-v5 rect{fill:#07131f;stroke:#fb7185;stroke-width:2}
+.twin-power-label-v5 text{fill:#fff;font-size:12px;font-weight:900;letter-spacing:.02em}
+.twin-terminal-label{font-size:11px;font-weight:950}
+.twin-water-label-v5{fill:#dffaff;font-size:13px;font-weight:900}
+.twin-component-gap{filter:drop-shadow(0 8px 10px rgba(0,0,0,.32))}
+@keyframes twinCurrentMove{to{stroke-dashoffset:-44}}
+@keyframes twinWaterMove{to{stroke-dashoffset:-56}}
+@media(prefers-reduced-motion:reduce){.twin-current-flow,.twin-water-flow-v5{animation:none!important}}
