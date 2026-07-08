@@ -290,9 +290,17 @@ void loop() {
     ["Quel est l’objectif principal de la séance 1 ?", ["Observer et afficher les signaux sans commander l’arrosage", "Déterminer l’hystérésis finale", "Faire fonctionner la pompe en permanence"], 0, "La pompe reste arrêtée pendant l’observation." ]
   ];
 
+  const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#39;"
+  }[char]));
+
   const renderQuestions = (questions, offset) => questions.map((item, index) => {
     const number = offset + index + 1;
-    return `<fieldset class="s1-question" data-q="${number}" data-correct="${item[2]}"><legend>${number}. ${item[0]}</legend>${item[1].map((choice, choiceIndex) => `<label><input type="radio" name="s1q${number}" value="${choiceIndex}"> ${choice}</label>`).join("")}<p class="s1-feedback" hidden>${item[3]}</p></fieldset>`;
+    return `<fieldset class="s1-question" data-q="${number}" data-correct="${item[2]}"><legend>${number}. ${escapeHtml(item[0])}</legend>${item[1].map((choice, choiceIndex) => `<label><input type="radio" name="s1q${number}" value="${choiceIndex}"> ${escapeHtml(choice)}</label>`).join("")}<p class="s1-feedback" hidden>${escapeHtml(item[3])}</p></fieldset>`;
   }).join("");
 
   const section = document.createElement("section");
