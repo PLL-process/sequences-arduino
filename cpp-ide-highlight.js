@@ -7,7 +7,7 @@
   if (!editor || !output) return;
 
   const escapeHtml = value => String(value).replace(/[&<>]/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[char]));
-  const tokenRegex = /(#[A-Za-z_]\w*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b\d+(?:\.\d+)?\b|\b(?:const|int|void|long|float|double|bool|char|byte|unsigned|signed|return|if|else|for|while|do|switch|case|break|continue)\b|\b(?:LOW|HIGH|OUTPUT|INPUT|INPUT_PULLUP|A0|A1|A2|A3|A4|A5)\b|\b(?:setup|loop|pinMode|analogRead|analogWrite|digitalRead|digitalWrite|delay|millis)\b|\b(?:Serial|begin|print|println|available|read)\b|==|!=|<=|>=|&&|\|\||\+\+|--|[=+\-*\/%<>!&|.;,:(){}\[\]])/g;
+  const tokenRegex = /(<[A-Za-z_][\w.\/-]*>|#[A-Za-z_]\w*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b\d+(?:\.\d+)?\b|\b(?:const|int|void|long|float|double|bool|char|byte|unsigned|signed|return|if|else|for|while|do|switch|case|break|continue)\b|\b(?:LOW|HIGH|OUTPUT|INPUT|INPUT_PULLUP|A0|A1|A2|A3|A4|A5)\b|\b(?:setup|loop|pinMode|analogRead|analogWrite|digitalRead|digitalWrite|delay|millis)\b|\b(?:Serial|begin|print|println|available|read)\b|==|!=|<=|>=|&&|\|\||\+\+|--|[=+\-*\/%<>!&|.;,:(){}\[\]])/g;
 
   const fragment = source => {
     let html = "", last = 0, match;
@@ -15,7 +15,8 @@
       html += escapeHtml(source.slice(last, match.index));
       const value = match[0];
       let className = "py-operator";
-      if (value.startsWith("#")) className = "py-decision";
+      if (value.startsWith("#")) className = "cpp-preprocessor";
+      else if (/^<.*>$/.test(value)) className = "cpp-header";
       else if (/^["']/.test(value)) className = "py-string";
       else if (/^\d/.test(value)) className = "py-number";
       else if (/^(const|int|void|long|float|double|bool|char|byte|unsigned|signed|return|if|else|for|while|do|switch|case|break|continue)$/.test(value)) className = "py-keyword";
@@ -45,7 +46,7 @@
     if (normalized.includes("ACQUERIR") || normalized.includes("LIRE")) commentClass = "py-comment py-comment-acquire";
     else if (normalized.includes("MEMORISER") || normalized.includes("STOCKER")) commentClass = "py-comment py-comment-memory";
     else if (normalized.includes("COMMUNIQUER") || normalized.includes("AFFICHER")) commentClass = "py-comment py-comment-output";
-    else if (normalized.includes("SECURISER") || normalized.includes("ARRETEE")) commentClass = "py-comment py-comment-safety";
+    else if (normalized.includes("SECURISER") || normalized.includes("ARRETEE") || normalized.includes("RELAIS AU REPOS")) commentClass = "py-comment py-comment-safety";
     return fragment(code) + (comment ? `<span class="${commentClass}">${escapeHtml(comment)}</span>` : "");
   };
 
