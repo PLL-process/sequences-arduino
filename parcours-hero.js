@@ -45,7 +45,7 @@
   const points = values.reduce((sum, item) => sum + item.score, 0);
   const average = points / 8;
   const next = values.find(item => !item.done) || values[7];
-  const visualIds = ["v18","v16","v06","v15","v19","v09","v05","v20"];
+  const sessionImage = index => `images/seance-${String(index + 1).padStart(2, "0")}-reelle.png?v=1`;
 
   hero.innerHTML = `
     <div class="hub-hero-copy">
@@ -62,10 +62,8 @@
         <a class="btn" href="index.html">Voir la présentation générale</a>
       </div>
     </div>
-    <figure class="hub-hero-visual" aria-label="Aperçu réaliste des huit séances">
-      <div class="hero-real-grid">
-        ${titles.map((title,index)=>`<div class="hero-real-thumb" data-label="S${index+1} · ${title}" role="img" aria-label="Illustration de la séance ${index+1} : ${title}"><svg class="hero-real-thumb-art" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><use href="images/technoquest-visuels.svg?v=27#${visualIds[index]}"></use></svg></div>`).join("")}
-      </div>
+    <figure class="hub-hero-visual">
+      <img src="images/accueil-technoquest.png?v=1" width="1536" height="1024" alt="Planche TechnoQuest du jardin connecté présentant les huit séances avec les composants Arduino, capteurs, relais, pompe et logique de sécurité.">
     </figure>`;
 
   const timeline = document.createElement("section");
@@ -93,6 +91,21 @@
     if (!item) return;
     if (item.done) card.classList.add("is-done");
     if (item.id === next.id) card.classList.add("is-current");
+
+    const media = document.createElement("figure");
+    media.className = "hub-card-media";
+    media.style.setProperty("--image-zoom", index === 0 ? "1" : "1.75");
+    const thumbnail = document.createElement("img");
+    thumbnail.className = "hub-card-image";
+    thumbnail.src = sessionImage(index);
+    thumbnail.width = 1280;
+    thumbnail.height = 720;
+    thumbnail.loading = "lazy";
+    thumbnail.alt = "";
+    media.appendChild(thumbnail);
+    const number = card.querySelector(".hub-number");
+    if (number) number.insertAdjacentElement("afterend", media);
+    else card.prepend(media);
 
     const statusText = item.done
       ? item.correction
