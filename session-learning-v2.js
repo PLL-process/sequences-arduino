@@ -7,14 +7,15 @@
 
   const data = {
     1: {
-      version: "2026-07-seance1-couleurs",
+      version: "2026-07-seance1-cpp",
       old: [
         "# Lire la grandeur analogique du capteur A0\nhumidite = lire_humidite()\n\n# Afficher la valeur mesurée\nafficher(humidite)\n\n# Maintenir la pompe arrêtée\nstop()",
-        "# 1 ACQUÉRIR : lire le capteur A0\n# 2 MÉMORISER : ranger la valeur dans la variable humidite\nhumidite = lire_humidite()\n\n# 3 COMMUNIQUER : afficher la valeur mesurée\nafficher(humidite)\n\n# 4 SÉCURISER : maintenir la pompe arrêtée\nstop()"
+        "# 1 ACQUÉRIR : lire le capteur A0\n# 2 MÉMORISER : ranger la valeur dans la variable humidite\nhumidite = lire_humidite()\n\n# 3 COMMUNIQUER : afficher la valeur mesurée\nafficher(humidite)\n\n# 4 SÉCURISER : maintenir la pompe arrêtée\nstop()",
+        "const int RELAIS_POMPE = 6;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(RELAIS_POMPE, OUTPUT);\n}\n\nvoid loop() {\n  // 1 ACQUÉRIR : lire le capteur A0\n  // 2 MÉMORISER : ranger la valeur dans la variable humidite\n  int humidite = analogRead(A0);\n\n  // 3 COMMUNIQUER : afficher la valeur mesurée\n  Serial.println(humidite);\n\n  // 4 SÉCURISER : maintenir la pompe arrêtée\n  digitalWrite(RELAIS_POMPE, LOW);\n}"
       ],
-      guided: "# 1 ACQUÉRIR : lire le capteur A0\n# Indice : utilise la fonction lire_humidite()\n# 2 MÉMORISER : ranger la valeur dans la variable humidite\nhumidite = _____________\n\n# 3 COMMUNIQUER : afficher la valeur mesurée\n# Indice : la fonction d’affichage s’appelle afficher()\n_____________(humidite)\n\n# 4 SÉCURISER : maintenir la pompe arrêtée\nstop()",
-      standard: "# 1 ACQUÉRIR : lire le capteur A0\n# 2 MÉMORISER : stocker la mesure dans humidite\nhumidite = __________________\n\n# 3 COMMUNIQUER : afficher humidite\n____________________________\n\n# 4 SÉCURISER : arrêter la pompe\n____________________________",
-      expert: "# Contrat : ACQUÉRIR A0, MÉMORISER dans humidite, COMMUNIQUER par affichage et SÉCURISER avec stop().\n"
+      guided: "const int RELAIS_POMPE = 6;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(RELAIS_POMPE, OUTPUT);\n}\n\nvoid loop() {\n  // 1 ACQUÉRIR : lire le capteur A0\n  // Indice : analogRead(A0) lit explicitement A0.\n  // 2 MÉMORISER : ranger la valeur dans la variable humidite\n  int humidite = _______________;\n\n  // 3 COMMUNIQUER : afficher la valeur mesurée\n  // Indice : utilise Serial.println(...)\n  ____________________________;\n\n  // 4 SÉCURISER : maintenir la pompe arrêtée\n  digitalWrite(RELAIS_POMPE, LOW);\n}",
+      standard: "const int RELAIS_POMPE = 6;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(RELAIS_POMPE, OUTPUT);\n}\n\nvoid loop() {\n  // 1 ACQUÉRIR : lire le capteur A0\n  // 2 MÉMORISER : stocker la mesure dans humidite\n  int humidite = __________________;\n\n  // 3 COMMUNIQUER : afficher humidite\n  ________________________________;\n\n  // 4 SÉCURISER : arrêter la pompe\n  ________________________________;\n}",
+      expert: "const int RELAIS_POMPE = 6;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(RELAIS_POMPE, OUTPUT);\n}\n\nvoid loop() {\n  // Lire A0, afficher la mesure, garder D6 à LOW.\n}\n"
     },
     2: {
       old: "# Définir un seuil modifiable\nseuil_humidite = 35\n\n# Lire puis comparer la mesure\nhumidite = lire_humidite()\nif humidite < seuil_humidite:\n    afficher(\"Sol sec\")\nelse:\n    afficher(\"Sol humide\")\nstop()",
@@ -110,7 +111,7 @@
   if (editorCard && editorWrap && !document.getElementById("codeModeV2")) {
     const modeRow = document.createElement("div");
     modeRow.className = "code-mode-row";
-    modeRow.innerHTML = `<label for="codeModeV2"><strong>Niveau d’aide</strong></label><select id="codeModeV2"><option value="guided">Guidé</option><option value="standard">Standard</option><option value="expert">Autonome</option></select><span>Le modèle reste volontairement incomplet.</span>`;
+    modeRow.innerHTML = `<label for="codeModeV2"><strong>Niveau d’aide</strong></label><select id="codeModeV2"><option value="guided">Guidé</option><option value="standard">Standard</option><option value="expert">Autonome</option></select><span>Les ____ sont des zones à effacer puis remplacer.</span>`;
     editorCard.insertBefore(modeRow, editorWrap);
     const select = modeRow.querySelector("select");
     select.value = current.learningMode;
