@@ -45,7 +45,7 @@
   const points = values.reduce((sum, item) => sum + item.score, 0);
   const average = points / 8;
   const next = values.find(item => !item.done) || values[7];
-  const spritePositions = [0,14.286,28.571,42.857,57.143,71.429,85.714,100];
+  const visualIds = ["v18","v16","v06","v15","v19","v09","v05","v20"];
 
   hero.innerHTML = `
     <div class="hub-hero-copy">
@@ -64,7 +64,7 @@
     </div>
     <figure class="hub-hero-visual" aria-label="Aperçu réaliste des huit séances">
       <div class="hero-real-grid">
-        ${titles.map((title,index)=>`<div class="hero-real-thumb" style="--x:${spritePositions[index]}%" data-label="S${index+1} · ${title}"></div>`).join("")}
+        ${titles.map((title,index)=>`<div class="hero-real-thumb" data-label="S${index+1} · ${title}" role="img" aria-label="Illustration de la séance ${index+1} : ${title}"><svg class="hero-real-thumb-art" viewBox="0 0 640 360" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false"><use href="images/technoquest-visuels.svg?v=27#${visualIds[index]}"></use></svg></div>`).join("")}
       </div>
     </figure>`;
 
