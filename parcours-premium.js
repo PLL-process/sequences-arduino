@@ -4,14 +4,18 @@
 (() => {
   const sessions = [
     {
-      id:1,title:"Observer les signaux",accent:"#22d3ee",story:"Les plantes se flétrissent. L’équipe doit observer les données du capteur d’humidité et distinguer une grandeur analogique d’un état logique.",
-      objective:"Lire et afficher l’humidité du sol, puis expliquer la différence entre une mesure analogique et une commande logique.",
+      id:1,title:"Observer les signaux",accent:"#22d3ee",story:"Les plantes se flétrissent. L’équipe commence sans connaître Python : elle observe d’abord le jumeau numérique, puis elle traduit l’algorithme coloré en lignes de programme.",
+      objective:"Simuler le système, repérer A0 et D6, puis écrire pas à pas un premier programme Python qui lit, affiche et sécurise l’objet technique.",
       chips:["Signal analogique","Signal logique","A0","D6"],
-      tasks:["Observer la valeur d’humidité fournie par A0.","Afficher la mesure dans le programme.","Maintenir la pompe arrêtée avec stop().","Expliquer pourquoi A0 varie alors que D6 possède seulement deux états."],
+      tasks:["1. Lance la démonstration du jumeau numérique et observe le signal A0.","2. Lis l’algorithme coloré dans l’ordre, de haut en bas.","3. Écris chaque commentaire coloré, puis la ligne Python associée.","4. Coche les tests et explique la différence entre A0 et D6."],
       algorithm:[["ACQUÉRIR","Lire l’humidité du sol avec le capteur A0.","#60a5fa"],["MÉMORISER","Stocker la valeur dans la variable humidite.","#c084fc"],["COMMUNIQUER","Afficher la mesure obtenue.","#67e8f9"],["SÉCURISER","Maintenir D6 à LOW et la pompe arrêtée.","#fb7185"]],
-      code:"# Lire la grandeur analogique du capteur A0\nhumidite = lire_humidite()\n\n# Afficher la valeur mesurée\nafficher(humidite)\n\n# Maintenir la pompe arrêtée\nstop()",
-      tests:["La valeur d’humidité est lue.","La mesure est affichée.","La pompe reste explicitement arrêtée."],
-      question:"Explique pourquoi l’humidité est une grandeur analogique et pourquoi la commande D6 du relais est une information logique.",
+      code:"# 1 ACQUÉRIR : lire le capteur A0\n# 2 MÉMORISER : ranger la valeur dans la variable humidite\nhumidite = lire_humidite()\n\n# 3 COMMUNIQUER : afficher la valeur mesurée\nafficher(humidite)\n\n# 4 SÉCURISER : maintenir la pompe arrêtée\nstop()",
+      codeVersion:"2026-07-guide-python-v2",
+      tests:["J’ai lancé la démonstration et observé le capteur A0.","Le programme contient la ligne humidite = lire_humidite().","Le programme affiche la mesure avec afficher(humidite).","La pompe reste explicitement arrêtée avec stop()."],
+      question:"En t’appuyant sur la simulation, explique pourquoi A0 donne une mesure analogique variable et pourquoi D6 commande seulement deux états logiques : LOW ou HIGH.",
+      demoInstruction:"Clique sur « Lancer la démonstration » pour simuler l’objet technique. Observe A0 qui mesure l’humidité, puis D6 qui reste la commande logique de la pompe.",
+      demoReady:"Prêt : lance la démonstration, observe le trajet des signaux, puis arrête avant d’écrire le programme.",
+      demoRunning:"Démonstration active : suis A0 vers l’Arduino, puis vérifie que D6 garde la pompe dans un état sûr.",
       correction:"L’humidité du sol varie progressivement : le capteur produit une tension analogique, puis l’ADC/CAN de l’Arduino la convertit en valeur numérique. La sortie D6 commande le relais avec deux états logiques : LOW = 0 pour l’arrêt et HIGH = 1 pour la marche."
     },
     {
@@ -107,8 +111,39 @@
   state.sessions = state.sessions || {};
   state.sessions[session.id] = state.sessions[session.id] || {code:session.code,answer:"",tests:[],scores:[0,0,0,0,0],correction:false};
   const current = state.sessions[session.id];
+  if(session.codeVersion && current.codeVersion !== session.codeVersion && !current.saved){
+    current.code = session.code;
+    current.codeVersion = session.codeVersion;
+    state.sessions[session.id] = current;
+    saveState(state);
+  }
 
   const colors = ["#22d3ee","#c084fc","#facc15","#fb7185","#4ade80","#60a5fa","#34d399","#fb923c"];
+  const pythonGuides = {
+    1:[
+      {step:"1",title:"ACQUÉRIR",color:"#60a5fa",comment:"# 1 ACQUÉRIR : lire le capteur A0",line:"humidite = lire_humidite()",hint:"La fonction lire_humidite() interroge le capteur branché sur A0."},
+      {step:"2",title:"MÉMORISER",color:"#c084fc",comment:"# 2 MÉMORISER : garder la mesure",line:"humidite = lire_humidite()",hint:"Le mot placé à gauche du signe = devient la variable qui garde la valeur."},
+      {step:"3",title:"COMMUNIQUER",color:"#67e8f9",comment:"# 3 COMMUNIQUER : afficher la valeur mesurée",line:"afficher(humidite)",hint:"On réutilise exactement le nom de variable humidite pour voir la mesure."},
+      {step:"4",title:"SÉCURISER",color:"#fb7185",comment:"# 4 SÉCURISER : maintenir la pompe arrêtée",line:"stop()",hint:"Pendant l’observation, la commande D6 reste dans l’état sûr : la pompe est arrêtée."}
+    ]
+  };
+
+  function sectionTitle(number,title){return `<span class="section-number">${number}</span><span>${title}</span>`}
+  function lessonPathTemplate(){
+    const steps = [
+      ["1","Simuler","Lance le jumeau numérique et observe le système."],
+      ["2","Lire","Suis l’algorithme coloré de haut en bas."],
+      ["3","Écrire","Ajoute les commentaires puis les lignes Python."],
+      ["4","Tester","Coche chaque vérification après l’avoir réalisée."],
+      ["5","Expliquer","Rédige la réponse avec le vocabulaire technique."]
+    ];
+    return `<section class="lesson-path" aria-label="Chronologie de travail">${steps.map(step=>`<article><strong>${step[0]}</strong><div><span>${step[1]}</span><p>${step[2]}</p></div></article>`).join("")}</section>`;
+  }
+  function pythonGuideTemplate(){
+    const guide = pythonGuides[session.id];
+    if(!guide)return "";
+    return `<section class="python-guide" aria-label="Aide d’écriture Python pas à pas"><h3>Aide d’écriture pas à pas</h3><p>Pour chaque couleur, écris d’abord le commentaire, puis la ligne de Python proposée.</p><div>${guide.map(item=>`<article style="--guide:${item.color}"><strong><span>${item.step}</span>${item.title}</strong><p>${item.hint}</p><code>${escapeHtml(item.comment)}</code><code>${escapeHtml(item.line)}</code></article>`).join("")}</div></section>`;
+  }
 
   function svgTwin(){
     const focus = session.id;
@@ -148,8 +183,8 @@
       <path class="twin-signal" d="M702 215H585V210H561" fill="none" stroke="#c084fc" stroke-width="5"/>
       <path class="twin-signal" d="M561 301H575" fill="none" stroke="#fb923c" stroke-width="5"/>
       <path d="M660 420H690M645 305V392H660" fill="none" stroke="#fb7185" stroke-width="4"/>
-      <path d="M785 328V426H840M690 426H660" fill="none" stroke="#64748b" stroke-width="12" stroke-linecap="round"/>
-      <path class="twin-water" d="M785 328V426H840M690 426H660M690 426H650V470H180V420" fill="none" stroke="#67e8f9" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" ${waterVisible?'opacity="1"':'opacity="0"'}/>
+      <path d="M785 328V376C785 390 776 398 760 398H742C725 398 712 410 712 426H690M690 426H660" fill="none" stroke="#64748b" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+      <path class="twin-water" d="M785 328V376C785 390 776 398 760 398H742C725 398 712 410 712 426H690M690 426H650V470H180V420" fill="none" stroke="#67e8f9" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" ${waterVisible?'opacity="1"':'opacity="0"'}/>
       <text x="650" y="484" fill="#e5f9ff" font-size="13" font-weight="900">Réservoir → pompe → plante</text>
       <rect x="305" y="390" width="230" height="62" rx="16" fill="#07131fee" stroke="${session.accent}" stroke-width="2"/><text x="420" y="415" text-anchor="middle" fill="#fff" font-size="14" font-weight="900">Séance ${session.id}</text><text x="420" y="437" text-anchor="middle" fill="#dbe9ef" font-size="12">${session.title}</text>
     </svg>`;
@@ -166,11 +201,19 @@
     }
     return out+escapeHtml(fragment.slice(last));
   }
+  function commentClass(comment){
+    const normalized = comment.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
+    if(normalized.includes("ACQUERIR"))return "py-comment py-comment-acquire";
+    if(normalized.includes("MEMORISER"))return "py-comment py-comment-memory";
+    if(normalized.includes("COMMUNIQUER"))return "py-comment py-comment-output";
+    if(normalized.includes("SECURISER"))return "py-comment py-comment-safety";
+    return "py-comment";
+  }
   function highlightLine(line){
     let quote=null,escaped=false,comment=-1;
     for(let i=0;i<line.length;i++){const c=line[i];if(escaped){escaped=false;continue}if(c==="\\"){escaped=true;continue}if(quote){if(c===quote)quote=null}else if(c==='"'||c==="'")quote=c;else if(c==="#"){comment=i;break}}
     const a=comment>=0?line.slice(0,comment):line,b=comment>=0?line.slice(comment):"";
-    return highlightFragment(a)+(b?`<span class="py-comment">${escapeHtml(b)}</span>`:"");
+    return highlightFragment(a)+(b?`<span class="${commentClass(b)}">${escapeHtml(b)}</span>`:"");
   }
 
   function pageTemplate(){
@@ -179,18 +222,19 @@
     return `<div class="session-shell" style="--session-accent:${session.accent}">
       <header class="session-topbar"><a class="brand" href="parcours.html">TECHNOQUEST · JARDIN CONNECTÉ</a><nav class="session-nav"><a href="${prev}">← Précédente</a><a href="parcours.html">8 séances</a><a href="${next}">Suivante →</a><button id="printSession" type="button">Imprimer</button></nav></header>
       <section class="session-hero"><div><p class="eyebrow">Séance ${session.id} sur 8 · Évaluation autonome</p><h1>${session.title}</h1><p>${session.story}</p><p><strong>Objectif :</strong> ${session.objective}</p><div>${session.chips.map(c=>`<span class="chip">${c}</span>`).join(" ")}</div></div><div class="score-badge"><div><strong id="heroScore">0</strong><span>/ 20</span></div></div></section>
+      ${lessonPathTemplate()}
       <section class="session-grid">
         <div>
-          <article class="card"><div class="card-head"><div><h2>Jumeau numérique premium</h2><p>Le visuel met en évidence les éléments utiles à cette séance.</p></div><span class="chip">Chargement ciblé</span></div><div class="card-body"><div id="twinStage" class="twin-stage">${svgTwin()}</div><div class="twin-legend"><article><strong>Chaîne d’information</strong>Capteurs → entrées A0/A1/A2 → Arduino → décision → D6.</article><article><strong>Chaîne d’énergie</strong>Alimentation séparée → relais → pompe → tuyaux → sol.</article></div><div class="demo-controls"><button id="runDemo" class="btn primary" type="button">▶ Lancer la démonstration</button><button id="stopDemo" class="btn" type="button">■ Arrêter</button></div><p id="demoStatus" class="demo-status">Prêt. La pompe reste arrêtée tant que la démonstration n’est pas lancée.</p></div></article>
-          <article class="card" style="margin-top:1rem"><div class="card-head"><h2>Algorithme textuel coloré</h2><span class="chip">Chronologie</span></div><div class="card-body"><div class="algorithm">${session.algorithm.map((s,i)=>`${i?'<div class="algo-arrow">↓</div>':''}<div class="algo-step" style="--step:${s[2]}"><strong>${s[0]}</strong><span>${s[1]}</span></div>`).join("")}</div></div></article>
+          <article class="card"><div class="card-head"><div><h2>${sectionTitle(1,"Simuler le jumeau numérique")}</h2><p>${session.demoInstruction || "Lance la démonstration pour observer le comportement de l’objet technique avant d’écrire le programme."}</p></div><span class="chip">Simulation</span></div><div class="card-body"><div id="twinStage" class="twin-stage">${svgTwin()}</div><div class="twin-legend"><article><strong>Chaîne d’information</strong>Capteurs → entrées A0/A1/A2 → Arduino → décision → D6.</article><article><strong>Chaîne d’énergie</strong>Alimentation séparée → relais → pompe → tuyaux → sol.</article></div><div class="demo-controls"><button id="runDemo" class="btn primary" type="button">▶ Lancer la démonstration</button><button id="stopDemo" class="btn" type="button">■ Arrêter</button></div><p id="demoStatus" class="demo-status">${session.demoReady || "Prêt : lance la démonstration pour observer le système, puis arrête-la avant de valider."}</p></div></article>
+          <article class="card" style="margin-top:1rem"><div class="card-head"><h2>${sectionTitle(2,"Lire l’algorithme coloré")}</h2><span class="chip">Chronologie</span></div><div class="card-body"><div class="algorithm">${session.algorithm.map((s,i)=>`${i?'<div class="algo-arrow">↓</div>':''}<div class="algo-step" style="--step:${s[2]}"><em>${i+1}</em><strong>${s[0]}</strong><span>${s[1]}</span></div>`).join("")}</div></div></article>
         </div>
         <div>
-          <article class="card"><div class="card-head"><div><h2>Défi élève</h2><p>Une seule production principale pour limiter la charge cognitive.</p></div><span class="chip">Noté /20</span></div><div class="card-body"><ul class="task-list">${session.tasks.map(t=>`<li>${t}</li>`).join("")}</ul></div></article>
-          <article class="card" style="margin-top:1rem"><div class="card-head"><div><h2>Programme Python pédagogique</h2><p>Écris directement dans l’éditeur coloré.</p></div><span class="chip">Modifiable</span></div><div class="card-body"><div class="editor-wrap"><pre id="codeHighlight" aria-hidden="true"></pre><textarea id="codeEditor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Programme Python de la séance"></textarea></div><div class="demo-controls"><button id="restoreCode" class="btn" type="button">↺ Restaurer le modèle</button><button id="saveSession" class="btn primary" type="button">Enregistrer</button></div></div></article>
+          <article class="card"><div class="card-head"><div><h2>Mission élève</h2><p>Le travail se fait dans cet ordre pour éviter de deviner le code au hasard.</p></div><span class="chip">Noté /20</span></div><div class="card-body"><ul class="task-list">${session.tasks.map(t=>`<li>${t}</li>`).join("")}</ul></div></article>
+          <article class="card" style="margin-top:1rem"><div class="card-head"><div><h2>${sectionTitle(3,"Écrire le programme Python")}</h2><p>Commence par les commentaires colorés : ils servent de repères pour écrire les lignes.</p></div><span class="chip">Modifiable</span></div><div class="card-body">${pythonGuideTemplate()}<div class="editor-wrap"><pre id="codeHighlight" aria-hidden="true"></pre><textarea id="codeEditor" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Programme Python de la séance"></textarea></div><div class="demo-controls"><button id="restoreCode" class="btn" type="button">↺ Restaurer le modèle</button><button id="saveSession" class="btn primary" type="button">Enregistrer</button></div></div></article>
         </div>
       </section>
       <section class="session-grid" style="margin-top:1rem">
-        <article class="card"><div class="card-head"><h2>Protocole de tests</h2><span class="chip">Validation</span></div><div class="card-body"><div id="testGrid" class="test-grid">${session.tests.map((t,i)=>`<label><input type="checkbox" data-test="${i}"> <span>${t}</span></label>`).join("")}</div><h3>Réponse argumentée</h3><p>${session.question}</p><textarea id="answer" class="response-area" placeholder="Rédige une réponse précise en utilisant le vocabulaire technique..."></textarea></div></article>
+        <article class="card"><div class="card-head"><h2>${sectionTitle(4,"Vérifier avec le protocole de tests")}</h2><span class="chip">Validation</span></div><div class="card-body"><p class="card-guidance">Ce ne sont pas des questions : coche une ligne seulement quand tu as observé ou vérifié le résultat.</p><div id="testGrid" class="test-grid">${session.tests.map((t,i)=>`<label><input type="checkbox" data-test="${i}"> <span>${t}</span></label>`).join("")}</div><h3 class="subsection-title">${sectionTitle(5,"Réponse argumentée")}</h3><p>${session.question}</p><textarea id="answer" class="response-area" placeholder="Rédige une réponse précise en utilisant le vocabulaire technique..."></textarea></div></article>
         <article class="card"><div class="card-head"><h2>Barème de la séance</h2><span class="chip">20 points</span></div><div class="card-body"><div class="rubric-grid">
           ${[["Compréhension et analyse",4],["Programme Python",6],["Simulation et tests",4],["Justification écrite",4],["Autonomie et sécurité",2]].map((r,i)=>`<div class="rubric-item"><label>${r[0]}<br><strong>/ ${r[1]}</strong></label><input type="number" min="0" max="${r[1]}" step="0.5" data-score="${i}" value="0"></div>`).join("")}
           </div><div class="rubric-total"><span>Note de la séance</span><strong id="totalScore">0 / 20</strong></div><div class="demo-controls"><button id="showCorrection" class="btn warning" type="button">📘 Correction complète</button><button id="resetSession" class="btn danger" type="button">Réinitialiser la séance</button></div><section id="correctionPanel" class="correction"><h3>Correction exhaustive</h3><p>${session.correction}</p><p><strong>Programme de référence :</strong></p><pre>${escapeHtml(session.code)}</pre><p class="zero-note">Correction consultée : cette séance devient formative et rapporte 0 point.</p></section></div></article>
@@ -230,7 +274,7 @@
   document.getElementById("printSession").addEventListener("click",()=>window.print());
 
   const stage=document.getElementById("twinStage"),status=document.getElementById("demoStatus");
-  document.getElementById("runDemo").addEventListener("click",()=>{stage.classList.add("running");status.textContent=`Démonstration active : ${session.objective}`});
+  document.getElementById("runDemo").addEventListener("click",()=>{stage.classList.add("running");status.textContent=session.demoRunning || `Démonstration active : ${session.objective}`});
   document.getElementById("stopDemo").addEventListener("click",()=>{stage.classList.remove("running");status.textContent="Démonstration arrêtée. La pompe revient à l’état sûr."});
 
   document.getElementById("showCorrection").addEventListener("click",()=>{
