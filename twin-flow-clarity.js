@@ -4,12 +4,12 @@
   // Récupérer le SVG du jumeau déjà construit.
   const stage = document.getElementById("twinStage");
   const svg = stage?.querySelector("svg");
-  if (!svg || svg.querySelector("#twinFlowClarityV2")) return;
+  if (!svg || svg.querySelector("#twinFlowClarityV3")) return;
 
   // Ajouter un marqueur invisible pour éviter une double exécution.
   const NS = "http://www.w3.org/2000/svg";
   const marker = document.createElementNS(NS, "g");
-  marker.id = "twinFlowClarityV2";
+  marker.id = "twinFlowClarityV3";
   marker.setAttribute("display", "none");
   svg.appendChild(marker);
 
@@ -40,6 +40,18 @@
     ) {
       path.remove();
     }
+  });
+
+  // Retirer les points de jonction et bornes d’alimentation devenus orphelins.
+  const orphanTerminalSelectors = [
+    'circle[cx="516"][cy="100"]',
+    'circle[cx="55"][cy="340"]',
+    'circle[cx="241"][cy="170"]',
+    'circle[cx="869"][cy="135"]',
+    'circle[cx="892"][cy="145"]'
+  ];
+  orphanTerminalSelectors.forEach(selector => {
+    svg.querySelector(selector)?.remove();
   });
 
   // Replacer le libellé 5 V à proximité immédiate de sa verticale.
@@ -88,35 +100,35 @@
     waterLabel.setAttribute("y", "530");
   }
 
-  // Ajouter une note pédagogique en bas à droite du jumeau numérique.
+  // Ajouter la note pédagogique sous la carte Arduino, dans la zone marron.
   const note = document.createElementNS(NS, "text");
-  note.id = "twinMeasurementNoteV2";
-  note.setAttribute("x", "690");
-  note.setAttribute("y", "494");
+  note.id = "twinMeasurementNoteV3";
+  note.setAttribute("x", "330");
+  note.setAttribute("y", "365");
   note.setAttribute("class", "twin-measurement-note");
 
   // Première ligne : nature des liaisons analogiques.
   const lineOne = document.createElementNS(NS, "tspan");
-  lineOne.setAttribute("x", "690");
+  lineOne.setAttribute("x", "330");
   lineOne.setAttribute("dy", "0");
   lineOne.textContent = "A0, A1 et A2 : liaisons de mesure,";
 
   // Deuxième ligne : distinction avec le courant d’alimentation.
   const lineTwo = document.createElementNS(NS, "tspan");
-  lineTwo.setAttribute("x", "690");
-  lineTwo.setAttribute("dy", "12");
+  lineTwo.setAttribute("x", "330");
+  lineTwo.setAttribute("dy", "13");
   lineTwo.textContent = "pas des chemins principaux de courant.";
 
   // Troisième ligne : sens conventionnel du courant.
   const lineThree = document.createElementNS(NS, "tspan");
-  lineThree.setAttribute("x", "690");
-  lineThree.setAttribute("dy", "12");
+  lineThree.setAttribute("x", "330");
+  lineThree.setAttribute("dy", "13");
   lineThree.textContent = "Sens conventionnel : du + vers le −.";
 
   // Quatrième ligne : avertissement sur la simplification du dessin.
   const lineFour = document.createElementNS(NS, "tspan");
-  lineFour.setAttribute("x", "690");
-  lineFour.setAttribute("dy", "12");
+  lineFour.setAttribute("x", "330");
+  lineFour.setAttribute("dy", "13");
   lineFour.textContent = "Alimentation des capteurs non représentée.";
 
   // Insérer les quatre lignes dans le SVG.
