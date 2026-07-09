@@ -66,6 +66,35 @@
   box-shadow: inset 0 0 0 2px rgba(56, 189, 248, .32);
 }
 
+@media (pointer: coarse) {
+  /*
+   * Au repos, placer la couche colorée au-dessus du textarea. Cela contourne le calque
+   * graphique opaque que certains navigateurs Android créent même avec un fond transparent.
+   */
+  .fusion-editor-shell:not(.editor-native-mode):not(.editor-native-fallback) .fusion-code-highlight,
+  .editor-wrap:not(.editor-native-mode):not(.editor-native-fallback) pre,
+  .code-harmony-textarea-shell:not(.editor-native-mode):not(.editor-native-fallback) .code-harmony-live-highlight {
+    z-index: 7 !important;
+    pointer-events: none !important;
+  }
+
+  .fusion-editor-shell:not(.editor-native-mode):not(.editor-native-fallback) .fusion-code-editor,
+  .editor-wrap:not(.editor-native-mode):not(.editor-native-fallback) textarea,
+  .code-harmony-textarea-shell:not(.editor-native-mode):not(.editor-native-fallback) textarea {
+    z-index: 5 !important;
+  }
+
+  /* La gouttière et la flèche restent toujours au premier plan. */
+  .fusion-line-numbers,
+  .fusion-code-arrow,
+  .code-harmony-live-gutter,
+  .code-harmony-live-arrow,
+  .mission-line-numbers,
+  .mission-arrow {
+    z-index: 9 !important;
+  }
+}
+
 @media (pointer: fine) {
   /* Sur ordinateur à souris, conserver en permanence la coloration complète. */
   .fusion-editor-shell.editor-native-mode .fusion-code-highlight,
