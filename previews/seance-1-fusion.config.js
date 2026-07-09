@@ -40,3 +40,41 @@ window.TechnoQuestSessionTemplateConfig = {
     { label: "Justification écrite", points: 4 }
   ]
 };
+
+// Charger immédiatement les feuilles de style communes.
+[
+  "../code-harmony.css?v=6",
+  "../mission-mode/mission-algorithms-premium.css?v=2",
+  "../editor-visibility-guard.css?v=1"
+].forEach(href => {
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = href;
+  document.head.appendChild(link);
+});
+
+// Charger les moteurs complémentaires après l’initialisation de la page, dans un ordre stable.
+function loadPreviewEnhancements() {
+  const sources = [
+    "../code-harmony.js?v=3",
+    "../mission-mode/mission-algorithms-premium.js?v=2",
+    "../editor-visibility-guard.js?v=1"
+  ];
+
+  const loadNext = index => {
+    if (index >= sources.length) return;
+    const script = document.createElement("script");
+    script.src = sources[index];
+    script.onload = () => loadNext(index + 1);
+    script.onerror = () => loadNext(index + 1);
+    document.body.appendChild(script);
+  };
+
+  window.setTimeout(() => loadNext(0), 0);
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", loadPreviewEnhancements, { once: true });
+} else {
+  loadPreviewEnhancements();
+}
