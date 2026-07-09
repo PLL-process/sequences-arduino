@@ -128,14 +128,15 @@
   top: 0;
   bottom: 0;
   left: 0;
-  width: 2.85rem;
+  width: 4rem;
   overflow: hidden;
   padding-top: var(--fusion-editor-padding);
-  border-right: 1px solid #233847;
-  background: #09141d;
-  color: #587486;
+  border-right: 3px solid #38bdf8;
+  background: #111827;
+  color: #7dd3fc;
   font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
   font-size: 0.9rem;
+  font-weight: 750;
   line-height: var(--fusion-line-height);
   text-align: right;
   user-select: none;
@@ -144,19 +145,23 @@
 .fusion-line-numbers span {
   display: block;
   height: var(--fusion-line-height);
-  padding-right: 0.55rem;
+  padding-right: 0.72rem;
+  border-left: 3px solid transparent;
 }
 
 .fusion-line-numbers span.is-target {
-  color: var(--fusion-arrow);
-  font-weight: 900;
+  border-left-color: #fde047;
+  background: linear-gradient(90deg, rgba(253, 224, 71, .16), rgba(253, 224, 71, .03));
+  color: #fde047;
+  font-weight: 950;
+  text-shadow: 0 0 8px rgba(253, 224, 71, .55);
 }
 
 .fusion-code-arrow {
   position: absolute;
   z-index: 8;
   top: calc(var(--fusion-editor-padding) + var(--fusion-arrow-line) * var(--fusion-line-height));
-  left: 3.05rem;
+  left: 4.18rem;
   display: grid;
   width: 1.35rem;
   height: var(--fusion-line-height);
@@ -182,8 +187,8 @@
 .fusion-code-highlight,
 .fusion-code-editor {
   position: absolute;
-  inset: 0 0 0 4.6rem;
-  width: calc(100% - 4.6rem);
+  inset: 0 0 0 5.8rem;
+  width: calc(100% - 5.8rem);
   height: 100%;
   margin: 0;
   padding: var(--fusion-editor-padding);
@@ -232,11 +237,11 @@
 }
 
 .fusion-token-header {
-  color: #86efac;
+  color: #a3e635;
 }
 
 .fusion-token-comment {
-  color: #6ee7b7;
+  color: #4ade80;
   font-style: italic;
 }
 
@@ -246,7 +251,7 @@
 }
 
 .fusion-token-type {
-  color: #67e8f9;
+  color: #22d3ee;
   font-weight: 800;
 }
 
@@ -260,7 +265,7 @@
 }
 
 .fusion-token-string {
-  color: #fdba74;
+  color: #fb923c;
 }
 
 .fusion-token-number {
@@ -351,9 +356,17 @@
 
   .fusion-code-highlight,
   .fusion-code-editor {
-    inset-left: 4.25rem;
-    width: calc(100% - 4.25rem);
+    inset: 0 0 0 5.15rem;
+    width: calc(100% - 5.15rem);
     font-size: 0.78rem;
+  }
+
+  .fusion-line-numbers {
+    width: 3.5rem;
+  }
+
+  .fusion-code-arrow {
+    left: 3.68rem;
   }
 
   .fusion-editor-titlebar {
