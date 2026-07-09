@@ -357,9 +357,9 @@
 }
 
 /* Le Mode Mission possède déjà sa propre gouttière et sa propre flèche. */
+.mission-editor-mount .code-harmony-editor-head,
 .mission-editor-mount .code-harmony-live-gutter,
-.mission-editor-mount .code-harmony-live-arrow,
-.mission-editor-mount + .code-harmony-editor-head {
+.mission-editor-mount .code-harmony-live-arrow {
   display: none !important;
 }
 
@@ -393,17 +393,19 @@
 }
 
 .code-harmony-textarea-shell .code-harmony-live-highlight,
-.code-harmony-textarea-shell textarea {
-  position: absolute;
-  inset: 0 0 0 5.75rem;
-  width: calc(100% - 5.75rem);
-  height: 100%;
-  margin: 0;
-  padding: 1rem;
-  border: 0;
-  background: transparent;
-  font: .9rem/var(--ch-line-height) "Cascadia Code", "Fira Code", Consolas, monospace;
-  white-space: pre;
+.code-harmony-textarea-shell textarea,
+.code-harmony-textarea-shell textarea#codeEditor {
+  position: absolute !important;
+  inset: 0 0 0 5.75rem !important;
+  width: calc(100% - 5.75rem) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 1rem !important;
+  border: 0 !important;
+  background: transparent !important;
+  font: .9rem/var(--ch-line-height) "Cascadia Code", "Fira Code", Consolas, monospace !important;
+  white-space: pre !important;
   tab-size: 2;
 }
 
@@ -414,14 +416,15 @@
   pointer-events: none;
 }
 
-.code-harmony-textarea-shell textarea {
+.code-harmony-textarea-shell textarea,
+.code-harmony-textarea-shell textarea#codeEditor {
   z-index: 5;
-  resize: none;
+  resize: none !important;
   overflow: auto;
   outline: none;
-  color: transparent;
-  caret-color: #fff;
-  -webkit-text-fill-color: transparent;
+  color: transparent !important;
+  caret-color: #fff !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 .code-harmony-inline {
@@ -435,10 +438,11 @@
   .editor-wrap.code-harmony-live-editor pre,
   .editor-wrap.code-harmony-live-editor textarea,
   .code-harmony-textarea-shell .code-harmony-live-highlight,
-  .code-harmony-textarea-shell textarea {
-    inset-left: 5rem;
-    width: calc(100% - 5rem);
-    font-size: .78rem;
+  .code-harmony-textarea-shell textarea,
+  .code-harmony-textarea-shell textarea#codeEditor {
+    inset: 0 0 0 5rem !important;
+    width: calc(100% - 5rem) !important;
+    font-size: .78rem !important;
   }
   .code-harmony-live-gutter { width: 3.5rem; font-size: .74rem; }
   .code-harmony-live-arrow { left: 3.68rem; }
