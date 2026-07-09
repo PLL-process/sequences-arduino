@@ -128,11 +128,11 @@
   layout.appendChild(labelGroup);
 
   const plus = document.createElementNS(NS, "text");
-  plus.setAttribute("x", "690"); plus.setAttribute("y", "438"); plus.setAttribute("fill", "#fecaca"); plus.setAttribute("class", "twin-terminal-label"); plus.textContent = "+ TBT";
+  plus.setAttribute("x", "664"); plus.setAttribute("y", "410"); plus.setAttribute("fill", "#fecaca"); plus.setAttribute("class", "twin-terminal-label"); plus.textContent = "+ TBT";
   const zero = document.createElementNS(NS, "text");
-  zero.setAttribute("x", "690"); zero.setAttribute("y", "501"); zero.setAttribute("fill", "#bfdbfe"); zero.setAttribute("class", "twin-terminal-label"); zero.textContent = "0 V";
+  zero.setAttribute("x", "614"); zero.setAttribute("y", "535"); zero.setAttribute("fill", "#bfdbfe"); zero.setAttribute("class", "twin-terminal-label"); zero.textContent = "0 V";
   const waterLabel = document.createElementNS(NS, "text");
-  waterLabel.setAttribute("x", "530"); waterLabel.setAttribute("y", "526"); waterLabel.setAttribute("text-anchor", "middle"); waterLabel.setAttribute("class", "twin-water-label-v5");
+  waterLabel.setAttribute("x", "400"); waterLabel.setAttribute("y", "526"); waterLabel.setAttribute("text-anchor", "middle"); waterLabel.setAttribute("class", "twin-water-label-v5");
   waterLabel.textContent = "Réservoir → pompe → plante";
   layout.append(plus, zero, waterLabel);
 
