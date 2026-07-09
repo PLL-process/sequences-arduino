@@ -54,7 +54,7 @@
   const supplyGroup = document.createElementNS(NS, "g");
   supplyGroup.id = "supplyV5";
   supplyGroup.classList.add("twin-component-gap");
-  supplyGroup.setAttribute("transform", "translate(-20 55)");
+  supplyGroup.setAttribute("transform", "translate(10 55)");
   [supplyRect, supplyText, supplySubtitle].forEach(node => { if (node) supplyGroup.appendChild(node.cloneNode(true)); });
 
   tankGroup.style.display = "none";
@@ -107,12 +107,12 @@
   const waterBase2 = path("M800 480 H735 V510 H180 V420", "twin-water-pipe-v5");
   const waterFlow2 = path("M800 480 H735 V510 H180 V420", "twin-water-flow-v5", "waterArrowV5");
 
-  const plusWire1 = path("M650 438 V350 H620 V333", "twin-current-wire");
-  const plusFlow1 = path("M650 438 V350 H620 V333", "twin-current-flow", "currentArrowPlusV5");
+  const plusWire1 = path("M635 425 V333", "twin-current-wire");
+  const plusFlow1 = path("M635 425 V333", "twin-current-flow", "currentArrowPlusV5");
   const plusWire2 = path("M670 305 H720 V375 H880 V435", "twin-current-wire");
   const plusFlow2 = path("M670 305 H720 V375 H880 V435", "twin-current-flow", "currentArrowPlusV5");
-  const returnWire = path("M920 507 V544 H600 V483", "twin-current-wire twin-current-return-wire");
-  const returnFlow = path("M920 507 V544 H600 V483", "twin-current-flow return", "currentArrowReturnV5");
+  const returnWire = path("M920 507 V544 H635 V483", "twin-current-wire twin-current-return-wire");
+  const returnFlow = path("M920 507 V544 H635 V483", "twin-current-flow return", "currentArrowReturnV5");
 
   layout.append(waterBase1, waterFlow1, waterBase2, waterFlow2, plusWire1, plusFlow1, plusWire2, plusFlow2, returnWire, returnFlow);
 
@@ -128,9 +128,9 @@
   layout.appendChild(labelGroup);
 
   const plus = document.createElementNS(NS, "text");
-  plus.setAttribute("x", "664"); plus.setAttribute("y", "410"); plus.setAttribute("fill", "#fecaca"); plus.setAttribute("class", "twin-terminal-label"); plus.textContent = "+ TBT";
+  plus.setAttribute("x", "650"); plus.setAttribute("y", "405"); plus.setAttribute("fill", "#fecaca"); plus.setAttribute("class", "twin-terminal-label"); plus.textContent = "+ TBT";
   const zero = document.createElementNS(NS, "text");
-  zero.setAttribute("x", "614"); zero.setAttribute("y", "535"); zero.setAttribute("fill", "#bfdbfe"); zero.setAttribute("class", "twin-terminal-label"); zero.textContent = "0 V";
+  zero.setAttribute("x", "650"); zero.setAttribute("y", "532"); zero.setAttribute("fill", "#bfdbfe"); zero.setAttribute("class", "twin-terminal-label"); zero.textContent = "0 V";
   const waterLabel = document.createElementNS(NS, "text");
   waterLabel.setAttribute("x", "400"); waterLabel.setAttribute("y", "526"); waterLabel.setAttribute("text-anchor", "middle"); waterLabel.setAttribute("class", "twin-water-label-v5");
   waterLabel.textContent = "Réservoir → pompe → plante";
@@ -140,8 +140,8 @@
   svg.append(tankClone, pumpClone, supplyGroup);
 
   const supplyPlus = document.createElementNS(NS, "circle");
-  supplyPlus.setAttribute("cx", "650"); supplyPlus.setAttribute("cy", "438"); supplyPlus.setAttribute("r", "6"); supplyPlus.setAttribute("fill", "#fb7185");
+  supplyPlus.setAttribute("cx", "635"); supplyPlus.setAttribute("cy", "425"); supplyPlus.setAttribute("r", "6"); supplyPlus.setAttribute("fill", "#fb7185");
   const supplyZero = document.createElementNS(NS, "circle");
-  supplyZero.setAttribute("cx", "600"); supplyZero.setAttribute("cy", "483"); supplyZero.setAttribute("r", "6"); supplyZero.setAttribute("fill", "#60a5fa");
+  supplyZero.setAttribute("cx", "635"); supplyZero.setAttribute("cy", "483"); supplyZero.setAttribute("r", "6"); supplyZero.setAttribute("fill", "#60a5fa");
   svg.append(supplyPlus, supplyZero);
 })();
