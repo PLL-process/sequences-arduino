@@ -4,12 +4,12 @@
   // Récupérer le SVG du jumeau déjà construit.
   const stage = document.getElementById("twinStage");
   const svg = stage?.querySelector("svg");
-  if (!svg || svg.querySelector("#twinFlowClarityV4")) return;
+  if (!svg || svg.querySelector("#twinFlowClarityV5")) return;
 
   // Ajouter un marqueur invisible pour éviter une double exécution.
   const NS = "http://www.w3.org/2000/svg";
   const marker = document.createElementNS(NS, "g");
-  marker.id = "twinFlowClarityV4";
+  marker.id = "twinFlowClarityV5";
   marker.setAttribute("display", "none");
   svg.appendChild(marker);
 
@@ -92,10 +92,10 @@
   }
 
   // Ajouter le libellé GND à droite de la verticale noire.
-  let supplyGroundLabel = svg.querySelector("#arduinoGroundLabelV4");
+  let supplyGroundLabel = svg.querySelector("#arduinoGroundLabelV5");
   if (!supplyGroundLabel) {
     supplyGroundLabel = document.createElementNS(NS, "text");
-    supplyGroundLabel.id = "arduinoGroundLabelV4";
+    supplyGroundLabel.id = "arduinoGroundLabelV5";
     supplyGroundLabel.setAttribute("class", "twin-supply-ground-label");
     supplyGroundLabel.textContent = "GND";
     svg.appendChild(supplyGroundLabel);
@@ -104,7 +104,7 @@
   supplyGroundLabel.setAttribute("y", "77");
   supplyGroundLabel.setAttribute("text-anchor", "start");
 
-  // Corriger le sous-titre de l’alimentation afin de ne plus suggérer les fils des capteurs.
+  // Corriger le sous-titre de l’alimentation Arduino.
   const supplySubtitle = [...svg.querySelectorAll("text")]
     .find(node => node.textContent.trim() === "5 V USB · capteurs via Arduino");
   if (supplySubtitle) {
@@ -142,38 +142,70 @@
     waterLabel.setAttribute("y", "530");
   }
 
-  // Ajouter la note pédagogique sous la carte Arduino, dans la zone marron.
+  // Remplacer le libellé du retour de puissance par 0 V TBT.
+  const zeroVoltLabel = [...svg.querySelectorAll("text")]
+    .find(node => node.textContent.trim() === "0 V");
+  if (zeroVoltLabel) zeroVoltLabel.textContent = "0 V TBT";
+
+  // Développer l’abréviation TBT dans le cartouche de l’alimentation séparée.
+  const separateSupplyGroup = svg.querySelector("#supplyV5");
+  if (separateSupplyGroup) {
+    const separateSupplyRect = separateSupplyGroup.querySelector("rect");
+    const separateSupplyTexts = [...separateSupplyGroup.querySelectorAll("text")];
+    const separateSupplyTitle = separateSupplyTexts
+      .find(node => node.textContent.trim() === "ALIMENTATION");
+    const separateSupplySubtitle = separateSupplyTexts
+      .find(node => node.textContent.trim() === "séparée TBT");
+
+    // Élargir le cartouche symétriquement autour de ses bornes centrales.
+    if (separateSupplyRect) {
+      separateSupplyRect.setAttribute("x", "535");
+      separateSupplyRect.setAttribute("width", "180");
+    }
+
+    // Conserver le titre centré.
+    if (separateSupplyTitle) {
+      separateSupplyTitle.setAttribute("x", "625");
+      separateSupplyTitle.setAttribute("y", "392");
+    }
+
+    // Écrire le développement complet de TBT sur la deuxième ligne.
+    if (separateSupplySubtitle) {
+      separateSupplySubtitle.textContent = "séparée TBT (Très Basse Tension)";
+      separateSupplySubtitle.setAttribute("x", "625");
+      separateSupplySubtitle.setAttribute("y", "410");
+      separateSupplySubtitle.setAttribute("font-size", "8.5");
+      separateSupplySubtitle.setAttribute("font-weight", "800");
+    }
+  }
+
+  // Ajouter la note pédagogique au centre de l’espace marron libre.
   const note = document.createElementNS(NS, "text");
-  note.id = "twinMeasurementNoteV4";
-  note.setAttribute("x", "330");
-  note.setAttribute("y", "365");
+  note.id = "twinMeasurementNoteV5";
+  note.setAttribute("x", "350");
+  note.setAttribute("y", "421");
+  note.setAttribute("text-anchor", "middle");
   note.setAttribute("class", "twin-measurement-note");
 
   // Première ligne : nature des liaisons analogiques.
   const lineOne = document.createElementNS(NS, "tspan");
-  lineOne.setAttribute("x", "330");
+  lineOne.setAttribute("x", "350");
   lineOne.setAttribute("dy", "0");
   lineOne.textContent = "A0, A1 et A2 : liaisons de mesure,";
 
   // Deuxième ligne : distinction avec le courant d’alimentation.
   const lineTwo = document.createElementNS(NS, "tspan");
-  lineTwo.setAttribute("x", "330");
+  lineTwo.setAttribute("x", "350");
   lineTwo.setAttribute("dy", "13");
   lineTwo.textContent = "pas des chemins principaux de courant.";
 
-  // Troisième ligne : sens conventionnel du courant.
+  // Troisième ligne : avertissement sur la simplification du dessin.
   const lineThree = document.createElementNS(NS, "tspan");
-  lineThree.setAttribute("x", "330");
+  lineThree.setAttribute("x", "350");
   lineThree.setAttribute("dy", "13");
-  lineThree.textContent = "Sens conventionnel : du + vers le −.";
+  lineThree.textContent = "Alimentation des capteurs non représentée.";
 
-  // Quatrième ligne : avertissement sur la simplification du dessin.
-  const lineFour = document.createElementNS(NS, "tspan");
-  lineFour.setAttribute("x", "330");
-  lineFour.setAttribute("dy", "13");
-  lineFour.textContent = "Alimentation des capteurs non représentée.";
-
-  // Insérer les quatre lignes dans le SVG.
-  note.append(lineOne, lineTwo, lineThree, lineFour);
+  // Insérer les trois lignes dans le SVG.
+  note.append(lineOne, lineTwo, lineThree);
   svg.appendChild(note);
 })();
