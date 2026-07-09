@@ -41,8 +41,14 @@ window.TechnoQuestSessionTemplateConfig = {
   ]
 };
 
-// Charger la palette pédagogique et la gouttière renforcée de l’éditeur.
-const pedagogicalPaletteScript = document.createElement("script");
-pedagogicalPaletteScript.src = "seance-1-fusion-palette.js?v=2";
-pedagogicalPaletteScript.async = false;
-document.head.appendChild(pedagogicalPaletteScript);
+// Charger la feuille de style commune à tous les langages et tous les programmes.
+const codeHarmonyStyles = document.createElement("link");
+codeHarmonyStyles.rel = "stylesheet";
+codeHarmonyStyles.href = "../code-harmony.css?v=1";
+document.head.appendChild(codeHarmonyStyles);
+
+// Charger le moteur commun de gouttière et de coloration après la construction du document.
+const codeHarmonyScript = document.createElement("script");
+codeHarmonyScript.src = "../code-harmony.js?v=1";
+codeHarmonyScript.async = false;
+document.head.appendChild(codeHarmonyScript);
