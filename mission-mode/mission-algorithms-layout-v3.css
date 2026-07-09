@@ -44,8 +44,15 @@
   pointer-events: none;
 }
 
+/* Règle de fallback explicite pour les connecteurs reconstruits par le moteur layout-v3.
+   Cyan vif + épaisseur pour visibilité maximale sur fond sombre, indépendant du dégradé.
+   Les attributs inline sur les <path> (dans layout-v3.js) assurent le rendu standalone du SVG téléchargé. */
 .algorithm-premium-svg .algorithm-connector {
-  stroke-width: 4.5px;
+  stroke: #67e8f9;
+  stroke-width: 5px;
+  stroke-opacity: 0.92;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .algorithm-premium-svg .algorithm-loop-connector {
@@ -59,9 +66,11 @@
   fill: #fff3a3;
 }
 
-/* La séance 1 devient un parcours compact sur deux rangées en écran paysage. */
+/* La séance 1 utilise une disposition verticale centrée (plus lisible que le compact horizontal).
+   Le ratio plus haut permet d'afficher la pile + le retour de boucle sans contrainte excessive. */
 .algorithm-premium-card.algorithm-layout-compact .algorithm-premium-svg {
-  aspect-ratio: 1100 / 420;
+  aspect-ratio: 1100 / 780;
+  min-height: 520px;
 }
 
 /* Les textes restent nets même lorsque le SVG est réduit. */

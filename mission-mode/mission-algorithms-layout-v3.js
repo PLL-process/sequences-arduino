@@ -8,6 +8,11 @@
  * - il corrige les retours arrière, notamment la maintenance de la séance 7 ;
  * - il vérifie automatiquement que les connecteurs ne traversent aucun autre bloc ;
  * - il retire le titre visuel répété à l’intérieur du SVG, tout en conservant title/desc.
+ * 
+ * CORRECTION séance 1 (commit suivant) :
+ * - Disposition verticale conventionnelle centrée pour ordre de lecture évident (collégiens).
+ * - Retour boucle via loop-right (couloir latéral droit visible).
+ * - Connecteurs générés avec attributs inline stroke pour visibilité garantie et SVG téléchargé standalone.
  */
 "use strict";
 
@@ -20,7 +25,7 @@
     1: [
       edge("start", "setup"), edge("setup", "read"), edge("read", "display"),
       edge("display", "safe"), edge("safe", "wait"), edge("wait", "loop"),
-      edge("loop", "read", "Boucle", "loop-top")
+      edge("loop", "read", "Boucle", "loop-right")
     ],
     2: [
       edge("start", "setup"), edge("setup", "read"), edge("read", "compare"),
@@ -70,15 +75,16 @@
     ]
   };
 
-  // La séance 1 est linéaire : elle utilise mieux l’écran paysage avec deux rangées.
+  // La séance 1 utilise une disposition verticale conventionnelle centrée.
+  // Flux descendant évident pour collégiens ; retour boucle latéral droit (loop-right) clair et sans traversée.
   const SESSION_ONE_LAYOUT = {
-    start: { x: 30, y: 70 },
-    setup: { x: 290, y: 70 },
-    read: { x: 550, y: 70 },
-    display: { x: 810, y: 70 },
-    safe: { x: 810, y: 250 },
-    wait: { x: 550, y: 250 },
-    loop: { x: 290, y: 250 }
+    start: { x: 380, y: 50 },
+    setup: { x: 380, y: 145 },
+    read: { x: 380, y: 240 },
+    display: { x: 380, y: 335 },
+    safe: { x: 380, y: 430 },
+    wait: { x: 380, y: 525 },
+    loop: { x: 380, y: 620 }
   };
 
   function edge(source, target, label = "", kind = "auto") {
@@ -166,7 +172,7 @@
   function route(source, target, kind, bounds) {
     const gap = 11;
 
-    // La séance 1 revient par le haut : une arrivée latérale traverserait le bloc Afficher.
+    // Retour par le haut (legacy pour layout horizontal séance 1 ; conservé pour compatibilité).
     if (kind === "loop-top") {
       const laneX = Math.max(1062, bounds.maxRight + 32);
       const topY = Math.max(18, bounds.minTop - 32);
@@ -299,15 +305,15 @@
       { x: laneX, y: target.centerY },
       { x: target.right + gap, y: target.centerY }
     ];
-    return {
-      points,
-      d: pathData(points),
-      labelX: laneX - 12,
-      labelY: (source.centerY + target.centerY) / 2 - 8,
-      labelAnchor: "end",
-      extentRight: laneX
-    };
-  }
+      return {
+        points,
+        d: pathData(points),
+        labelX: laneX - 12,
+        labelY: (source.centerY + target.centerY) / 2 - 8,
+        labelAnchor: "end",
+        extentRight: laneX
+      };
+    }
 
   // Détecter si un segment orthogonal traverse l’intérieur d’un autre bloc.
   function segmentCrossesBox(first, second, box) {
@@ -346,6 +352,7 @@
   }
 
   // Reconstruire les connecteurs afin qu’ils n’entrent plus dans les formes.
+  // Les attributs inline stroke assurent visibilité et fonctionnement du SVG téléchargé seul.
   function rebuildEdges(svg, sessionId, nodeMap) {
     svg.querySelectorAll(".algorithm-connector,.algorithm-branch-label,.algorithm-layout-connectors").forEach(element => element.remove());
 
@@ -380,7 +387,13 @@
         "data-edge-index": index,
         "data-source": definition.source,
         "data-target": definition.target,
-        "vector-effect": "non-scaling-stroke"
+        "vector-effect": "non-scaling-stroke",
+        // Attributs inline pour visibilité garantie et SVG standalone (téléchargement/impression)
+        stroke: "#67e8f9",
+        "stroke-width": "5",
+        "stroke-opacity": "0.92",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
       });
       layer.appendChild(path);
 
