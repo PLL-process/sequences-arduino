@@ -106,7 +106,7 @@
     5: {
       title: "Économiser l’eau avec une vraie hystérésis",
       subtitle: "Mémoriser l’état précédent de la pompe entre deux seuils distincts.",
-      note: "Correction intégrée : entre le seuil de démarrage et le seuil d’arrêt, aucune nouvelle affectation n’est faite ; pompeActive conserve donc son état précédent.",
+      note: "Correction intégrée : la zone intermédiaire conserve explicitement l’état précédent de pompeActive.",
       nodes: [
         n("start", 410, 25, "start", "Début", "pompeActive = false", "rememberPumpState"),
         n("read", 390, 125, "sensor", "Lire A0 et A2", "Humidité + niveau", "readHumidity"),
@@ -115,15 +115,15 @@
         n("low", 610, 400, "decision", "Humidité < seuil bas ?", "Démarrage", "compareHumidity", 220, 105),
         n("startPump", 520, 560, "memory", "pompeActive = true", "Mémoriser marche", "rememberPumpState"),
         n("high", 760, 560, "decision", "Humidité > seuil haut ?", "Arrêt", "compareStop", 220, 105),
-        n("stopPump", 710, 720, "memory", "pompeActive = false", "Mémoriser arrêt", "rememberPumpState"),
-        n("keep", 900, 720, "memory", "Conserver l’état", "Zone d’hystérésis", "rememberPumpState", 190, 76),
-        n("command", 390, 835, "energy", "Commander D6", "Selon pompeActive", "pumpStart"),
-        n("wait", 390, 950, "process", "Attendre 1 seconde", "Nouvelle mesure", "delay"),
-        n("loop", 410, 1055, "end", "Recommencer", "Mémoire conservée", "delay")
+        n("stopPump", 540, 830, "memory", "pompeActive = false", "Mémoriser arrêt", "rememberPumpState"),
+        n("keep", 850, 780, "memory", "Conserver pompeActive", "Entre seuils : état inchangé", "rememberPumpState", 240, 78),
+        n("command", 390, 980, "energy", "Commander D6", "Selon pompeActive", "pumpStart"),
+        n("wait", 390, 1095, "process", "Attendre 1 seconde", "Nouvelle mesure", "delay"),
+        n("loop", 410, 1210, "end", "Recommencer", "Mémoire conservée", "delay")
       ],
       edges: [
         e("start", "read"), e("read", "water"), e("water", "forceStop", "Oui"), e("water", "low", "Non"),
-        e("low", "startPump", "Oui"), e("low", "high", "Non"), e("high", "stopPump", "Oui"), e("high", "keep", "Non"),
+        e("low", "startPump", "Oui"), e("low", "high", "Non"), e("high", "stopPump", "Oui"), e("high", "keep", "Non : état conservé"),
         e("forceStop", "command"), e("startPump", "command"), e("stopPump", "command"), e("keep", "command"),
         e("command", "wait"), e("wait", "loop")
       ],

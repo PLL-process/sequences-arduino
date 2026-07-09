@@ -47,7 +47,7 @@
     5: [
       edge("start", "read"), edge("read", "water"), edge("water", "forceStop", "Oui"),
       edge("water", "low", "Non"), edge("low", "startPump", "Oui"), edge("low", "high", "Non"),
-      edge("high", "stopPump", "Oui"), edge("high", "keep", "Non"),
+      edge("high", "stopPump", "Oui"), edge("high", "keep", "Non : état conservé"),
       edge("forceStop", "command"), edge("startPump", "command"),
       edge("stopPump", "command"), edge("keep", "command"),
       edge("command", "wait"), edge("wait", "loop"), edge("loop", "read", "Retour", "loop-right")
