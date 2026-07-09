@@ -44,7 +44,7 @@ window.TechnoQuestSessionTemplateConfig = {
 // Charger la feuille de style commune à tous les langages et tous les programmes.
 const codeHarmonyStyles = document.createElement("link");
 codeHarmonyStyles.rel = "stylesheet";
-codeHarmonyStyles.href = "../code-harmony.css?v=2";
+codeHarmonyStyles.href = "../code-harmony.css?v=3";
 document.head.appendChild(codeHarmonyStyles);
 
 // Charger le moteur commun de gouttière et de coloration après la construction du document.
