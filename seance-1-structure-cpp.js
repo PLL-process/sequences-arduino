@@ -50,13 +50,13 @@
           [5,"ACQUÉRIR / MÉMORISER","Lire les capteurs et stocker leurs valeurs dans des variables entières.","int valeurHumidite = analogRead(PIN_HUMIDITE_SOL);","#60a5fa"],
           [6,"COMMUNIQUER","Envoyer les mesures vers le Moniteur Série.","Serial.println(valeurHumidite);","#67e8f9"],
           [7,"TEMPORISER / REBOUCLER","Attendre une seconde, puis laisser loop() recommencer.","delay(1000);","#4ade80"]
-        ].map(step => `<article class="cpp-timeline-item" style="--step:${step[4]}"><div class="cpp-timeline-number">${step[0]}</div><div class="cpp-timeline-card"><h4>${step[1]}</h4><p>${step[2]}</p><pre>${step[3].replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre></div></article>`).join("")}
+        ].map(step => `<article class="cpp-timeline-item" style="--step:${step[4]}"><div class="cpp-timeline-number">${step[0]}</div><div class="cpp-timeline-card"><h4>${step[1]}</h4><p>${step[2]}</p><pre data-language="cpp" data-code-title="Exemple — ${step[1]}">${step[3].replace(/</g,"&lt;").replace(/>/g,"&gt;")}</pre></div></article>`).join("")}
       </div>
     </section>`;
 
   course.classList.add("cpp-structure-course");
   course.innerHTML = `
-    <div class="cpp-structure-intro"><strong>Structure générale d’un programme Arduino en C++ :</strong> un sketch contient des directives éventuelles, des déclarations globales, les deux fonctions obligatoires <code>setup()</code> et <code>loop()</code>, puis éventuellement des fonctions supplémentaires créées pour rendre le programme plus clair.</div>
+    <div class="cpp-structure-intro"><strong>Structure générale d’un programme Arduino en C++ :</strong> un sketch contient des directives éventuelles, des déclarations globales, les deux fonctions obligatoires <code>#setup()</code> et <code>loop()</code>, puis éventuellement des fonctions supplémentaires créées pour rendre le programme plus clair.</div>
 
     <div class="cpp-structure-grid">
       <article class="cpp-structure-card"><span class="tag">Avant setup()</span><h4>Directives, constantes, broches et variables globales</h4><p>On place ici les <code>#include</code>, les constantes de broches et les variables qui doivent être accessibles depuis plusieurs fonctions.</p><p><strong>Constante :</strong> valeur qui ne change pas. <strong>Variable :</strong> valeur qui peut évoluer pendant l’exécution.</p></article>
@@ -67,26 +67,26 @@
       <article class="cpp-structure-card"><span class="tag">Bibliothèques</span><h4>#include selon le matériel utilisé</h4><p><code>#include &lt;Arduino.h&gt;</code> est affiché ici pour comprendre la structure. D’autres bibliothèques ne seront ajoutées que lorsqu’un module en aura réellement besoin, par exemple un écran LCD I²C.</p></article>
     </div>
 
-    <pre class="cpp-structure-code"><span class="comment">// 1. DIRECTIVES ÉVENTUELLES</span>
-<span class="sec">#include &lt;Arduino.h&gt;</span>
+    <pre class="cpp-structure-code" data-language="cpp" data-code-title="Structure générale d’un programme C++ Arduino">// 1. DIRECTIVES ÉVENTUELLES
+#include &lt;Arduino.h&gt;
 
-<span class="comment">// 2. DÉCLARATIONS GLOBALES</span>
-const int PIN_CAPTEUR = A0;      <span class="comment">// constante de broche</span>
-int derniereMesure = 0;          <span class="comment">// variable globale éventuelle</span>
+// 2. DÉCLARATIONS GLOBALES
+const int PIN_CAPTEUR = A0;      // constante de broche
+int derniereMesure = 0;          // variable globale éventuelle
 
-<span class="comment">// 3. FONCTION OBLIGATOIRE : UNE SEULE FOIS</span>
+// 3. FONCTION OBLIGATOIRE : UNE SEULE FOIS
 void setup() {
   Serial.begin(9600);
 }
 
-<span class="comment">// 4. FONCTION OBLIGATOIRE : EN BOUCLE</span>
+// 4. FONCTION OBLIGATOIRE : EN BOUCLE
 void loop() {
-  int mesure = analogRead(PIN_CAPTEUR); <span class="comment">// variable locale</span>
+  int mesure = analogRead(PIN_CAPTEUR); // variable locale
   Serial.println(mesure);
   delay(1000);
 }
 
-<span class="opt">// 5. FONCTION SUPPLÉMENTAIRE OPTIONNELLE</span>
+// 5. FONCTION SUPPLÉMENTAIRE OPTIONNELLE
 void afficherMessage() {
   Serial.println("Mesure effectuee");
 }</pre>
