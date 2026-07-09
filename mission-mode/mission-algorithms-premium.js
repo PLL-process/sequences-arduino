@@ -115,11 +115,11 @@
         n("low", 610, 400, "decision", "Humidité < seuil bas ?", "Démarrage", "compareHumidity", 220, 105),
         n("startPump", 520, 560, "memory", "pompeActive = true", "Mémoriser marche", "rememberPumpState"),
         n("high", 760, 560, "decision", "Humidité > seuil haut ?", "Arrêt", "compareStop", 220, 105),
-        n("stopPump", 540, 830, "memory", "pompeActive = false", "Mémoriser arrêt", "rememberPumpState"),
-        n("keep", 850, 780, "memory", "Conserver pompeActive", "Entre seuils : état inchangé", "rememberPumpState", 240, 78),
-        n("command", 390, 980, "energy", "Commander D6", "Selon pompeActive", "pumpStart"),
-        n("wait", 390, 1095, "process", "Attendre 1 seconde", "Nouvelle mesure", "delay"),
-        n("loop", 410, 1210, "end", "Recommencer", "Mémoire conservée", "delay")
+        n("stopPump", 250, 835, "memory", "pompeActive = false", "Mémoriser arrêt", "rememberPumpState"),
+        n("keep", 800, 925, "memory", "Conserver pompeActive", "Entre seuils : état inchangé", "rememberPumpState", 240, 78),
+        n("command", 390, 1085, "energy", "Commander D6", "Selon pompeActive", "pumpStart"),
+        n("wait", 390, 1200, "process", "Attendre 1 seconde", "Nouvelle mesure", "delay"),
+        n("loop", 410, 1315, "end", "Recommencer", "Mémoire conservée", "delay")
       ],
       edges: [
         e("start", "read"), e("read", "water"), e("water", "forceStop", "Oui"), e("water", "low", "Non"),
@@ -276,7 +276,7 @@
       ${gradient("Amber", "#451a03", "#b45309")}
       <filter id="algorithmSoftGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       <filter id="algorithmStrongGlow" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="8" result="blur"/><feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.15  0 1 0 0 0.65  0 0 1 0 0.95  0 0 0 1 0"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <marker id="algorithmArrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#67e8f9"/></marker>
+      <marker id="algorithmArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#67e8f9"/></marker>
       <style>
         .algorithm-connector{fill:none;stroke:url(#algorithmConnectorGradient);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:url(#algorithmSoftGlow)}
         .algorithm-branch-label{fill:#dff7ff;font:900 12px Arial;paint-order:stroke;stroke:#06111b;stroke-width:4px}
