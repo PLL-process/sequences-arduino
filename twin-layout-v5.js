@@ -12,7 +12,20 @@
   const pumpText = findText("POMPE");
   const supplyText = findText("ALIMENTATION");
   const relayText = findText("RELAIS");
+  const humidityLabel = findText("Humidité A0");
+  const lightLabel = findText("Lumière A1");
   if (!tankText || !pumpText || !supplyText || !relayText) return;
+
+  if (humidityLabel) {
+    humidityLabel.textContent = "Capteur d’humidité du sol — A0";
+    humidityLabel.setAttribute("x", "18");
+    humidityLabel.setAttribute("font-size", "12");
+  }
+  if (lightLabel) {
+    lightLabel.textContent = "Capteur de lumière — A1";
+    lightLabel.setAttribute("x", "205");
+    lightLabel.setAttribute("font-size", "12");
+  }
 
   svg.setAttribute("viewBox", "0 0 1000 560");
   const background = svg.querySelector('rect[width="900"][height="510"]');
@@ -156,5 +169,8 @@
   const relayControl = terminal(600, 301, "#fb923c");
   const pumpPlus = terminal(880, 435, "#fb7185");
   const pumpZero = terminal(880, 507, "#60a5fa");
-  svg.append(supplyPlus, supplyZero, relayInput, relayOutput, relayControl, pumpPlus, pumpZero);
+  const humiditySignal = terminal(97, 340, "#60a5fa");
+  const lightSignal = terminal(289, 132, "#facc15");
+  const levelSignal = terminal(800, 210, "#c084fc");
+  svg.append(supplyPlus, supplyZero, relayInput, relayOutput, relayControl, pumpPlus, pumpZero, humiditySignal, lightSignal, levelSignal);
 })();
