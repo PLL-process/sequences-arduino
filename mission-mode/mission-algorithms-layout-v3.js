@@ -6,20 +6,21 @@
  * - il reconstruit toutes les liaisons avec des marges avant les blocs ;
  * - il ajoute un véritable retour de boucle à chaque séance ;
  * - il corrige les retours arrière, notamment la maintenance de la séance 7 ;
+ * - il vérifie automatiquement que les connecteurs ne traversent aucun autre bloc ;
  * - il retire le titre visuel répété à l’intérieur du SVG, tout en conservant title/desc.
  */
 "use strict";
 
 (() => {
   const SVG_NS = "http://www.w3.org/2000/svg";
-  const VERSION = "3";
+  const VERSION = "4";
 
   // Décrire les liaisons de chaque séance afin de pouvoir les recalculer après adaptation.
   const SESSION_EDGES = {
     1: [
       edge("start", "setup"), edge("setup", "read"), edge("read", "display"),
       edge("display", "safe"), edge("safe", "wait"), edge("wait", "loop"),
-      edge("loop", "read", "Boucle", "loop-right")
+      edge("loop", "read", "Boucle", "loop-top")
     ],
     2: [
       edge("start", "setup"), edge("setup", "read"), edge("read", "compare"),
@@ -119,6 +120,7 @@
     const dx = number(node.dataset.layoutDx);
     const dy = number(node.dataset.layoutDy);
     return {
+      id: node.dataset.node || "",
       x: x + dx,
       y: y + dy,
       width,
@@ -143,28 +145,83 @@
     node.setAttribute("transform", `translate(${node.dataset.layoutDx} ${node.dataset.layoutDy})`);
   }
 
+  // Calculer les limites réellement occupées par les blocs.
+  function graphBounds(nodeMap) {
+    const boxes = [...nodeMap.values()];
+    if (!boxes.length) return { minLeft: 0, maxRight: 1100, minTop: 0, maxBottom: 420 };
+    return {
+      minLeft: Math.min(...boxes.map(box => box.left)),
+      maxRight: Math.max(...boxes.map(box => box.right)),
+      minTop: Math.min(...boxes.map(box => box.top)),
+      maxBottom: Math.max(...boxes.map(box => box.bottom))
+    };
+  }
+
+  // Convertir une liste de points orthogonaux en chemin SVG.
+  function pathData(points) {
+    return points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
+  }
+
   // Construire un trajet orthogonal qui s’arrête avant le bloc cible.
-  function route(source, target, kind) {
+  function route(source, target, kind, bounds) {
     const gap = 11;
 
-    if (kind === "loop-right") {
-      const laneX = 1062;
-      const topY = 24;
+    // La séance 1 revient par le haut : une arrivée latérale traverserait le bloc Afficher.
+    if (kind === "loop-top") {
+      const laneX = Math.max(1062, bounds.maxRight + 32);
+      const topY = Math.max(18, bounds.minTop - 32);
+      const points = [
+        { x: source.centerX, y: source.bottom + gap },
+        { x: laneX, y: source.bottom + gap },
+        { x: laneX, y: topY },
+        { x: target.centerX, y: topY },
+        { x: target.centerX, y: target.top - gap }
+      ];
       return {
-        d: `M ${source.centerX} ${source.bottom + gap} H ${laneX} V ${topY} H ${target.centerX} V ${target.top - gap}`,
+        points,
+        d: pathData(points),
         labelX: laneX - 12,
         labelY: Math.max(topY + 18, (source.bottom + topY) / 2),
-        labelAnchor: "end"
+        labelAnchor: "end",
+        extentRight: laneX
       };
     }
 
-    if (kind === "loop-left") {
-      const laneX = 34;
+    // Les autres retours principaux rejoignent la cible par son côté droit.
+    if (kind === "loop-right") {
+      const laneX = bounds.maxRight + 34;
+      const points = [
+        { x: source.right + gap, y: source.centerY },
+        { x: laneX, y: source.centerY },
+        { x: laneX, y: target.centerY },
+        { x: target.right + gap, y: target.centerY }
+      ];
       return {
-        d: `M ${source.left - gap} ${source.centerY} H ${laneX} V ${target.centerY} H ${target.left - gap}`,
+        points,
+        d: pathData(points),
+        labelX: laneX - 12,
+        labelY: (source.centerY + target.centerY) / 2 - 8,
+        labelAnchor: "end",
+        extentRight: laneX
+      };
+    }
+
+    // La boucle corrective de maintenance utilise un couloir extérieur à gauche.
+    if (kind === "loop-left") {
+      const laneX = Math.max(24, bounds.minLeft - 34);
+      const points = [
+        { x: source.left - gap, y: source.centerY },
+        { x: laneX, y: source.centerY },
+        { x: laneX, y: target.centerY },
+        { x: target.left - gap, y: target.centerY }
+      ];
+      return {
+        points,
+        d: pathData(points),
         labelX: laneX + 10,
         labelY: (source.centerY + target.centerY) / 2 - 8,
-        labelAnchor: "start"
+        labelAnchor: "start",
+        extentRight: bounds.maxRight
       };
     }
 
@@ -178,22 +235,38 @@
         const startX = source.right + gap;
         const endX = target.left - gap;
         const middleX = startX + (endX - startX) / 2;
+        const points = [
+          { x: startX, y: source.centerY },
+          { x: middleX, y: source.centerY },
+          { x: middleX, y: target.centerY },
+          { x: endX, y: target.centerY }
+        ];
         return {
-          d: `M ${startX} ${source.centerY} H ${middleX} V ${target.centerY} H ${endX}`,
+          points,
+          d: pathData(points),
           labelX: middleX,
           labelY: Math.min(source.centerY, target.centerY) - 10,
-          labelAnchor: "middle"
+          labelAnchor: "middle",
+          extentRight: Math.max(...points.map(point => point.x))
         };
       }
 
       const startX = source.left - gap;
       const endX = target.right + gap;
       const middleX = startX + (endX - startX) / 2;
+      const points = [
+        { x: startX, y: source.centerY },
+        { x: middleX, y: source.centerY },
+        { x: middleX, y: target.centerY },
+        { x: endX, y: target.centerY }
+      ];
       return {
-        d: `M ${startX} ${source.centerY} H ${middleX} V ${target.centerY} H ${endX}`,
+        points,
+        d: pathData(points),
         labelX: middleX,
         labelY: Math.min(source.centerY, target.centerY) - 10,
-        labelAnchor: "middle"
+        labelAnchor: "middle",
+        extentRight: Math.max(...points.map(point => point.x))
       };
     }
 
@@ -202,22 +275,68 @@
       const startY = source.bottom + gap;
       const endY = target.top - gap;
       const middleY = startY + Math.max(24, (endY - startY) / 2);
+      const points = [
+        { x: source.centerX, y: startY },
+        { x: source.centerX, y: middleY },
+        { x: target.centerX, y: middleY },
+        { x: target.centerX, y: endY }
+      ];
       return {
-        d: `M ${source.centerX} ${startY} V ${middleY} H ${target.centerX} V ${endY}`,
+        points,
+        d: pathData(points),
         labelX: source.centerX + (target.centerX >= source.centerX ? 18 : -18),
         labelY: middleY - 8,
-        labelAnchor: target.centerX >= source.centerX ? "start" : "end"
+        labelAnchor: target.centerX >= source.centerX ? "start" : "end",
+        extentRight: Math.max(...points.map(point => point.x))
       };
     }
 
-    // Sécurité pour un retour arrière non déclaré : utiliser la marge droite.
-    const laneX = 1062;
+    // Sécurité pour un retour arrière non déclaré : utiliser un couloir droit dynamique.
+    const laneX = bounds.maxRight + 34;
+    const points = [
+      { x: source.right + gap, y: source.centerY },
+      { x: laneX, y: source.centerY },
+      { x: laneX, y: target.centerY },
+      { x: target.right + gap, y: target.centerY }
+    ];
     return {
-      d: `M ${source.right + gap} ${source.centerY} H ${laneX} V ${target.centerY} H ${target.right + gap}`,
+      points,
+      d: pathData(points),
       labelX: laneX - 12,
       labelY: (source.centerY + target.centerY) / 2 - 8,
-      labelAnchor: "end"
+      labelAnchor: "end",
+      extentRight: laneX
     };
+  }
+
+  // Détecter si un segment orthogonal traverse l’intérieur d’un autre bloc.
+  function segmentCrossesBox(first, second, box) {
+    if (first.x === second.x) {
+      const low = Math.min(first.y, second.y);
+      const high = Math.max(first.y, second.y);
+      return first.x > box.left && first.x < box.right && Math.max(low, box.top) < Math.min(high, box.bottom);
+    }
+    if (first.y === second.y) {
+      const low = Math.min(first.x, second.x);
+      const high = Math.max(first.x, second.x);
+      return first.y > box.top && first.y < box.bottom && Math.max(low, box.left) < Math.min(high, box.right);
+    }
+    return false;
+  }
+
+  // Vérifier qu’un trajet n’entre dans aucun bloc autre que sa source et sa cible.
+  function routingCollisions(points, sourceId, targetId, nodeMap) {
+    const collisions = [];
+    nodeMap.forEach((box, nodeId) => {
+      if (nodeId === sourceId || nodeId === targetId) return;
+      for (let index = 0; index < points.length - 1; index += 1) {
+        if (segmentCrossesBox(points[index], points[index + 1], box)) {
+          collisions.push(nodeId);
+          break;
+        }
+      }
+    });
+    return collisions;
   }
 
   function svgElement(name, attributes = {}) {
@@ -235,17 +354,32 @@
     if (firstNode) svg.insertBefore(layer, firstNode);
     else svg.appendChild(layer);
 
+    const bounds = graphBounds(nodeMap);
+    const warnings = [];
+    let extentRight = bounds.maxRight;
+
     (SESSION_EDGES[sessionId] || []).forEach((definition, index) => {
       const source = nodeMap.get(definition.source);
       const target = nodeMap.get(definition.target);
-      if (!source || !target) return;
+      if (!source || !target) {
+        warnings.push(`liaison ${definition.source} → ${definition.target} incomplète`);
+        return;
+      }
 
-      const geometry = route(source, target, definition.kind);
+      const geometry = route(source, target, definition.kind, bounds);
+      extentRight = Math.max(extentRight, geometry.extentRight || bounds.maxRight);
+      const collisions = routingCollisions(geometry.points, definition.source, definition.target, nodeMap);
+      if (collisions.length) {
+        warnings.push(`${definition.source} → ${definition.target} traverse ${collisions.join(", ")}`);
+      }
+
       const path = svgElement("path", {
         class: `algorithm-connector${definition.kind.startsWith("loop") ? " algorithm-loop-connector" : ""}`,
         d: geometry.d,
         "marker-end": "url(#algorithmArrow)",
         "data-edge-index": index,
+        "data-source": definition.source,
+        "data-target": definition.target,
         "vector-effect": "non-scaling-stroke"
       });
       layer.appendChild(path);
@@ -261,6 +395,10 @@
         layer.appendChild(text);
       }
     });
+
+    svg.dataset.routingAudit = warnings.length ? "warning" : "ok";
+    if (warnings.length) console.warn(`TechnoQuest — séance ${sessionId} :`, warnings);
+    return { bounds, extentRight, warnings };
   }
 
   function applyLayout(svg) {
@@ -286,12 +424,12 @@
       if (box) nodeMap.set(node.dataset.node, box);
     });
 
-    rebuildEdges(svg, sessionId, nodeMap);
-
-    const bottom = Math.max(...[...nodeMap.values()].map(box => box.bottom));
-    const height = Math.max(420, bottom + 58);
-    svg.setAttribute("viewBox", `0 0 1100 ${height}`);
+    const audit = rebuildEdges(svg, sessionId, nodeMap);
+    const width = Math.max(1100, Math.ceil(audit.extentRight + 28));
+    const height = Math.max(420, audit.bounds.maxBottom + 58);
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.setAttribute("preserveAspectRatio", "xMidYMin meet");
+    card.dataset.algorithmRoutingAudit = svg.dataset.routingAudit;
   }
 
   function scan(root = document) {
