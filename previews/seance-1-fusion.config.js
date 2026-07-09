@@ -40,3 +40,9 @@ window.TechnoQuestSessionTemplateConfig = {
     { label: "Justification écrite", points: 4 }
   ]
 };
+
+// Charger la palette pédagogique et la gouttière renforcée de l’éditeur.
+const pedagogicalPaletteScript = document.createElement("script");
+pedagogicalPaletteScript.src = "seance-1-fusion-palette.js?v=2";
+pedagogicalPaletteScript.async = false;
+document.head.appendChild(pedagogicalPaletteScript);
