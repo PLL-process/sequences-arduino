@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Prévisualisation de la séance 1 fusionnant le template moderne et les contenus pédagogiques du parcours TechnoQuest Jardin connecté.">
+  <title>Séance 1 fusionnée — TechnoQuest Jardin connecté</title>
+  <link rel="stylesheet" href="../templates/session-template.css?v=1">
+  <link rel="stylesheet" href="seance-1-fusion.css?v=1">
+</head>
+<body data-session="1">
+  <a class="skip-link" href="#mainContent">Aller au contenu principal</a>
+
+  <header class="tq-header">
+    <div class="tq-header__identity">
+      <a class="tq-brand" href="../parcours.html" aria-label="Retour au parcours TechnoQuest">
+        <span class="tq-brand__mark" aria-hidden="true">TQ</span>
+        <span><strong>TechnoQuest</strong><small>Jardin connecté</small></span>
+      </a>
+      <div class="tq-session-heading">
+        <p class="tq-eyebrow">Prévisualisation sur branche — Séance 1 sur 8</p>
+        <h1>Observer les signaux</h1>
+        <p>Version fusionnée : interface du template + contenus et moteurs de la séance actuelle</p>
+      </div>
+    </div>
+
+    <div class="tq-header__tools">
+      <div class="tq-global-progress" aria-label="Progression globale du parcours">
+        <div class="tq-global-progress__label"><span>Parcours</span><strong>1 / 8</strong></div>
+        <div class="tq-progress-track" aria-hidden="true"><span style="width:12.5%"></span></div>
+      </div>
+      <div class="tq-mode-switch" role="group" aria-label="Choisir le mode de travail">
+        <button id="classicModeButton" class="tq-button tq-button--active" type="button" aria-pressed="true">Mode Classique</button>
+        <button id="missionModeButton" class="tq-button" type="button" aria-pressed="false">Mode Mission</button>
+      </div>
+    </div>
+  </header>
+
+  <main id="mainContent" class="tq-layout">
+    <aside class="tq-sidebar" aria-label="Étapes de la séance">
+      <div class="tq-sidebar__progress"><span>Progression de la séance</span><strong id="sessionProgressText">0 %</strong></div>
+      <div class="tq-progress-track" aria-hidden="true"><span id="sessionProgressBar"></span></div>
+      <nav class="tq-step-nav">
+        <a href="#phase1"><span>1</span> Explorer</a>
+        <a href="#phase2"><span>2</span> Comprendre</a>
+        <a href="#phase3"><span>3</span> Programmer</a>
+        <a href="#phase4"><span>4</span> Tester</a>
+        <a href="#phase5"><span>5</span> Réfléchir</a>
+        <a href="#phase6"><span>6</span> Valider</a>
+      </nav>
+      <p class="tq-sidebar__note">Cette page est une prévisualisation. Elle n’est pas fusionnée dans <code>main</code>.</p>
+    </aside>
+
+    <div class="tq-content">
+      <section id="phase1" class="tq-section" data-phase="1">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">1</span>
+          <div><p class="tq-eyebrow">Explorer</p><h2>Observer le système avant de coder</h2></div>
+        </div>
+
+        <div class="tq-grid tq-grid--two">
+          <article class="tq-card tq-card--context">
+            <h3>Situation déclenchante</h3>
+            <p>Les plantes du jardin ne peuvent pas communiquer directement leur état. Il faut lire les trois capteurs et transmettre leurs mesures sans démarrer la pompe.</p>
+          </article>
+          <article class="tq-card">
+            <h3>Objectifs visibles</h3>
+            <ul class="tq-objective-list">
+              <li>Repérer A0, A1, A2 et D6.</li>
+              <li>Distinguer mesure, traitement et puissance.</li>
+              <li>Lire les trois valeurs analogiques.</li>
+              <li>Afficher les mesures dans le Moniteur Série.</li>
+              <li>Maintenir D6 à LOW.</li>
+            </ul>
+          </article>
+        </div>
+
+        <article class="tq-card tq-card--twin">
+          <div class="tq-card__heading">
+            <div><p class="tq-eyebrow">Jumeau numérique réel</p><h3>Observer les flux du jardin connecté</h3></div>
+            <button id="twinDemoButton" class="tq-button tq-button--primary" type="button">Lancer l’observation</button>
+          </div>
+          <div id="templateTwin" class="tq-real-twin-host" aria-label="Jumeau numérique complet du Jardin connecté"></div>
+        </article>
+      </section>
+
+      <section id="phase2" class="tq-section" data-phase="2">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">2</span>
+          <div><p class="tq-eyebrow">Comprendre</p><h2>Relier le système, l’algorithme et le code</h2></div>
+        </div>
+
+        <div class="tq-grid tq-grid--two fusion-chain-grid">
+          <article class="tq-card fusion-chain-card fusion-chain-card--info">
+            <h3>Chaîne d’information</h3>
+            <p><strong>Acquérir :</strong> A0 humidité, A1 lumière, A2 niveau d’eau.</p>
+            <p><strong>Traiter :</strong> l’Arduino mémorise les trois mesures.</p>
+            <p><strong>Communiquer :</strong> le Moniteur Série affiche les valeurs.</p>
+          </article>
+          <article class="tq-card fusion-chain-card fusion-chain-card--energy">
+            <h3>Chaîne d’énergie</h3>
+            <p><strong>Alimenter :</strong> l’alimentation séparée fournit la TBT.</p>
+            <p><strong>Distribuer :</strong> le relais D6 autorise ou coupe la puissance.</p>
+            <p><strong>Convertir :</strong> la pompe transforme l’énergie électrique en mouvement de l’eau.</p>
+          </article>
+        </div>
+
+        <article class="tq-card fusion-algorithm-card">
+          <div class="tq-card__heading">
+            <div><h3>Algorigramme visuel</h3><p>Le bloc actif est surligné pendant l’exécution.</p></div>
+            <button id="algorithmReplayButton" class="tq-button" type="button">Rejouer</button>
+          </div>
+          <div id="algorithmFlow" class="tq-flowchart" aria-label="Algorigramme de la séance 1"></div>
+        </article>
+      </section>
+
+      <section id="phase3" class="tq-section" data-phase="3">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">3</span>
+          <div><p class="tq-eyebrow">Programmer</p><h2>Compléter le programme comme dans un IDE</h2></div>
+        </div>
+
+        <article class="tq-card fusion-ide-card">
+          <div class="tq-code-toolbar">
+            <label for="guidanceLevel">Niveau d’aide
+              <select id="guidanceLevel">
+                <option value="guided">Guidé</option>
+                <option value="standard">Accompagné</option>
+                <option value="autonomous">Autonome</option>
+              </select>
+            </label>
+            <div class="tq-code-toolbar__actions">
+              <button id="checkCodeButton" class="tq-button" type="button">Vérifier</button>
+              <button id="runCodeButton" class="tq-button tq-button--primary" type="button">Exécuter</button>
+              <button id="restoreCodeButton" class="tq-button tq-button--warning" type="button">Restaurer</button>
+              <button id="loadReferenceButton" class="tq-button" type="button">Charger l’exemple complet</button>
+              <button id="copyCodeButton" class="tq-button" type="button">Copier</button>
+              <button id="downloadCodeButton" class="tq-button" type="button">Télécharger .ino</button>
+            </div>
+          </div>
+
+          <div class="fusion-ide-grid">
+            <div class="fusion-editor-panel">
+              <div class="fusion-editor-titlebar">
+                <span class="fusion-dot fusion-dot--red"></span>
+                <span class="fusion-dot fusion-dot--yellow"></span>
+                <span class="fusion-dot fusion-dot--green"></span>
+                <strong>mission-1-faire-parler-les-capteurs.ino</strong>
+                <span class="fusion-language">C++ Arduino</span>
+              </div>
+              <div id="editorShell" class="fusion-editor-shell">
+                <div class="fusion-line-numbers" id="lineNumbers" aria-hidden="true"></div>
+                <div id="codeArrow" class="fusion-code-arrow" aria-hidden="true">➤</div>
+                <pre id="codeHighlight" class="fusion-code-highlight" aria-hidden="true"></pre>
+                <textarea id="codeEditor" class="fusion-code-editor" spellcheck="false" aria-describedby="codeFeedback" aria-label="Éditeur C++ Arduino"></textarea>
+              </div>
+              <p id="codeFeedback" class="tq-feedback" aria-live="polite">La flèche jaune indique la prochaine ligne à compléter.</p>
+            </div>
+
+            <div class="tq-serial-panel fusion-serial-panel">
+              <div class="tq-serial-panel__heading">
+                <div><p class="tq-eyebrow">Retour immédiat</p><h3>Moniteur Série simulé</h3></div>
+                <button id="clearSerialButton" class="tq-button tq-button--small" type="button">Effacer</button>
+              </div>
+              <pre id="serialMonitor" aria-live="polite">[Moniteur Série] En attente d’exécution…</pre>
+              <div class="fusion-safety-note"><strong>Sécurité :</strong> cette séance observe les capteurs. La pompe doit rester arrêtée.</div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section id="phase4" class="tq-section" data-phase="4">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">4</span>
+          <div><p class="tq-eyebrow">Tester</p><h2>Recevoir un feedback automatique précis</h2></div>
+        </div>
+        <div class="tq-grid tq-grid--two">
+          <article class="tq-card"><h3>Validation automatique</h3><ul id="automaticCheckList" class="tq-check-list"></ul></article>
+          <article class="tq-card"><h3>Je sais faire…</h3><div id="microObjectiveList" class="tq-micro-objectives"></div></article>
+        </div>
+      </section>
+
+      <section id="phase5" class="tq-section" data-phase="5">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">5</span>
+          <div><p class="tq-eyebrow">Réfléchir</p><h2>Expliquer le fonctionnement observé</h2></div>
+        </div>
+        <article class="tq-card">
+          <label for="reflectionText"><strong>Réponse argumentée</strong></label>
+          <p>Explique pourquoi A0, A1 et A2 sont des liaisons de mesure et pourquoi D6 doit rester à LOW pendant cette première séance.</p>
+          <textarea id="reflectionText" class="tq-reflection" placeholder="A0, A1 et A2 transmettent…"></textarea>
+          <p id="reflectionStatus" class="tq-feedback" aria-live="polite">La réponse est enregistrée automatiquement dans ce navigateur.</p>
+        </article>
+      </section>
+
+      <section id="phase6" class="tq-section tq-mission-only" data-phase="6" hidden>
+        <div class="tq-section__heading">
+          <span class="tq-section__number">6</span>
+          <div><p class="tq-eyebrow">Valider</p><h2>Mission évaluée sur 20</h2></div>
+        </div>
+        <article class="tq-card">
+          <div class="tq-card__heading"><div><h3>Critères explicites</h3><p>La vitesse ne retire aucun point.</p></div><strong id="scoreTotal" class="tq-score">0 / 20</strong></div>
+          <div id="assessmentGrid" class="tq-assessment-grid"></div>
+        </article>
+      </section>
+
+      <nav class="tq-session-navigation" aria-label="Navigation entre les séances">
+        <a class="tq-button" href="../seance-1.html">← Voir la séance 1 actuelle</a>
+        <a class="tq-button tq-button--primary" href="../seance-2.html">Séance 2 actuelle →</a>
+      </nav>
+    </div>
+  </main>
+
+  <script src="seance-1-fusion.config.js?v=1"></script>
+  <script src="../templates/real-twin.js?v=1"></script>
+  <script src="seance-1-fusion.js?v=1"></script>
+</body>
+</html>
