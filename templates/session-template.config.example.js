@@ -172,7 +172,7 @@ document.head.appendChild(realTwinScript);
 // Charger la feuille de style commune aux programmes et à tous les langages reconnus.
 const codeHarmonyStyles = document.createElement("link");
 codeHarmonyStyles.rel = "stylesheet";
-codeHarmonyStyles.href = "../code-harmony.css?v=1";
+codeHarmonyStyles.href = "../code-harmony.css?v=2";
 document.head.appendChild(codeHarmonyStyles);
 
 // Charger le moteur commun de coloration, de légende et de gouttière.
