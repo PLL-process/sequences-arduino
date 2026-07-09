@@ -19,7 +19,7 @@
 .twin-ground-label-text{fill:#111827;font-size:12px;font-weight:950;paint-order:stroke;stroke:#f8fafc;stroke-width:3px;stroke-linejoin:round}
 .twin-sensor-label{font-weight:900;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;filter:drop-shadow(0 0 3px rgba(255,255,255,.95))}
 .twin-level-signal{filter:drop-shadow(0 0 3px rgba(192,132,252,.7))}
-.twin-measurement-note{fill:#f8fafc;font-size:9.5px;font-weight:850;paint-order:stroke;stroke:#07131f;stroke-width:3px;stroke-linejoin:round;letter-spacing:.01em}
+.twin-measurement-note{fill:#f8fafc;font-size:9.5px;font-weight:850;paint-order:stroke;stroke:#07131f;stroke-width:2px;stroke-linejoin:round;letter-spacing:.01em}
 .twin-arduino-supply rect{fill:#172033;stroke:#ef4444;stroke-width:2.5}
 .twin-arduino-supply text:first-of-type{fill:#fee2e2;font-size:12px;font-weight:950}
 .twin-arduino-supply text:last-of-type{fill:#fecaca;font-size:10px;font-weight:800}
