@@ -25,6 +25,6 @@
 .twin-component-gap{filter:drop-shadow(0 8px 10px rgba(0,0,0,.32))}
 @keyframes twinCurrentMove{to{stroke-dashoffset:-44}}
 @keyframes twinWaterMove{to{stroke-dashoffset:-56}}
-@keyframes twinGroundMove{to{stroke-dashoffset:-38}}
+@keyframes twinGroundMove{to{stroke-dashoffset:38}}
 @keyframes twinLogicPowerMove{to{stroke-dashoffset:-38}}
 @media(prefers-reduced-motion:reduce){.twin-current-flow,.twin-water-flow-v5,.twin-ground-flow,.twin-logic-power-flow{animation:none!important}}
