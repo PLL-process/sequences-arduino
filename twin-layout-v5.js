@@ -17,12 +17,12 @@
   if (!tankText || !pumpText || !supplyText || !relayText) return;
 
   if (humidityLabel) {
-    humidityLabel.textContent = "Capteur d’humidité du sol — A0";
+    humidityLabel.textContent = "Signal d’humidité du sol — A0";
     humidityLabel.setAttribute("x", "18");
     humidityLabel.setAttribute("font-size", "12");
   }
   if (lightLabel) {
-    lightLabel.textContent = "Capteur de lumière — A1";
+    lightLabel.textContent = "Signal de lumière — A1";
     lightLabel.setAttribute("x", "205");
     lightLabel.setAttribute("font-size", "12");
   }
