@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <!-- Encodage et affichage adaptatif. -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <!-- Description destinée aux moteurs de recherche et aux outils d’accessibilité. -->
+  <meta name="description" content="Template réutilisable TechnoQuest pour les séances du Jardin connecté.">
+
+  <!-- Titre de la page de démonstration. -->
+  <title>Template de séance — TechnoQuest Jardin connecté</title>
+
+  <!-- Feuille de style autonome du template. -->
+  <link rel="stylesheet" href="session-template.css?v=1">
+</head>
+<body>
+  <!-- Lien d’évitement utile au clavier et aux lecteurs d’écran. -->
+  <a class="skip-link" href="#mainContent">Aller au contenu principal</a>
+
+  <!-- En-tête commun à toutes les séances. -->
+  <header class="tq-header">
+    <div class="tq-header__identity">
+      <a id="homeLink" class="tq-brand" href="../parcours.html" aria-label="Retour au parcours TechnoQuest">
+        <span class="tq-brand__mark" aria-hidden="true">TQ</span>
+        <span>
+          <strong>TechnoQuest</strong>
+          <small>Jardin connecté</small>
+        </span>
+      </a>
+
+      <div class="tq-session-heading">
+        <p id="sessionEyebrow" class="tq-eyebrow">Séance 2 sur 8</p>
+        <h1 id="sessionTitle">Calibrer un seuil</h1>
+        <p id="sessionSubtitle">Transformer des mesures en décision fiable</p>
+      </div>
+    </div>
+
+    <!-- Progression globale et choix de mode. -->
+    <div class="tq-header__tools">
+      <div class="tq-global-progress" aria-label="Progression globale du parcours">
+        <div class="tq-global-progress__label">
+          <span>Parcours</span>
+          <strong id="globalProgressText">2 / 8</strong>
+        </div>
+        <div class="tq-progress-track" aria-hidden="true">
+          <span id="globalProgressBar"></span>
+        </div>
+      </div>
+
+      <div class="tq-mode-switch" role="group" aria-label="Choisir le mode de travail">
+        <button id="classicModeButton" class="tq-button tq-button--active" type="button" aria-pressed="true">
+          Mode Classique
+        </button>
+        <button id="missionModeButton" class="tq-button" type="button" aria-pressed="false">
+          Mode Mission
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Zone principale organisée en navigation latérale et contenu. -->
+  <main id="mainContent" class="tq-layout">
+    <!-- Navigation interne persistante sur grand écran. -->
+    <aside class="tq-sidebar" aria-label="Étapes de la séance">
+      <div class="tq-sidebar__progress">
+        <span>Progression de la séance</span>
+        <strong id="sessionProgressText">0 %</strong>
+      </div>
+      <div class="tq-progress-track" aria-hidden="true">
+        <span id="sessionProgressBar"></span>
+      </div>
+
+      <nav class="tq-step-nav">
+        <a href="#phase1"><span>1</span> Explorer</a>
+        <a href="#phase2"><span>2</span> Comprendre</a>
+        <a href="#phase3"><span>3</span> Programmer</a>
+        <a href="#phase4"><span>4</span> Tester</a>
+        <a href="#phase5"><span>5</span> Réfléchir</a>
+        <a href="#phase6"><span>6</span> Valider</a>
+      </nav>
+
+      <p class="tq-sidebar__note">
+        Ce modèle est une base de travail. Les moteurs actuels du dépôt restent prioritaires lors de l’intégration finale.
+      </p>
+    </aside>
+
+    <!-- Colonne principale de la séance. -->
+    <div class="tq-content">
+      <!-- Situation de départ et objectifs. -->
+      <section id="phase1" class="tq-section" data-phase="1">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">1</span>
+          <div>
+            <p class="tq-eyebrow">Explorer</p>
+            <h2>Comprendre le problème à résoudre</h2>
+          </div>
+        </div>
+
+        <div class="tq-grid tq-grid--two">
+          <article class="tq-card tq-card--context">
+            <h3>Situation déclenchante</h3>
+            <p id="sessionContext"></p>
+          </article>
+
+          <article class="tq-card">
+            <h3>Objectifs de la séance</h3>
+            <ul id="objectiveList" class="tq-objective-list"></ul>
+          </article>
+        </div>
+
+        <!-- Emplacement prévu pour le jumeau numérique existant. -->
+        <article class="tq-card tq-card--twin">
+          <div class="tq-card__heading">
+            <div>
+              <p class="tq-eyebrow">Jumeau numérique</p>
+              <h3>Observer avant de programmer</h3>
+            </div>
+            <button id="twinDemoButton" class="tq-button tq-button--primary" type="button">
+              Lancer l’observation
+            </button>
+          </div>
+
+          <div id="templateTwin" class="tq-twin" role="img" aria-label="Démonstration simplifiée du jumeau numérique">
+            <div class="tq-twin__sky"></div>
+            <div class="tq-twin__ground"></div>
+            <div class="tq-twin__plant" aria-hidden="true">🌱</div>
+            <div class="tq-twin__sensor">
+              <span>A0</span>
+              <strong id="twinHumidityValue">--</strong>
+            </div>
+            <div class="tq-twin__arduino">ARDUINO</div>
+            <div class="tq-twin__relay">D6</div>
+            <div id="twinPump" class="tq-twin__pump">POMPE</div>
+            <div id="twinSignal" class="tq-twin__signal" aria-hidden="true"></div>
+            <p id="twinStatus" class="tq-twin__status" aria-live="polite">Prêt pour l’observation.</p>
+          </div>
+        </article>
+      </section>
+
+      <!-- Algorigramme visuel. -->
+      <section id="phase2" class="tq-section" data-phase="2">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">2</span>
+          <div>
+            <p class="tq-eyebrow">Comprendre</p>
+            <h2>Lire l’algorithme avant le code</h2>
+          </div>
+        </div>
+
+        <article class="tq-card">
+          <div class="tq-card__heading">
+            <div>
+              <h3>Algorigramme de la séance</h3>
+              <p>Chaque bloc sera surligné pendant l’exécution pédagogique.</p>
+            </div>
+            <button id="algorithmReplayButton" class="tq-button" type="button">Rejouer</button>
+          </div>
+
+          <div id="algorithmFlow" class="tq-flowchart" aria-label="Algorigramme visuel"></div>
+        </article>
+      </section>
+
+      <!-- Éditeur, niveaux d’aide et moniteur série. -->
+      <section id="phase3" class="tq-section" data-phase="3">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">3</span>
+          <div>
+            <p class="tq-eyebrow">Programmer</p>
+            <h2>Écrire puis exécuter le programme</h2>
+          </div>
+        </div>
+
+        <article class="tq-card tq-code-card">
+          <div class="tq-code-toolbar">
+            <label for="guidanceLevel">
+              Niveau d’aide
+              <select id="guidanceLevel">
+                <option value="guided">Guidé</option>
+                <option value="standard">Accompagné</option>
+                <option value="autonomous">Autonome</option>
+              </select>
+            </label>
+
+            <div class="tq-code-toolbar__actions">
+              <button id="checkCodeButton" class="tq-button" type="button">Vérifier</button>
+              <button id="runCodeButton" class="tq-button tq-button--primary" type="button">Exécuter</button>
+              <button id="restoreCodeButton" class="tq-button tq-button--warning" type="button">Restaurer</button>
+              <button id="copyCodeButton" class="tq-button" type="button">Copier</button>
+              <button id="downloadCodeButton" class="tq-button" type="button">Télécharger .ino</button>
+            </div>
+          </div>
+
+          <div class="tq-code-grid">
+            <div class="tq-editor-panel">
+              <label class="tq-visually-hidden" for="codeEditor">Éditeur C++ Arduino</label>
+              <textarea id="codeEditor" spellcheck="false" aria-describedby="codeFeedback"></textarea>
+              <p id="codeFeedback" class="tq-feedback" aria-live="polite">Complète le programme, puis clique sur Vérifier.</p>
+            </div>
+
+            <div class="tq-serial-panel">
+              <div class="tq-serial-panel__heading">
+                <div>
+                  <p class="tq-eyebrow">Retour immédiat</p>
+                  <h3>Moniteur série simulé</h3>
+                </div>
+                <button id="clearSerialButton" class="tq-button tq-button--small" type="button">Effacer</button>
+              </div>
+              <pre id="serialMonitor" aria-live="polite">[Moniteur série] En attente d’exécution…</pre>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <!-- Validation automatique et micro-objectifs. -->
+      <section id="phase4" class="tq-section" data-phase="4">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">4</span>
+          <div>
+            <p class="tq-eyebrow">Tester</p>
+            <h2>Vérifier les critères un par un</h2>
+          </div>
+        </div>
+
+        <div class="tq-grid tq-grid--two">
+          <article class="tq-card">
+            <h3>Validation automatique</h3>
+            <ul id="automaticCheckList" class="tq-check-list"></ul>
+          </article>
+
+          <article class="tq-card">
+            <h3>Je sais faire…</h3>
+            <div id="microObjectiveList" class="tq-micro-objectives"></div>
+          </article>
+        </div>
+      </section>
+
+      <!-- Retour réflexif. -->
+      <section id="phase5" class="tq-section" data-phase="5">
+        <div class="tq-section__heading">
+          <span class="tq-section__number">5</span>
+          <div>
+            <p class="tq-eyebrow">Réfléchir</p>
+            <h2>Expliquer la décision technique</h2>
+          </div>
+        </div>
+
+        <article class="tq-card">
+          <label for="reflectionText"><strong>Justification de l’élève</strong></label>
+          <p>Explique comment le seuil a été choisi et pourquoi la pompe reste arrêtée pendant la calibration.</p>
+          <textarea id="reflectionText" class="tq-reflection" placeholder="J’ai choisi ce seuil parce que…"></textarea>
+          <p id="reflectionStatus" class="tq-feedback" aria-live="polite">La réponse est enregistrée automatiquement sur cet appareil.</p>
+        </article>
+      </section>
+
+      <!-- Évaluation affichée seulement en Mode Mission. -->
+      <section id="phase6" class="tq-section tq-mission-only" data-phase="6" hidden>
+        <div class="tq-section__heading">
+          <span class="tq-section__number">6</span>
+          <div>
+            <p class="tq-eyebrow">Valider</p>
+            <h2>Mission évaluée sur 20</h2>
+          </div>
+        </div>
+
+        <article class="tq-card">
+          <div class="tq-card__heading">
+            <div>
+              <h3>Critères d’évaluation</h3>
+              <p>Aucune pénalité de vitesse : la priorité est la compréhension.</p>
+            </div>
+            <strong id="scoreTotal" class="tq-score">0 / 20</strong>
+          </div>
+          <div id="assessmentGrid" class="tq-assessment-grid"></div>
+        </article>
+      </section>
+
+      <!-- Navigation entre les séances. -->
+      <nav class="tq-session-navigation" aria-label="Navigation entre les séances">
+        <a id="previousSessionLink" class="tq-button" href="../seance-1.html">← Séance précédente</a>
+        <a id="nextSessionLink" class="tq-button tq-button--primary" href="../seance-3.html">Séance suivante →</a>
+      </nav>
+    </div>
+  </main>
+
+  <!-- Configuration d’exemple à remplacer lors de la duplication. -->
+  <script src="session-template.config.example.js?v=1"></script>
+
+  <!-- Moteur générique du template. -->
+  <script src="session-template.js?v=1"></script>
+</body>
+</html>
