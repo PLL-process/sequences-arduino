@@ -111,8 +111,8 @@
   const plusFlow1 = path("M635 425 V333", "twin-current-flow", "currentArrowPlusV5");
   const plusWire2 = path("M670 305 H720 V375 H880 V435", "twin-current-wire");
   const plusFlow2 = path("M670 305 H720 V375 H880 V435", "twin-current-flow", "currentArrowPlusV5");
-  const returnWire = path("M920 507 V544 H635 V483", "twin-current-wire twin-current-return-wire");
-  const returnFlow = path("M920 507 V544 H635 V483", "twin-current-flow return", "currentArrowReturnV5");
+  const returnWire = path("M880 507 V544 H635 V483", "twin-current-wire twin-current-return-wire");
+  const returnFlow = path("M880 507 V544 H635 V483", "twin-current-flow return", "currentArrowReturnV5");
 
   layout.append(waterBase1, waterFlow1, waterBase2, waterFlow2, plusWire1, plusFlow1, plusWire2, plusFlow2, returnWire, returnFlow);
 
@@ -139,9 +139,20 @@
   relayGroup.parentNode.insertBefore(layout, relayGroup);
   svg.append(tankClone, pumpClone, supplyGroup);
 
-  const supplyPlus = document.createElementNS(NS, "circle");
-  supplyPlus.setAttribute("cx", "635"); supplyPlus.setAttribute("cy", "425"); supplyPlus.setAttribute("r", "6"); supplyPlus.setAttribute("fill", "#fb7185");
-  const supplyZero = document.createElementNS(NS, "circle");
-  supplyZero.setAttribute("cx", "635"); supplyZero.setAttribute("cy", "483"); supplyZero.setAttribute("r", "6"); supplyZero.setAttribute("fill", "#60a5fa");
-  svg.append(supplyPlus, supplyZero);
+  const terminal = (cx, cy, fill) => {
+    const point = document.createElementNS(NS, "circle");
+    point.setAttribute("cx", String(cx));
+    point.setAttribute("cy", String(cy));
+    point.setAttribute("r", "6");
+    point.setAttribute("fill", fill);
+    return point;
+  };
+
+  const supplyPlus = terminal(635, 425, "#fb7185");
+  const supplyZero = terminal(635, 483, "#60a5fa");
+  const relayInput = terminal(635, 333, "#fb7185");
+  const relayOutput = terminal(670, 305, "#fb7185");
+  const pumpPlus = terminal(880, 435, "#fb7185");
+  const pumpZero = terminal(880, 507, "#60a5fa");
+  svg.append(supplyPlus, supplyZero, relayInput, relayOutput, pumpPlus, pumpZero);
 })();
