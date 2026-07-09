@@ -4,12 +4,12 @@
   // Récupérer le SVG du jumeau déjà construit.
   const stage = document.getElementById("twinStage");
   const svg = stage?.querySelector("svg");
-  if (!svg || svg.querySelector("#twinFlowClarityV5")) return;
+  if (!svg || svg.querySelector("#twinFlowClarityV6")) return;
 
   // Ajouter un marqueur invisible pour éviter une double exécution.
   const NS = "http://www.w3.org/2000/svg";
   const marker = document.createElementNS(NS, "g");
-  marker.id = "twinFlowClarityV5";
+  marker.id = "twinFlowClarityV6";
   marker.setAttribute("display", "none");
   svg.appendChild(marker);
 
@@ -92,10 +92,10 @@
   }
 
   // Ajouter le libellé GND à droite de la verticale noire.
-  let supplyGroundLabel = svg.querySelector("#arduinoGroundLabelV5");
+  let supplyGroundLabel = svg.querySelector("#arduinoGroundLabelV6");
   if (!supplyGroundLabel) {
     supplyGroundLabel = document.createElementNS(NS, "text");
-    supplyGroundLabel.id = "arduinoGroundLabelV5";
+    supplyGroundLabel.id = "arduinoGroundLabelV6";
     supplyGroundLabel.setAttribute("class", "twin-supply-ground-label");
     supplyGroundLabel.textContent = "GND";
     svg.appendChild(supplyGroundLabel);
@@ -147,9 +147,12 @@
     .find(node => node.textContent.trim() === "0 V");
   if (zeroVoltLabel) zeroVoltLabel.textContent = "0 V TBT";
 
-  // Développer l’abréviation TBT dans le cartouche de l’alimentation séparée.
+  // Développer l’abréviation TBT et remonter tout le cartouche d’alimentation séparée.
   const separateSupplyGroup = svg.querySelector("#supplyV5");
   if (separateSupplyGroup) {
+    // Remonter le rectangle et ses textes de 20 unités.
+    separateSupplyGroup.setAttribute("transform", "translate(10 35)");
+
     const separateSupplyRect = separateSupplyGroup.querySelector("rect");
     const separateSupplyTexts = [...separateSupplyGroup.querySelectorAll("text")];
     const separateSupplyTitle = separateSupplyTexts
@@ -179,9 +182,25 @@
     }
   }
 
+  // Remonter les deux bornes du cartouche TBT avec le rectangle.
+  const supplyPlusTerminal = svg.querySelector('circle[cx="635"][cy="425"][fill="#fb7185"]');
+  const supplyZeroTerminal = svg.querySelector('circle[cx="635"][cy="483"][fill="#60a5fa"]');
+  if (supplyPlusTerminal) supplyPlusTerminal.setAttribute("cy", "405");
+  if (supplyZeroTerminal) supplyZeroTerminal.setAttribute("cy", "463");
+
+  // Recaler la liaison positive et son libellé après la remontée du cartouche.
+  [...svg.querySelectorAll("path")].forEach(path => {
+    if ((path.getAttribute("d") || "") === "M635 425 V333") {
+      path.setAttribute("d", "M635 405 V333");
+    }
+  });
+  const plusTbtLabel = [...svg.querySelectorAll("text")]
+    .find(node => node.textContent.trim() === "+ TBT");
+  if (plusTbtLabel) plusTbtLabel.setAttribute("y", "385");
+
   // Ajouter la note pédagogique au centre de l’espace marron libre.
   const note = document.createElementNS(NS, "text");
-  note.id = "twinMeasurementNoteV5";
+  note.id = "twinMeasurementNoteV6";
   note.setAttribute("x", "350");
   note.setAttribute("y", "421");
   note.setAttribute("text-anchor", "middle");
