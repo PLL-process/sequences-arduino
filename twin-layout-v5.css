@@ -16,6 +16,7 @@
 .twin-terminal-label{font-size:11px;font-weight:950}
 .twin-water-label-v5{fill:#dffaff;font-size:13px;font-weight:900}
 .twin-logic-power-label{fill:#ef4444;font-size:11px;font-weight:950}
+.twin-supply-ground-label{fill:#111827;font-size:11px;font-weight:950;paint-order:stroke;stroke:#f8fafc;stroke-width:2.5px;stroke-linejoin:round}
 .twin-ground-label-text{fill:#111827;font-size:12px;font-weight:950;paint-order:stroke;stroke:#f8fafc;stroke-width:3px;stroke-linejoin:round}
 .twin-sensor-label{font-weight:900;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round;filter:drop-shadow(0 0 3px rgba(255,255,255,.95))}
 .twin-level-signal{filter:drop-shadow(0 0 3px rgba(192,132,252,.7))}
