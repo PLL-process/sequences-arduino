@@ -151,7 +151,7 @@
 
   const arduinoPowerWire = path("M600 58 V84 H520 V160", "twin-logic-power-wire");
   const arduinoPowerFlow = path("M600 58 V84 H520 V160", "twin-logic-power-flow");
-  const groundRoute = "M710 58 V70 H480 V160 M480 70 H55 V340 M241 70 V132 M480 70 H858 V215";
+  const groundRoute = "M710 58 V70 H540 V180 H532 M540 70 H55 V340 M315 70 V115 H241 V132 M540 70 H858 V215";
   const groundWire = path(groundRoute, "twin-ground-wire");
   const groundFlow = path(groundRoute, "twin-ground-flow");
 
@@ -235,7 +235,7 @@
   const levelSignal = terminal(800, 210, "#c084fc");
   const arduinoFiveVolt = terminal(520, 160, "#f97316", "#fff7ed");
   const supplyFiveVolt = terminal(600, 58, "#f97316", "#fff7ed");
-  const arduinoGround = terminal(480, 160, "#111827", "#f8fafc");
+  const arduinoGround = terminal(532, 180, "#111827", "#f8fafc");
   const supplyGround = terminal(710, 58, "#111827", "#f8fafc");
   const humidityGround = terminal(55, 340, "#111827", "#f8fafc");
   const lightGround = terminal(241, 132, "#111827", "#f8fafc");
