@@ -1,17 +1,29 @@
-/* Jumeau numérique v5 — séparation visuelle de l’eau et du circuit électrique. */
-.twin-current-wire,.twin-current-flow,.twin-water-pipe-v5,.twin-water-flow-v5{fill:none;stroke-linecap:round;stroke-linejoin:round}
+/* Jumeau numérique v5 — séparation visuelle de l’eau et des circuits électriques. */
+.twin-current-wire,.twin-current-flow,.twin-water-pipe-v5,.twin-water-flow-v5,.twin-ground-wire,.twin-ground-flow,.twin-logic-power-wire,.twin-logic-power-flow{fill:none;stroke-linecap:round;stroke-linejoin:round}
 .twin-current-wire{stroke:#7f1d1d;stroke-width:10;opacity:.9}
 .twin-current-return-wire{stroke:#1e3a5f}
 .twin-current-flow{stroke:#fb7185;stroke-width:4;stroke-dasharray:10 12;animation:twinCurrentMove .9s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 4px rgba(251,113,133,.75))}
 .twin-current-flow.return{stroke:#60a5fa;filter:drop-shadow(0 0 4px rgba(96,165,250,.65))}
 .twin-water-pipe-v5{stroke:#475569;stroke-width:14}
 .twin-water-flow-v5{stroke:#67e8f9;stroke-width:7;stroke-dasharray:15 13;animation:twinWaterMove 1.05s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 4px rgba(103,232,249,.65))}
-.twin-stage.running .twin-current-flow,.twin-stage.running .twin-water-flow-v5{animation-play-state:running}
+.twin-ground-wire{stroke:#cbd5e1;stroke-width:8;opacity:.82}
+.twin-ground-flow{stroke:#111827;stroke-width:4;stroke-dasharray:9 10;animation:twinGroundMove 1s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 2px rgba(255,255,255,.8))}
+.twin-logic-power-wire{stroke:#7c2d12;stroke-width:8;opacity:.9}
+.twin-logic-power-flow{stroke:#f97316;stroke-width:4;stroke-dasharray:9 10;animation:twinLogicPowerMove .9s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 3px rgba(249,115,22,.7))}
+.twin-stage.running .twin-current-flow,.twin-stage.running .twin-water-flow-v5,.twin-stage.running .twin-ground-flow,.twin-stage.running .twin-logic-power-flow{animation-play-state:running}
 .twin-power-label-v5 rect{fill:#07131f;stroke:#fb7185;stroke-width:2}
 .twin-power-label-v5 text{fill:#fff;font-size:12px;font-weight:900;letter-spacing:.02em}
 .twin-terminal-label{font-size:11px;font-weight:950}
 .twin-water-label-v5{fill:#dffaff;font-size:13px;font-weight:900}
+.twin-logic-power-label{fill:#fed7aa;font-size:11px;font-weight:900}
+.twin-ground-label rect{fill:#07131fee;stroke:#111827;stroke-width:2}
+.twin-ground-label text{fill:#f8fafc;font-size:11px;font-weight:900}
+.twin-arduino-supply rect{fill:#172033;stroke:#f97316;stroke-width:2.5}
+.twin-arduino-supply text:first-of-type{fill:#fff7ed;font-size:12px;font-weight:950}
+.twin-arduino-supply text:last-of-type{fill:#fed7aa;font-size:10px;font-weight:800}
 .twin-component-gap{filter:drop-shadow(0 8px 10px rgba(0,0,0,.32))}
 @keyframes twinCurrentMove{to{stroke-dashoffset:-44}}
 @keyframes twinWaterMove{to{stroke-dashoffset:-56}}
-@media(prefers-reduced-motion:reduce){.twin-current-flow,.twin-water-flow-v5{animation:none!important}}
+@keyframes twinGroundMove{to{stroke-dashoffset:-38}}
+@keyframes twinLogicPowerMove{to{stroke-dashoffset:-38}}
+@media(prefers-reduced-motion:reduce){.twin-current-flow,.twin-water-flow-v5,.twin-ground-flow,.twin-logic-power-flow{animation:none!important}}

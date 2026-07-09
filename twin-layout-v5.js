@@ -20,22 +20,32 @@
     humidityLabel.textContent = "";
     humidityLabel.setAttribute("x", "25");
     humidityLabel.setAttribute("y", "448");
-    humidityLabel.setAttribute("font-size", "12");
+    humidityLabel.setAttribute("font-size", "13");
     const humidityLine1 = document.createElementNS(NS, "tspan");
     humidityLine1.setAttribute("x", "25");
     humidityLine1.setAttribute("dy", "0");
     humidityLine1.textContent = "Capteur d’humidité";
     const humidityLine2 = document.createElementNS(NS, "tspan");
     humidityLine2.setAttribute("x", "25");
-    humidityLine2.setAttribute("dy", "16");
+    humidityLine2.setAttribute("dy", "17");
     humidityLine2.textContent = "du sol — A0";
     humidityLabel.append(humidityLine1, humidityLine2);
   }
   if (lightLabel) {
+    const lightPill = document.createElementNS(NS, "rect");
+    lightPill.setAttribute("x", "110");
+    lightPill.setAttribute("y", "72");
+    lightPill.setAttribute("width", "195");
+    lightPill.setAttribute("height", "28");
+    lightPill.setAttribute("rx", "10");
+    lightPill.setAttribute("fill", "#07131fdd");
+    lightPill.setAttribute("stroke", "#facc15");
+    lightPill.setAttribute("stroke-width", "1.5");
+    lightLabel.parentNode.insertBefore(lightPill, lightLabel);
     lightLabel.textContent = "Capteur de lumière — A1";
-    lightLabel.setAttribute("x", "125");
-    lightLabel.setAttribute("y", "92");
-    lightLabel.setAttribute("font-size", "12");
+    lightLabel.setAttribute("x", "118");
+    lightLabel.setAttribute("y", "91");
+    lightLabel.setAttribute("font-size", "13");
   }
 
   svg.setAttribute("viewBox", "0 0 1000 560");
@@ -139,7 +149,17 @@
   const returnWire = path("M880 507 V544 H635 V483", "twin-current-wire twin-current-return-wire");
   const returnFlow = path("M880 507 V544 H635 V483", "twin-current-flow return", "currentArrowReturnV5");
 
-  layout.append(waterBase1, waterFlow1, waterBase2, waterFlow2, plusWire1, plusFlow1, plusWire2, plusFlow2, returnWire, returnFlow);
+  const arduinoPowerWire = path("M600 58 V84 H520 V160", "twin-logic-power-wire");
+  const arduinoPowerFlow = path("M600 58 V84 H520 V160", "twin-logic-power-flow");
+  const groundRoute = "M710 58 V70 H540 V180 H532 M540 70 H55 V340 M315 70 V115 H241 V132 M540 70 H858 V215";
+  const groundWire = path(groundRoute, "twin-ground-wire");
+  const groundFlow = path(groundRoute, "twin-ground-flow");
+
+  layout.append(
+    waterBase1, waterFlow1, waterBase2, waterFlow2,
+    plusWire1, plusFlow1, plusWire2, plusFlow2, returnWire, returnFlow,
+    arduinoPowerWire, arduinoPowerFlow, groundWire, groundFlow
+  );
 
   const labelGroup = document.createElementNS(NS, "g");
   labelGroup.setAttribute("class", "twin-power-label-v5");
@@ -159,17 +179,47 @@
   const waterLabel = document.createElementNS(NS, "text");
   waterLabel.setAttribute("x", "400"); waterLabel.setAttribute("y", "526"); waterLabel.setAttribute("text-anchor", "middle"); waterLabel.setAttribute("class", "twin-water-label-v5");
   waterLabel.textContent = "Réservoir → pompe → plante";
-  layout.append(plus, zero, waterLabel);
+  const logicPowerLabel = document.createElementNS(NS, "text");
+  logicPowerLabel.setAttribute("x", "526"); logicPowerLabel.setAttribute("y", "81"); logicPowerLabel.setAttribute("class", "twin-logic-power-label"); logicPowerLabel.textContent = "5 V USB";
+  layout.append(plus, zero, waterLabel, logicPowerLabel);
+
+  const groundLabel = document.createElementNS(NS, "g");
+  groundLabel.setAttribute("class", "twin-ground-label");
+  const groundLabelRect = document.createElementNS(NS, "rect");
+  groundLabelRect.setAttribute("x", "330"); groundLabelRect.setAttribute("y", "52");
+  groundLabelRect.setAttribute("width", "145"); groundLabelRect.setAttribute("height", "26"); groundLabelRect.setAttribute("rx", "9");
+  const groundLabelText = document.createElementNS(NS, "text");
+  groundLabelText.setAttribute("x", "402.5"); groundLabelText.setAttribute("y", "69"); groundLabelText.setAttribute("text-anchor", "middle");
+  groundLabelText.textContent = "GND commun capteurs";
+  groundLabel.append(groundLabelRect, groundLabelText);
+  layout.appendChild(groundLabel);
 
   relayGroup.parentNode.insertBefore(layout, relayGroup);
   svg.append(tankClone, pumpClone, supplyGroup);
 
-  const terminal = (cx, cy, fill) => {
+  const arduinoSupply = document.createElementNS(NS, "g");
+  arduinoSupply.id = "arduinoSupplyV5";
+  arduinoSupply.setAttribute("class", "twin-arduino-supply twin-component-gap");
+  const arduinoSupplyRect = document.createElementNS(NS, "rect");
+  arduinoSupplyRect.setAttribute("x", "550"); arduinoSupplyRect.setAttribute("y", "8");
+  arduinoSupplyRect.setAttribute("width", "200"); arduinoSupplyRect.setAttribute("height", "50"); arduinoSupplyRect.setAttribute("rx", "14");
+  const arduinoSupplyTitle = document.createElementNS(NS, "text");
+  arduinoSupplyTitle.setAttribute("x", "650"); arduinoSupplyTitle.setAttribute("y", "29"); arduinoSupplyTitle.setAttribute("text-anchor", "middle");
+  arduinoSupplyTitle.textContent = "ALIMENTATION ARDUINO";
+  const arduinoSupplySubtitle = document.createElementNS(NS, "text");
+  arduinoSupplySubtitle.setAttribute("x", "650"); arduinoSupplySubtitle.setAttribute("y", "47"); arduinoSupplySubtitle.setAttribute("text-anchor", "middle");
+  arduinoSupplySubtitle.textContent = "5 V USB · capteurs via Arduino";
+  arduinoSupply.append(arduinoSupplyRect, arduinoSupplyTitle, arduinoSupplySubtitle);
+  svg.appendChild(arduinoSupply);
+
+  const terminal = (cx, cy, fill, stroke = "none") => {
     const point = document.createElementNS(NS, "circle");
     point.setAttribute("cx", String(cx));
     point.setAttribute("cy", String(cy));
     point.setAttribute("r", "6");
     point.setAttribute("fill", fill);
+    point.setAttribute("stroke", stroke);
+    if (stroke !== "none") point.setAttribute("stroke-width", "2");
     return point;
   };
 
@@ -183,5 +233,17 @@
   const humiditySignal = terminal(97, 340, "#60a5fa");
   const lightSignal = terminal(289, 132, "#facc15");
   const levelSignal = terminal(800, 210, "#c084fc");
-  svg.append(supplyPlus, supplyZero, relayInput, relayOutput, relayControl, pumpPlus, pumpZero, humiditySignal, lightSignal, levelSignal);
+  const arduinoFiveVolt = terminal(520, 160, "#f97316", "#fff7ed");
+  const supplyFiveVolt = terminal(600, 58, "#f97316", "#fff7ed");
+  const arduinoGround = terminal(532, 180, "#111827", "#f8fafc");
+  const supplyGround = terminal(710, 58, "#111827", "#f8fafc");
+  const humidityGround = terminal(55, 340, "#111827", "#f8fafc");
+  const lightGround = terminal(241, 132, "#111827", "#f8fafc");
+  const levelGround = terminal(858, 215, "#111827", "#f8fafc");
+  svg.append(
+    supplyPlus, supplyZero, relayInput, relayOutput, relayControl, pumpPlus, pumpZero,
+    humiditySignal, lightSignal, levelSignal,
+    arduinoFiveVolt, supplyFiveVolt, arduinoGround, supplyGround,
+    humidityGround, lightGround, levelGround
+  );
 })();
