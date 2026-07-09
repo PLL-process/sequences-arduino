@@ -14,9 +14,9 @@
   const relayText = findText("RELAIS");
   if (!tankText || !pumpText || !supplyText || !relayText) return;
 
-  svg.setAttribute("viewBox", "0 0 1000 530");
+  svg.setAttribute("viewBox", "0 0 1000 560");
   const background = svg.querySelector('rect[width="900"][height="510"]');
-  if (background) { background.setAttribute("width", "1000"); background.setAttribute("height", "530"); }
+  if (background) { background.setAttribute("width", "1000"); background.setAttribute("height", "560"); }
 
   const sun = svg.querySelector('circle[fill="#ffd166"][r="38"]');
   if (sun) { sun.setAttribute("cx", "952"); sun.setAttribute("cy", "38"); sun.setAttribute("r", "30"); }
@@ -111,8 +111,8 @@
   const plusFlow1 = path("M650 438 V350 H620 V333", "twin-current-flow", "currentArrowPlusV5");
   const plusWire2 = path("M670 305 H720 V375 H880 V435", "twin-current-wire");
   const plusFlow2 = path("M670 305 H720 V375 H880 V435", "twin-current-flow", "currentArrowPlusV5");
-  const returnWire = path("M920 507 V518 H600 V483", "twin-current-wire twin-current-return-wire");
-  const returnFlow = path("M920 507 V518 H600 V483", "twin-current-flow return", "currentArrowReturnV5");
+  const returnWire = path("M920 507 V544 H600 V483", "twin-current-wire twin-current-return-wire");
+  const returnFlow = path("M920 507 V544 H600 V483", "twin-current-flow return", "currentArrowReturnV5");
 
   layout.append(waterBase1, waterFlow1, waterBase2, waterFlow2, plusWire1, plusFlow1, plusWire2, plusFlow2, returnWire, returnFlow);
 
@@ -128,9 +128,9 @@
   layout.appendChild(labelGroup);
 
   const plus = document.createElementNS(NS, "text");
-  plus.setAttribute("x", "658"); plus.setAttribute("y", "438"); plus.setAttribute("fill", "#fecaca"); plus.setAttribute("class", "twin-terminal-label"); plus.textContent = "+ TBT";
+  plus.setAttribute("x", "690"); plus.setAttribute("y", "438"); plus.setAttribute("fill", "#fecaca"); plus.setAttribute("class", "twin-terminal-label"); plus.textContent = "+ TBT";
   const zero = document.createElementNS(NS, "text");
-  zero.setAttribute("x", "608"); zero.setAttribute("y", "501"); zero.setAttribute("fill", "#bfdbfe"); zero.setAttribute("class", "twin-terminal-label"); zero.textContent = "0 V";
+  zero.setAttribute("x", "690"); zero.setAttribute("y", "501"); zero.setAttribute("fill", "#bfdbfe"); zero.setAttribute("class", "twin-terminal-label"); zero.textContent = "0 V";
   const waterLabel = document.createElementNS(NS, "text");
   waterLabel.setAttribute("x", "530"); waterLabel.setAttribute("y", "526"); waterLabel.setAttribute("text-anchor", "middle"); waterLabel.setAttribute("class", "twin-water-label-v5");
   waterLabel.textContent = "Réservoir → pompe → plante";
