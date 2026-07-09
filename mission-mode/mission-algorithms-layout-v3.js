@@ -1,0 +1,321 @@
+/*
+ * TechnoQuest — audit visuel et correction responsive des huit algorigrammes.
+ *
+ * Ce module complète le générateur premium sans modifier ses données pédagogiques :
+ * - il compacte la séance 1 en parcours horizontal sur deux rangées ;
+ * - il reconstruit toutes les liaisons avec des marges avant les blocs ;
+ * - il ajoute un véritable retour de boucle à chaque séance ;
+ * - il corrige les retours arrière, notamment la maintenance de la séance 7 ;
+ * - il retire le titre visuel répété à l’intérieur du SVG, tout en conservant title/desc.
+ */
+"use strict";
+
+(() => {
+  const SVG_NS = "http://www.w3.org/2000/svg";
+  const VERSION = "3";
+
+  // Décrire les liaisons de chaque séance afin de pouvoir les recalculer après adaptation.
+  const SESSION_EDGES = {
+    1: [
+      edge("start", "setup"), edge("setup", "read"), edge("read", "display"),
+      edge("display", "safe"), edge("safe", "wait"), edge("wait", "loop"),
+      edge("loop", "read", "Boucle", "loop-right")
+    ],
+    2: [
+      edge("start", "setup"), edge("setup", "read"), edge("read", "compare"),
+      edge("compare", "dry", "Oui"), edge("compare", "wet", "Non"),
+      edge("dry", "safe"), edge("wet", "safe"), edge("safe", "loop"),
+      edge("loop", "read", "Retour", "loop-right")
+    ],
+    3: [
+      edge("start", "read"), edge("read", "compare"), edge("compare", "pump", "Oui"),
+      edge("compare", "stop", "Non"), edge("pump", "cut"), edge("cut", "wait"),
+      edge("stop", "wait"), edge("wait", "loop"), edge("loop", "read", "Retour", "loop-right")
+    ],
+    4: [
+      edge("start", "read"), edge("read", "water"), edge("water", "alert", "Oui"),
+      edge("water", "soil", "Non"), edge("soil", "pump", "Oui"), edge("soil", "stop", "Non"),
+      edge("pump", "wait"), edge("stop", "wait"), edge("alert", "wait"), edge("wait", "loop"),
+      edge("loop", "read", "Retour", "loop-right")
+    ],
+    5: [
+      edge("start", "read"), edge("read", "water"), edge("water", "forceStop", "Oui"),
+      edge("water", "low", "Non"), edge("low", "startPump", "Oui"), edge("low", "high", "Non"),
+      edge("high", "stopPump", "Oui"), edge("high", "keep", "Non"),
+      edge("forceStop", "command"), edge("startPump", "command"),
+      edge("stopPump", "command"), edge("keep", "command"),
+      edge("command", "wait"), edge("wait", "loop"), edge("loop", "read", "Retour", "loop-right")
+    ],
+    6: [
+      edge("start", "read"), edge("read", "display"), edge("display", "decision"),
+      edge("decision", "pump", "Oui"), edge("decision", "stop", "Non"),
+      edge("pump", "wait"), edge("stop", "wait"), edge("wait", "loop"),
+      edge("loop", "read", "Retour", "loop-right")
+    ],
+    7: [
+      edge("start", "inspect"), edge("inspect", "calibrate"), edge("calibrate", "read"),
+      edge("read", "plausible"), edge("plausible", "repair", "Non"), edge("plausible", "water", "Oui"),
+      edge("repair", "calibrate", "Recalibrer", "loop-left"),
+      edge("water", "pump", "Oui"), edge("water", "stop", "Non"),
+      edge("pump", "loop"), edge("stop", "loop"), edge("loop", "inspect", "Nouveau contrôle", "loop-right")
+    ],
+    8: [
+      edge("start", "read"), edge("read", "coherent"), edge("coherent", "sensorError", "Non"),
+      edge("coherent", "water", "Oui"), edge("water", "waterError", "Oui"), edge("water", "multi", "Non"),
+      edge("multi", "pump", "Oui"), edge("multi", "stop", "Non"),
+      edge("sensorError", "display"), edge("waterError", "display"),
+      edge("pump", "display"), edge("stop", "display"), edge("display", "wait"),
+      edge("wait", "loop"), edge("loop", "read", "Retour", "loop-right")
+    ]
+  };
+
+  // La séance 1 est linéaire : elle utilise mieux l’écran paysage avec deux rangées.
+  const SESSION_ONE_LAYOUT = {
+    start: { x: 30, y: 70 },
+    setup: { x: 290, y: 70 },
+    read: { x: 550, y: 70 },
+    display: { x: 810, y: 70 },
+    safe: { x: 810, y: 250 },
+    wait: { x: 550, y: 250 },
+    loop: { x: 290, y: 250 }
+  };
+
+  function edge(source, target, label = "", kind = "auto") {
+    return { source, target, label, kind };
+  }
+
+  function number(value) {
+    return Number.parseFloat(value || "0") || 0;
+  }
+
+  // Lire la boîte géométrique d’un bloc à partir de son rectangle ou de son losange.
+  function shapeBox(node) {
+    const shape = node.querySelector(".algorithm-node-shape");
+    if (!shape) return null;
+
+    let x = 0;
+    let y = 0;
+    let width = 0;
+    let height = 0;
+
+    if (shape.tagName.toLowerCase() === "rect") {
+      x = number(shape.getAttribute("x"));
+      y = number(shape.getAttribute("y"));
+      width = number(shape.getAttribute("width"));
+      height = number(shape.getAttribute("height"));
+    } else {
+      const points = String(shape.getAttribute("points") || "")
+        .trim()
+        .split(/\s+/)
+        .map(point => point.split(",").map(number));
+      const xs = points.map(point => point[0]);
+      const ys = points.map(point => point[1]);
+      x = Math.min(...xs);
+      y = Math.min(...ys);
+      width = Math.max(...xs) - x;
+      height = Math.max(...ys) - y;
+    }
+
+    const dx = number(node.dataset.layoutDx);
+    const dy = number(node.dataset.layoutDy);
+    return {
+      x: x + dx,
+      y: y + dy,
+      width,
+      height,
+      left: x + dx,
+      right: x + dx + width,
+      top: y + dy,
+      bottom: y + dy + height,
+      centerX: x + dx + width / 2,
+      centerY: y + dy + height / 2
+    };
+  }
+
+  // Déplacer un groupe complet sans désolidariser sa forme, ses textes et son numéro.
+  function moveNode(node, target) {
+    const current = shapeBox(node);
+    if (!current || !target) return;
+    const dx = target.x - current.x;
+    const dy = target.y - current.y;
+    node.dataset.layoutDx = String(number(node.dataset.layoutDx) + dx);
+    node.dataset.layoutDy = String(number(node.dataset.layoutDy) + dy);
+    node.setAttribute("transform", `translate(${node.dataset.layoutDx} ${node.dataset.layoutDy})`);
+  }
+
+  // Construire un trajet orthogonal qui s’arrête avant le bloc cible.
+  function route(source, target, kind) {
+    const gap = 11;
+
+    if (kind === "loop-right") {
+      const laneX = 1062;
+      const topY = 24;
+      return {
+        d: `M ${source.centerX} ${source.bottom + gap} H ${laneX} V ${topY} H ${target.centerX} V ${target.top - gap}`,
+        labelX: laneX - 12,
+        labelY: Math.max(topY + 18, (source.bottom + topY) / 2),
+        labelAnchor: "end"
+      };
+    }
+
+    if (kind === "loop-left") {
+      const laneX = 34;
+      return {
+        d: `M ${source.left - gap} ${source.centerY} H ${laneX} V ${target.centerY} H ${target.left - gap}`,
+        labelX: laneX + 10,
+        labelY: (source.centerY + target.centerY) / 2 - 8,
+        labelAnchor: "start"
+      };
+    }
+
+    const horizontalDistance = target.centerX - source.centerX;
+    const verticalDistance = target.centerY - source.centerY;
+    const verticalOverlap = Math.min(source.bottom, target.bottom) - Math.max(source.top, target.top);
+
+    // Liaisons latérales, particulièrement utiles dans la séance 1 compacte.
+    if (verticalOverlap > Math.min(source.height, target.height) * .35 || Math.abs(verticalDistance) < 45) {
+      if (horizontalDistance >= 0) {
+        const startX = source.right + gap;
+        const endX = target.left - gap;
+        const middleX = startX + (endX - startX) / 2;
+        return {
+          d: `M ${startX} ${source.centerY} H ${middleX} V ${target.centerY} H ${endX}`,
+          labelX: middleX,
+          labelY: Math.min(source.centerY, target.centerY) - 10,
+          labelAnchor: "middle"
+        };
+      }
+
+      const startX = source.left - gap;
+      const endX = target.right + gap;
+      const middleX = startX + (endX - startX) / 2;
+      return {
+        d: `M ${startX} ${source.centerY} H ${middleX} V ${target.centerY} H ${endX}`,
+        labelX: middleX,
+        labelY: Math.min(source.centerY, target.centerY) - 10,
+        labelAnchor: "middle"
+      };
+    }
+
+    // Flux principal descendant : sortie basse vers entrée haute.
+    if (target.top >= source.bottom) {
+      const startY = source.bottom + gap;
+      const endY = target.top - gap;
+      const middleY = startY + Math.max(24, (endY - startY) / 2);
+      return {
+        d: `M ${source.centerX} ${startY} V ${middleY} H ${target.centerX} V ${endY}`,
+        labelX: source.centerX + (target.centerX >= source.centerX ? 18 : -18),
+        labelY: middleY - 8,
+        labelAnchor: target.centerX >= source.centerX ? "start" : "end"
+      };
+    }
+
+    // Sécurité pour un retour arrière non déclaré : utiliser la marge droite.
+    const laneX = 1062;
+    return {
+      d: `M ${source.right + gap} ${source.centerY} H ${laneX} V ${target.centerY} H ${target.right + gap}`,
+      labelX: laneX - 12,
+      labelY: (source.centerY + target.centerY) / 2 - 8,
+      labelAnchor: "end"
+    };
+  }
+
+  function svgElement(name, attributes = {}) {
+    const element = document.createElementNS(SVG_NS, name);
+    Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
+    return element;
+  }
+
+  // Reconstruire les connecteurs afin qu’ils n’entrent plus dans les formes.
+  function rebuildEdges(svg, sessionId, nodeMap) {
+    svg.querySelectorAll(".algorithm-connector,.algorithm-branch-label,.algorithm-layout-connectors").forEach(element => element.remove());
+
+    const layer = svgElement("g", { class: "algorithm-layout-connectors", "aria-hidden": "true" });
+    const firstNode = svg.querySelector(".algorithm-node");
+    if (firstNode) svg.insertBefore(layer, firstNode);
+    else svg.appendChild(layer);
+
+    (SESSION_EDGES[sessionId] || []).forEach((definition, index) => {
+      const source = nodeMap.get(definition.source);
+      const target = nodeMap.get(definition.target);
+      if (!source || !target) return;
+
+      const geometry = route(source, target, definition.kind);
+      const path = svgElement("path", {
+        class: `algorithm-connector${definition.kind.startsWith("loop") ? " algorithm-loop-connector" : ""}`,
+        d: geometry.d,
+        "marker-end": "url(#algorithmArrow)",
+        "data-edge-index": index,
+        "vector-effect": "non-scaling-stroke"
+      });
+      layer.appendChild(path);
+
+      if (definition.label) {
+        const text = svgElement("text", {
+          class: `algorithm-branch-label${definition.kind.startsWith("loop") ? " algorithm-loop-label" : ""}`,
+          x: geometry.labelX,
+          y: geometry.labelY,
+          "text-anchor": geometry.labelAnchor
+        });
+        text.textContent = definition.label;
+        layer.appendChild(text);
+      }
+    });
+  }
+
+  function applyLayout(svg) {
+    if (svg.dataset.layoutAuditVersion === VERSION) return;
+    svg.dataset.layoutAuditVersion = VERSION;
+
+    const card = svg.closest(".algorithm-premium-card");
+    const sessionId = Number(card?.dataset.session || document.body.dataset.session || 0);
+    if (!SESSION_EDGES[sessionId]) return;
+
+    // Le titre est déjà présent dans l’en-tête de la carte : éviter sa répétition dans le dessin.
+    svg.querySelectorAll(".algorithm-svg-title,.algorithm-svg-subtitle").forEach(element => element.remove());
+
+    const nodes = [...svg.querySelectorAll(".algorithm-node")];
+    if (sessionId === 1) {
+      nodes.forEach(node => moveNode(node, SESSION_ONE_LAYOUT[node.dataset.node]));
+      card.classList.add("algorithm-layout-compact");
+    }
+
+    const nodeMap = new Map();
+    nodes.forEach(node => {
+      const box = shapeBox(node);
+      if (box) nodeMap.set(node.dataset.node, box);
+    });
+
+    rebuildEdges(svg, sessionId, nodeMap);
+
+    const bottom = Math.max(...[...nodeMap.values()].map(box => box.bottom));
+    const height = Math.max(420, bottom + 58);
+    svg.setAttribute("viewBox", `0 0 1100 ${height}`);
+    svg.setAttribute("preserveAspectRatio", "xMidYMin meet");
+  }
+
+  function scan(root = document) {
+    root.querySelectorAll?.("svg.algorithm-premium-svg").forEach(applyLayout);
+  }
+
+  function initialize() {
+    scan(document);
+    const observer = new MutationObserver(mutations => {
+      let mustScan = false;
+      mutations.forEach(mutation => {
+        mutation.addedNodes.forEach(node => {
+          if (node.nodeType !== Node.ELEMENT_NODE) return;
+          if (node.matches?.("svg.algorithm-premium-svg") || node.querySelector?.("svg.algorithm-premium-svg")) mustScan = true;
+        });
+      });
+      if (mustScan) window.requestAnimationFrame(() => scan(document));
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialize, { once: true });
+  } else {
+    initialize();
+  }
+})();
