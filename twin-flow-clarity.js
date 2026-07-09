@@ -4,17 +4,45 @@
   // Récupérer le SVG du jumeau déjà construit.
   const stage = document.getElementById("twinStage");
   const svg = stage?.querySelector("svg");
-  if (!svg || svg.querySelector("#twinFlowClarityV3")) return;
+  if (!svg || svg.querySelector("#twinFlowClarityV4")) return;
 
   // Ajouter un marqueur invisible pour éviter une double exécution.
   const NS = "http://www.w3.org/2000/svg";
   const marker = document.createElementNS(NS, "g");
-  marker.id = "twinFlowClarityV3";
+  marker.id = "twinFlowClarityV4";
   marker.setAttribute("display", "none");
   svg.appendChild(marker);
 
+  // Placer le cartouche de séance à l’extrême gauche du jumeau.
+  const sessionTitle = [...svg.querySelectorAll("text")]
+    .find(node => /^Séance\s+\d+$/.test(node.textContent.trim()));
+  if (sessionTitle) {
+    const sessionRect = sessionTitle.previousElementSibling;
+    const sessionSubtitle = sessionTitle.nextElementSibling;
+    if (sessionRect?.tagName.toLowerCase() === "rect") {
+      sessionRect.setAttribute("x", "12");
+      sessionRect.setAttribute("y", "8");
+      sessionRect.setAttribute("width", "210");
+      sessionRect.setAttribute("height", "50");
+    }
+    sessionTitle.setAttribute("x", "117");
+    sessionTitle.setAttribute("y", "31");
+    if (sessionSubtitle?.tagName.toLowerCase() === "text") {
+      sessionSubtitle.setAttribute("x", "117");
+      sessionSubtitle.setAttribute("y", "50");
+    }
+  }
+
+  // Éloigner légèrement le soleil du réservoir, en diagonale vers la droite et le haut.
+  const sun = svg.querySelector('circle[fill="#ffd166"][r="30"]');
+  if (sun) {
+    sun.setAttribute("cx", "970");
+    sun.setAttribute("cy", "30");
+  }
+
   // Placer la borne positive de l’alimentation exactement sur la verticale 5 V.
-  const positiveSupplyTerminal = svg.querySelector('circle[cx="470"][cy="58"][fill="#ef4444"]');
+  const positiveSupplyTerminal = [...svg.querySelectorAll('circle[fill="#ef4444"]')]
+    .find(node => node.getAttribute("cy") === "58");
   if (positiveSupplyTerminal) positiveSupplyTerminal.setAttribute("cx", "500");
 
   // Simplifier les conducteurs : conserver uniquement l’alimentation de la carte Arduino.
@@ -54,13 +82,27 @@
     svg.querySelector(selector)?.remove();
   });
 
-  // Replacer le libellé 5 V à proximité immédiate de sa verticale.
+  // Placer le libellé 5 V USB à gauche de la verticale rouge.
   const fiveVoltLabel = [...svg.querySelectorAll("text")]
     .find(node => node.textContent.trim() === "5 V USB");
   if (fiveVoltLabel) {
-    fiveVoltLabel.setAttribute("x", "510");
+    fiveVoltLabel.setAttribute("x", "490");
     fiveVoltLabel.setAttribute("y", "77");
+    fiveVoltLabel.setAttribute("text-anchor", "end");
   }
+
+  // Ajouter le libellé GND à droite de la verticale noire.
+  let supplyGroundLabel = svg.querySelector("#arduinoGroundLabelV4");
+  if (!supplyGroundLabel) {
+    supplyGroundLabel = document.createElementNS(NS, "text");
+    supplyGroundLabel.id = "arduinoGroundLabelV4";
+    supplyGroundLabel.setAttribute("class", "twin-supply-ground-label");
+    supplyGroundLabel.textContent = "GND";
+    svg.appendChild(supplyGroundLabel);
+  }
+  supplyGroundLabel.setAttribute("x", "526");
+  supplyGroundLabel.setAttribute("y", "77");
+  supplyGroundLabel.setAttribute("text-anchor", "start");
 
   // Corriger le sous-titre de l’alimentation afin de ne plus suggérer les fils des capteurs.
   const supplySubtitle = [...svg.querySelectorAll("text")]
@@ -102,7 +144,7 @@
 
   // Ajouter la note pédagogique sous la carte Arduino, dans la zone marron.
   const note = document.createElementNS(NS, "text");
-  note.id = "twinMeasurementNoteV3";
+  note.id = "twinMeasurementNoteV4";
   note.setAttribute("x", "330");
   note.setAttribute("y", "365");
   note.setAttribute("class", "twin-measurement-note");
