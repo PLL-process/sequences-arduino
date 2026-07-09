@@ -8,19 +8,18 @@
 .twin-water-flow-v5{stroke:#67e8f9;stroke-width:7;stroke-dasharray:15 13;animation:twinWaterMove 1.05s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 4px rgba(103,232,249,.65))}
 .twin-ground-wire{stroke:#cbd5e1;stroke-width:8;opacity:.82}
 .twin-ground-flow{stroke:#111827;stroke-width:4;stroke-dasharray:9 10;animation:twinGroundMove 1s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 2px rgba(255,255,255,.8))}
-.twin-logic-power-wire{stroke:#7c2d12;stroke-width:8;opacity:.9}
-.twin-logic-power-flow{stroke:#f97316;stroke-width:4;stroke-dasharray:9 10;animation:twinLogicPowerMove .9s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 3px rgba(249,115,22,.7))}
+.twin-logic-power-wire{stroke:#7f1d1d;stroke-width:8;opacity:.95}
+.twin-logic-power-flow{stroke:#ef4444;stroke-width:4;stroke-dasharray:9 10;animation:twinLogicPowerMove .9s linear infinite;animation-play-state:paused;filter:drop-shadow(0 0 4px rgba(239,68,68,.8))}
 .twin-stage.running .twin-current-flow,.twin-stage.running .twin-water-flow-v5,.twin-stage.running .twin-ground-flow,.twin-stage.running .twin-logic-power-flow{animation-play-state:running}
 .twin-power-label-v5 rect{fill:#07131f;stroke:#fb7185;stroke-width:2}
 .twin-power-label-v5 text{fill:#fff;font-size:12px;font-weight:900;letter-spacing:.02em}
 .twin-terminal-label{font-size:11px;font-weight:950}
 .twin-water-label-v5{fill:#dffaff;font-size:13px;font-weight:900}
-.twin-logic-power-label{fill:#fed7aa;font-size:11px;font-weight:900}
-.twin-ground-label rect{fill:#07131fee;stroke:#111827;stroke-width:2}
-.twin-ground-label text{fill:#f8fafc;font-size:11px;font-weight:900}
-.twin-arduino-supply rect{fill:#172033;stroke:#f97316;stroke-width:2.5}
-.twin-arduino-supply text:first-of-type{fill:#fff7ed;font-size:12px;font-weight:950}
-.twin-arduino-supply text:last-of-type{fill:#fed7aa;font-size:10px;font-weight:800}
+.twin-logic-power-label{fill:#ef4444;font-size:11px;font-weight:950}
+.twin-ground-label-text{fill:#111827;font-size:12px;font-weight:950;paint-order:stroke;stroke:#f8fafc;stroke-width:3px;stroke-linejoin:round}
+.twin-arduino-supply rect{fill:#172033;stroke:#ef4444;stroke-width:2.5}
+.twin-arduino-supply text:first-of-type{fill:#fee2e2;font-size:12px;font-weight:950}
+.twin-arduino-supply text:last-of-type{fill:#fecaca;font-size:10px;font-weight:800}
 .twin-component-gap{filter:drop-shadow(0 8px 10px rgba(0,0,0,.32))}
 @keyframes twinCurrentMove{to{stroke-dashoffset:-44}}
 @keyframes twinWaterMove{to{stroke-dashoffset:-56}}
