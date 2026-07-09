@@ -4,12 +4,12 @@
   // Récupérer le SVG du jumeau numérique déjà construit.
   const stage = document.getElementById("twinStage");
   const svg = stage?.querySelector("svg");
-  if (!svg || svg.querySelector("#twinPumpWaterInletV3")) return;
+  if (!svg || svg.querySelector("#twinPumpWaterInletV4")) return;
 
   // Ajouter un marqueur invisible afin d’éviter une double exécution.
   const NS = "http://www.w3.org/2000/svg";
   const marker = document.createElementNS(NS, "g");
-  marker.id = "twinPumpWaterInletV3";
+  marker.id = "twinPumpWaterInletV4";
   marker.setAttribute("display", "none");
   svg.appendChild(marker);
 
@@ -17,7 +17,7 @@
   const pump = svg.querySelector("#pumpV5");
   if (pump) pump.setAttribute("transform", "translate(25 45)");
 
-  // Dessiner une arrivée d’eau en L inversé avec une flèche entièrement visible.
+  // Dessiner une arrivée d’eau en L inversé sans flèche supplémentaire sur la pompe.
   const oldInletRoute = "M922 258 V325 H970 V470 H800";
   const newInletRoute = "M922 258 H975 V470 H955";
 
@@ -28,7 +28,16 @@
   // Adapter les deux couches du tuyau : fond sombre et flux cyan animé.
   [...svg.querySelectorAll("path")].forEach(path => {
     const route = path.getAttribute("d") || "";
-    if (route === oldInletRoute) path.setAttribute("d", newInletRoute);
+
+    // Rerouter l’arrivée et retirer uniquement sa pointe de flèche cyan.
+    if (route === oldInletRoute) {
+      path.setAttribute("d", newInletRoute);
+      if (path.classList.contains("twin-water-flow-v5")) {
+        path.removeAttribute("marker-end");
+      }
+    }
+
+    // Conserver la flèche située à la terminaison du tuyau vers la plante.
     if (route === oldOutletRoute) path.setAttribute("d", newOutletRoute);
   });
 
