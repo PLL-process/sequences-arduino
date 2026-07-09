@@ -17,13 +17,24 @@
   if (!tankText || !pumpText || !supplyText || !relayText) return;
 
   if (humidityLabel) {
-    humidityLabel.textContent = "Capteur d’humidité du sol — A0";
-    humidityLabel.setAttribute("x", "18");
+    humidityLabel.textContent = "";
+    humidityLabel.setAttribute("x", "25");
+    humidityLabel.setAttribute("y", "448");
     humidityLabel.setAttribute("font-size", "12");
+    const humidityLine1 = document.createElementNS(NS, "tspan");
+    humidityLine1.setAttribute("x", "25");
+    humidityLine1.setAttribute("dy", "0");
+    humidityLine1.textContent = "Capteur d’humidité";
+    const humidityLine2 = document.createElementNS(NS, "tspan");
+    humidityLine2.setAttribute("x", "25");
+    humidityLine2.setAttribute("dy", "16");
+    humidityLine2.textContent = "du sol — A0";
+    humidityLabel.append(humidityLine1, humidityLine2);
   }
   if (lightLabel) {
     lightLabel.textContent = "Capteur de lumière — A1";
-    lightLabel.setAttribute("x", "205");
+    lightLabel.setAttribute("x", "125");
+    lightLabel.setAttribute("y", "92");
     lightLabel.setAttribute("font-size", "12");
   }
 
