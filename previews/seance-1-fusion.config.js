@@ -40,27 +40,3 @@ window.TechnoQuestSessionTemplateConfig = {
     { label: "Justification écrite", points: 4 }
   ]
 };
-
-// Charger la feuille de style commune à tous les langages et tous les programmes.
-const codeHarmonyStyles = document.createElement("link");
-codeHarmonyStyles.rel = "stylesheet";
-codeHarmonyStyles.href = "../code-harmony.css?v=5";
-document.head.appendChild(codeHarmonyStyles);
-
-// Charger la feuille de style ultra premium des algorigrammes.
-const algorithmPremiumStyles = document.createElement("link");
-algorithmPremiumStyles.rel = "stylesheet";
-algorithmPremiumStyles.href = "../mission-mode/mission-algorithms-premium.css?v=1";
-document.head.appendChild(algorithmPremiumStyles);
-
-// Charger le moteur commun de gouttière et de coloration après la construction du document.
-const codeHarmonyScript = document.createElement("script");
-codeHarmonyScript.src = "../code-harmony.js?v=2";
-codeHarmonyScript.async = false;
-document.head.appendChild(codeHarmonyScript);
-
-// Charger le générateur des huit algorigrammes différenciés.
-const algorithmPremiumScript = document.createElement("script");
-algorithmPremiumScript.src = "../mission-mode/mission-algorithms-premium.js?v=1";
-algorithmPremiumScript.async = false;
-document.head.appendChild(algorithmPremiumScript);
