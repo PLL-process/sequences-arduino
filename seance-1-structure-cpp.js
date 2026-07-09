@@ -56,7 +56,7 @@
 
   course.classList.add("cpp-structure-course");
   course.innerHTML = `
-    <div class="cpp-structure-intro"><strong>Structure générale d’un programme Arduino en C++ :</strong> un sketch contient des directives éventuelles, des déclarations globales, les deux fonctions obligatoires <code>#setup()</code> et <code>loop()</code>, puis éventuellement des fonctions supplémentaires créées pour rendre le programme plus clair.</div>
+    <div class="cpp-structure-intro"><strong>Structure générale d’un programme Arduino en C++ :</strong> un sketch contient des directives éventuelles, des déclarations globales, les deux fonctions obligatoires <code>setup()</code> et <code>loop()</code>, puis éventuellement des fonctions supplémentaires créées pour rendre le programme plus clair.</div>
 
     <div class="cpp-structure-grid">
       <article class="cpp-structure-card"><span class="tag">Avant setup()</span><h4>Directives, constantes, broches et variables globales</h4><p>On place ici les <code>#include</code>, les constantes de broches et les variables qui doivent être accessibles depuis plusieurs fonctions.</p><p><strong>Constante :</strong> valeur qui ne change pas. <strong>Variable :</strong> valeur qui peut évoluer pendant l’exécution.</p></article>
