@@ -73,6 +73,7 @@
   oldPaths.forEach(path => {
     const d = path.getAttribute("d") || "";
     if (d.startsWith("M670 305") || d.startsWith("M882 328")) path.style.display = "none";
+    if (d.startsWith("M806 215")) path.setAttribute("d", "M800 210 H561");
   });
   const oldOverlay = svg.querySelector("#powerLinkV3");
   if (oldOverlay) oldOverlay.style.display = "none";
@@ -152,7 +153,8 @@
   const supplyZero = terminal(635, 483, "#60a5fa");
   const relayInput = terminal(635, 333, "#fb7185");
   const relayOutput = terminal(670, 305, "#fb7185");
+  const relayControl = terminal(600, 301, "#fb923c");
   const pumpPlus = terminal(880, 435, "#fb7185");
   const pumpZero = terminal(880, 507, "#60a5fa");
-  svg.append(supplyPlus, supplyZero, relayInput, relayOutput, pumpPlus, pumpZero);
+  svg.append(supplyPlus, supplyZero, relayInput, relayOutput, relayControl, pumpPlus, pumpZero);
 })();
