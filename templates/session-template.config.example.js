@@ -162,3 +162,9 @@ void loop() {
     { label: "Justification écrite", points: 4 }
   ]
 };
+
+// Charger le véritable jumeau numérique partagé avec les séances publiques.
+const realTwinScript = document.createElement("script");
+realTwinScript.src = "real-twin.js?v=1";
+realTwinScript.async = false;
+document.head.appendChild(realTwinScript);
