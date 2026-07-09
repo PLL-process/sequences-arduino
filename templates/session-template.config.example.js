@@ -172,11 +172,11 @@ document.head.appendChild(realTwinScript);
 // Charger la feuille de style commune aux programmes et à tous les langages reconnus.
 const codeHarmonyStyles = document.createElement("link");
 codeHarmonyStyles.rel = "stylesheet";
-codeHarmonyStyles.href = "../code-harmony.css?v=4";
+codeHarmonyStyles.href = "../code-harmony.css?v=5";
 document.head.appendChild(codeHarmonyStyles);
 
 // Charger le moteur commun de coloration, de légende et de gouttière.
 const codeHarmonyScript = document.createElement("script");
-codeHarmonyScript.src = "../code-harmony.js?v=1";
+codeHarmonyScript.src = "../code-harmony.js?v=2";
 codeHarmonyScript.async = false;
 document.head.appendChild(codeHarmonyScript);
