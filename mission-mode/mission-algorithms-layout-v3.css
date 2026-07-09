@@ -69,8 +69,8 @@
 /* La séance 1 utilise une disposition verticale centrée (plus lisible que le compact horizontal).
    Le ratio plus haut permet d'afficher la pile + le retour de boucle sans contrainte excessive. */
 .algorithm-premium-card.algorithm-layout-compact .algorithm-premium-svg {
-  aspect-ratio: 1100 / 780;
-  min-height: 520px;
+  aspect-ratio: 1100 / 900;
+  min-height: 620px;
 }
 
 /* Les textes restent nets même lorsque le SVG est réduit. */

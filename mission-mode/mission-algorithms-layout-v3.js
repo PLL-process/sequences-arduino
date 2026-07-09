@@ -18,7 +18,7 @@
 
 (() => {
   const SVG_NS = "http://www.w3.org/2000/svg";
-  const VERSION = "4";
+  const VERSION = "5";
 
   // Décrire les liaisons de chaque séance afin de pouvoir les recalculer après adaptation.
   const SESSION_EDGES = {
@@ -78,13 +78,13 @@
   // La séance 1 utilise une disposition verticale conventionnelle centrée.
   // Flux descendant évident pour collégiens ; retour boucle latéral droit (loop-right) clair et sans traversée.
   const SESSION_ONE_LAYOUT = {
-    start: { x: 380, y: 50 },
-    setup: { x: 380, y: 145 },
-    read: { x: 380, y: 240 },
-    display: { x: 380, y: 335 },
-    safe: { x: 380, y: 430 },
-    wait: { x: 380, y: 525 },
-    loop: { x: 380, y: 620 }
+    start: { x: 380, y: 35 },
+    setup: { x: 380, y: 155 },
+    read: { x: 380, y: 275 },
+    display: { x: 380, y: 395 },
+    safe: { x: 380, y: 515 },
+    wait: { x: 380, y: 635 },
+    loop: { x: 380, y: 755 }
   };
 
   function edge(source, target, label = "", kind = "auto") {
@@ -168,8 +168,32 @@
     return points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
   }
 
+  function effectiveVerticalGap(source, target, desiredGap) {
+    const available = Math.max(0, target.top - source.bottom);
+    if (available <= 1) return 0;
+    return Math.min(desiredGap, Math.max(0, (available - 1) / 2));
+  }
+
+  function rightLaneRoute(source, target, bounds, gap, outsideLabel = false) {
+    const laneX = bounds.maxRight + 34;
+    const points = [
+      { x: source.right + gap, y: source.centerY },
+      { x: laneX, y: source.centerY },
+      { x: laneX, y: target.centerY },
+      { x: target.right + gap, y: target.centerY }
+    ];
+    return {
+      points,
+      d: pathData(points),
+      labelX: outsideLabel ? laneX + 12 : laneX - 12,
+      labelY: (source.centerY + target.centerY) / 2 - 8,
+      labelAnchor: outsideLabel ? "start" : "end",
+      extentRight: outsideLabel ? laneX + 82 : laneX
+    };
+  }
+
   // Construire un trajet orthogonal qui s’arrête avant le bloc cible.
-  function route(source, target, kind, bounds) {
+  function route(source, target, kind, bounds, options = {}) {
     const gap = 11;
 
     // Retour par le haut (legacy pour layout horizontal séance 1 ; conservé pour compatibilité).
@@ -195,21 +219,7 @@
 
     // Les autres retours principaux rejoignent la cible par son côté droit.
     if (kind === "loop-right") {
-      const laneX = bounds.maxRight + 34;
-      const points = [
-        { x: source.right + gap, y: source.centerY },
-        { x: laneX, y: source.centerY },
-        { x: laneX, y: target.centerY },
-        { x: target.right + gap, y: target.centerY }
-      ];
-      return {
-        points,
-        d: pathData(points),
-        labelX: laneX - 12,
-        labelY: (source.centerY + target.centerY) / 2 - 8,
-        labelAnchor: "end",
-        extentRight: laneX
-      };
+      return rightLaneRoute(source, target, bounds, gap, options.outsideLoopLabel);
     }
 
     // La boucle corrective de maintenance utilise un couloir extérieur à gauche.
@@ -278,9 +288,30 @@
 
     // Flux principal descendant : sortie basse vers entrée haute.
     if (target.top >= source.bottom) {
-      const startY = source.bottom + gap;
-      const endY = target.top - gap;
-      const middleY = startY + Math.max(24, (endY - startY) / 2);
+      const routedGap = effectiveVerticalGap(source, target, gap);
+      const startY = source.bottom + routedGap;
+      const endY = target.top - routedGap;
+
+      if (Math.abs(horizontalDistance) < 1 && startY < endY) {
+        const points = [
+          { x: source.centerX, y: startY },
+          { x: target.centerX, y: endY }
+        ];
+        return {
+          points,
+          d: pathData(points),
+          labelX: source.centerX + 18,
+          labelY: (startY + endY) / 2 - 8,
+          labelAnchor: "start",
+          extentRight: Math.max(...points.map(point => point.x))
+        };
+      }
+
+      if (startY >= endY) {
+        return rightLaneRoute(source, target, bounds, gap, options.outsideLoopLabel);
+      }
+
+      const middleY = (startY + endY) / 2;
       const points = [
         { x: source.centerX, y: startY },
         { x: source.centerX, y: middleY },
@@ -298,22 +329,8 @@
     }
 
     // Sécurité pour un retour arrière non déclaré : utiliser un couloir droit dynamique.
-    const laneX = bounds.maxRight + 34;
-    const points = [
-      { x: source.right + gap, y: source.centerY },
-      { x: laneX, y: source.centerY },
-      { x: laneX, y: target.centerY },
-      { x: target.right + gap, y: target.centerY }
-    ];
-      return {
-        points,
-        d: pathData(points),
-        labelX: laneX - 12,
-        labelY: (source.centerY + target.centerY) / 2 - 8,
-        labelAnchor: "end",
-        extentRight: laneX
-      };
-    }
+    return rightLaneRoute(source, target, bounds, gap, options.outsideLoopLabel);
+  }
 
   // Détecter si un segment orthogonal traverse l’intérieur d’un autre bloc.
   function segmentCrossesBox(first, second, box) {
@@ -373,7 +390,9 @@
         return;
       }
 
-      const geometry = route(source, target, definition.kind, bounds);
+      const geometry = route(source, target, definition.kind, bounds, {
+        outsideLoopLabel: sessionId === 1 && definition.kind === "loop-right"
+      });
       extentRight = Math.max(extentRight, geometry.extentRight || bounds.maxRight);
       const collisions = routingCollisions(geometry.points, definition.source, definition.target, nodeMap);
       if (collisions.length) {
