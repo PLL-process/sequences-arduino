@@ -18,7 +18,7 @@
 
 (() => {
   const SVG_NS = "http://www.w3.org/2000/svg";
-  const VERSION = "8";
+  const VERSION = "9";
   const PORT_GAP = 10;
 
   // Décrire les liaisons de chaque séance afin de pouvoir les recalculer après adaptation.
@@ -306,19 +306,16 @@
     };
   }
 
-  function placeDecisionLabel(label, routePoints) {
-    const horizontalSegment = routePoints.slice(1).find((point, index) => {
-      const previous = routePoints[index];
-      return previous && previous.y === point.y && previous.x !== point.x;
-    });
-    const segmentIndex = routePoints.indexOf(horizontalSegment);
-    const previous = segmentIndex > 0 ? routePoints[segmentIndex - 1] : routePoints[1];
-    const first = previous || routePoints[0];
-    const second = horizontalSegment || routePoints[1] || first;
+  function placeDecisionLabel(branch, source, routePoints) {
+    const sign = branch === "yes" ? -1 : 1;
+    const first = routePoints[0];
+    const second = routePoints[1] || first;
+    const horizontalLength = Math.abs(second.x - first.x);
+    const offset = Math.max(22, Math.min(54, horizontalLength * .65));
     return {
-      labelX: (first.x + second.x) / 2,
-      labelY: first.y - 9,
-      labelAnchor: "middle"
+      labelX: first.x + sign * offset,
+      labelY: horizontalLength < 36 ? source.top - 8 : source.centerY - 9,
+      labelAnchor: branch === "yes" ? "end" : "start"
     };
   }
 
@@ -384,9 +381,8 @@
     const second = points[1];
     const last = points[points.length - 1];
     const previous = points[points.length - 2];
-    const third = points[2];
-    return first.x === second.x && second.y >= first.y &&
-      (!third || (third.y === second.y && third.x !== second.x)) &&
+    const sign = branch === "yes" ? -1 : 1;
+    return first.y === second.y && (second.x - first.x) * sign > 0 &&
       previous.x === last.x && previous.y <= last.y;
   }
 
@@ -498,60 +494,81 @@
 
   function routeDecisionBranch(source, target, label, bounds, nodeMap, previousPaths) {
     const branch = decisionBranch(label);
-    const side = target.centerX < source.centerX ? "left" : target.centerX > source.centerX ? "right" : branch === "yes" ? "left" : "right";
+    const sign = branch === "yes" ? -1 : 1;
+    const branchSide = branch === "yes" ? "left" : "right";
     const lead = 30;
     const gap = PORT_GAP;
-    const sourceAnchor = getBottomPort(source, gap);
+    const sourceAnchor = branch === "yes" ? getDecisionYesPort(source) : getDecisionNoPort(source);
     const targetAnchor = getTopPort(target, gap);
-    const stemY = sourceAnchor.y + 22;
-    const targetLeadY = approachYForTarget(target, targetAnchor, nodeMap, gap, lead);
+    const baseTargetLeadY = approachYForTarget(target, targetAnchor, nodeMap, gap, lead);
+    const branchOffsetY = branch === "yes" ? -8 : 8;
+    const minApproachY = sourceAnchor.y + 14;
+    const maxApproachY = targetAnchor.y - 1;
+    const targetLeadY = minApproachY <= maxApproachY
+      ? Math.max(minApproachY, Math.min(maxApproachY, baseTargetLeadY + branchOffsetY))
+      : maxApproachY;
+    const lowApproachY = minApproachY <= maxApproachY
+      ? Math.max(targetLeadY, Math.min(maxApproachY, targetAnchor.y - 12))
+      : targetLeadY;
     const targetLane = targetAnchor.x;
-    const sideLane = side === "left"
-      ? Math.min(targetLane, source.centerX - source.width * .58)
-      : Math.max(targetLane, source.centerX + source.width * .58);
-    const exterior = exteriorLane("", bounds, side);
-    const oppositeExterior = exteriorLane("", bounds, side === "left" ? "right" : "left");
+    let sideLane = sourceAnchor.x + sign * 28;
+    const laneLow = Math.min(sourceAnchor.y, Math.max(targetLeadY, lowApproachY));
+    const laneHigh = Math.max(sourceAnchor.y, Math.max(targetLeadY, lowApproachY));
+    nodeMap.forEach((box, nodeId) => {
+      if (nodeId === source.id || nodeId === target.id) return;
+      const laneInsideBox = sideLane > box.left && sideLane < box.right;
+      const verticalOverlap = Math.max(laneLow, box.top) < Math.min(laneHigh, box.bottom);
+      if (!laneInsideBox || !verticalOverlap) return;
+
+      const nearLane = sign < 0 ? box.right + 6 : box.left - 6;
+      const farLane = sign < 0 ? box.left - 6 : box.right + 6;
+      sideLane = (nearLane - sourceAnchor.x) * sign > 0 ? nearLane : farLane;
+    });
+    const exterior = exteriorLane("", bounds, branchSide);
+    const oppositeExterior = exteriorLane("", bounds, branchSide === "left" ? "right" : "left");
+    const targetIsOnBranchSide = (targetLane - sourceAnchor.x) * sign > 34;
     const candidates = [];
     const addCandidate = (points, penalty = 0) => candidates.push({ points, penalty });
 
-    addCandidate([
-      sourceAnchor,
-      { x: sourceAnchor.x, y: stemY },
-      { x: targetLane, y: stemY },
-      { x: targetLane, y: targetLeadY },
-      targetAnchor
-    ], 0);
+    if (targetIsOnBranchSide) {
+      addCandidate([
+        sourceAnchor,
+        { x: targetLane, y: sourceAnchor.y },
+        { x: targetLane, y: targetLeadY },
+        targetAnchor
+      ], 0);
+    }
 
     addCandidate([
       sourceAnchor,
-      { x: sourceAnchor.x, y: stemY },
-      { x: sideLane, y: stemY },
+      { x: sideLane, y: sourceAnchor.y },
       { x: sideLane, y: targetLeadY },
       { x: targetAnchor.x, y: targetLeadY },
       targetAnchor
-    ], 80);
+    ], targetIsOnBranchSide ? 80 : 0);
 
     addCandidate([
       sourceAnchor,
-      { x: sourceAnchor.x, y: stemY },
-      { x: sourceAnchor.x, y: targetLeadY },
-      { x: targetAnchor.x, y: targetLeadY },
-      targetAnchor
-    ], 90);
-
-    const lowMergeY = Math.max(targetLeadY, targetAnchor.y - 8);
-    addCandidate([
-      sourceAnchor,
-      { x: sourceAnchor.x, y: stemY },
-      { x: sourceAnchor.x, y: lowMergeY },
-      { x: targetAnchor.x, y: lowMergeY },
+      { x: sideLane, y: sourceAnchor.y },
+      { x: sideLane, y: lowApproachY },
+      { x: targetAnchor.x, y: lowApproachY },
       targetAnchor
     ], 110);
 
+    if (!targetIsOnBranchSide) {
+      const overpassY = source.top - Math.max(4, gap * .5);
+      addCandidate([
+        sourceAnchor,
+        { x: sideLane, y: sourceAnchor.y },
+        { x: sideLane, y: overpassY },
+        { x: targetAnchor.x, y: overpassY },
+        targetAnchor
+      ], 220);
+    }
+
     addCandidate([
       sourceAnchor,
-      { x: sourceAnchor.x, y: stemY },
-      { x: exterior, y: stemY },
+      { x: exterior, y: sourceAnchor.y },
       { x: exterior, y: targetLeadY },
       { x: targetAnchor.x, y: targetLeadY },
       targetAnchor
@@ -559,10 +576,17 @@
 
     addCandidate([
       sourceAnchor,
-      { x: sourceAnchor.x, y: stemY },
-      { x: sideLane, y: stemY },
-      { x: sideLane, y: stemY + lead },
-      { x: oppositeExterior, y: stemY + lead },
+      { x: exterior, y: sourceAnchor.y },
+      { x: exterior, y: lowApproachY },
+      { x: targetAnchor.x, y: lowApproachY },
+      targetAnchor
+    ], 650);
+
+    addCandidate([
+      sourceAnchor,
+      { x: sideLane, y: sourceAnchor.y },
+      { x: sideLane, y: sourceAnchor.y + lead },
+      { x: oppositeExterior, y: sourceAnchor.y + lead },
       { x: oppositeExterior, y: targetLeadY },
       { x: targetAnchor.x, y: targetLeadY },
       targetAnchor
@@ -576,7 +600,7 @@
       nodeMap,
       "middle",
       points => validDecisionBranch(points, branch),
-      points => placeDecisionLabel(label, points),
+      points => placeDecisionLabel(branch, source, points),
       previousPaths
     );
   }
@@ -663,7 +687,6 @@
     const second = points[1];
     const last = points[points.length - 1];
     const previous = points[points.length - 2];
-    const sourceBottom = getBottomPort(source, PORT_GAP);
     const targetTop = getTopPort(target, PORT_GAP);
     const result = {
       invalidDecisionInputs: 0,
@@ -682,13 +705,31 @@
       return result;
     }
 
-    if (!near(first, sourceBottom, tolerance) || second.x !== first.x || second.y < first.y) {
+    if (source.isDecision) {
+      const branch = decisionBranch(definition.label);
+      const sign = branch === "yes" ? -1 : 1;
+      const expectedSource = branch === "yes" ? getDecisionYesPort(source) : getDecisionNoPort(source);
+      const firstSegmentIsHorizontal = second.y === first.y;
+      const firstSegmentDirectionIsValid = (second.x - first.x) * sign > 0;
+      const startsAtExpectedSide = near(first, expectedSource, tolerance);
+      const startsFromBottom = first.y >= source.bottom - tolerance || Math.abs(first.x - source.centerX) <= tolerance;
+      const branchIsReversed = branch === "yes"
+        ? first.x >= source.centerX - tolerance || second.x > first.x
+        : first.x <= source.centerX + tolerance || second.x < first.x;
+
+      if (!["yes", "no"].includes(branch) || !startsAtExpectedSide || !firstSegmentIsHorizontal || !firstSegmentDirectionIsValid) {
+        result.invalidDecisionOutputs += 1;
+      }
+      if (startsFromBottom) result.decisionBottomOutputs += 1;
+      if (!["yes", "no"].includes(branch) || branchIsReversed) result.reversedDecisionLabels += 1;
+    } else if (!near(first, getBottomPort(source, PORT_GAP), tolerance) || second.x !== first.x || second.y < first.y) {
       result.ordinarySideExits += 1;
     }
 
     const nearTargetSide = Math.min(Math.abs(last.x - target.left), Math.abs(last.x - target.right)) <= 2;
     if (!near(last, targetTop, tolerance) || previous.x !== last.x || previous.y > last.y || nearTargetSide) {
-      result.ordinarySideEntries += 1;
+      if (target.isDecision) result.invalidDecisionInputs += 1;
+      else result.ordinarySideEntries += 1;
     }
 
     return result;
