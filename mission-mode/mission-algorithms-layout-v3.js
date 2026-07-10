@@ -18,7 +18,7 @@
 
 (() => {
   const SVG_NS = "http://www.w3.org/2000/svg";
-  const VERSION = "5";
+  const VERSION = "7";
 
   // Décrire les liaisons de chaque séance afin de pouvoir les recalculer après adaptation.
   const SESSION_EDGES = {
@@ -48,7 +48,7 @@
       edge("start", "read"), edge("read", "water"), edge("water", "forceStop", "Oui"),
       edge("water", "low", "Non"), edge("low", "startPump", "Oui"), edge("low", "high", "Non"),
       edge("high", "stopPump", "Oui"), edge("high", "keep", "Non : état conservé"),
-      edge("forceStop", "command"), edge("startPump", "command"),
+      edge("forceStop", "command", "", "merge-left"), edge("startPump", "command", "", "merge-left"),
       edge("stopPump", "command"), edge("keep", "command"),
       edge("command", "wait"), edge("wait", "loop"), edge("loop", "read", "Retour", "loop-right")
     ],
@@ -85,6 +85,10 @@
     safe: { x: 380, y: 515 },
     wait: { x: 380, y: 635 },
     loop: { x: 380, y: 755 }
+  };
+
+  const SESSION_FIVE_LAYOUT = {
+    stopPump: { x: 250, y: 900 }
   };
 
   function edge(source, target, label = "", kind = "auto") {
@@ -136,7 +140,9 @@
       top: y + dy,
       bottom: y + dy + height,
       centerX: x + dx + width / 2,
-      centerY: y + dy + height / 2
+      centerY: y + dy + height / 2,
+      type: node.classList.contains("algorithm-node--decision") ? "decision" : "ordinary",
+      isDecision: node.classList.contains("algorithm-node--decision")
     };
   }
 
@@ -149,6 +155,30 @@
     node.dataset.layoutDx = String(number(node.dataset.layoutDx) + dx);
     node.dataset.layoutDy = String(number(node.dataset.layoutDy) + dy);
     node.setAttribute("transform", `translate(${node.dataset.layoutDx} ${node.dataset.layoutDy})`);
+  }
+
+  function shiftNode(node, dx, dy = 0) {
+    node.dataset.layoutDx = String(number(node.dataset.layoutDx) + dx);
+    node.dataset.layoutDy = String(number(node.dataset.layoutDy) + dy);
+    node.setAttribute("transform", `translate(${node.dataset.layoutDx} ${node.dataset.layoutDy})`);
+  }
+
+  function separateOverlappingNodes(nodes) {
+    for (let pass = 0; pass < 8; pass += 1) {
+      let shifted = false;
+      const boxes = nodes.map(node => ({ node, box: shapeBox(node) })).filter(item => item.box);
+      for (let firstIndex = 0; firstIndex < boxes.length; firstIndex += 1) {
+        for (let secondIndex = firstIndex + 1; secondIndex < boxes.length; secondIndex += 1) {
+          const first = boxes[firstIndex];
+          const second = boxes[secondIndex];
+          if (!boxesOverlap(first.box, second.box)) continue;
+          const overlapX = Math.min(first.box.right, second.box.right) - Math.max(first.box.left, second.box.left);
+          shiftNode(second.node, overlapX + 24);
+          shifted = true;
+        }
+      }
+      if (!shifted) break;
+    }
   }
 
   // Calculer les limites réellement occupées par les blocs.
@@ -168,168 +198,365 @@
     return points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
   }
 
-  function effectiveVerticalGap(source, target, desiredGap) {
-    const available = Math.max(0, target.top - source.bottom);
-    if (available <= 1) return 0;
-    return Math.min(desiredGap, Math.max(0, (available - 1) / 2));
+  function getTopPort(box) {
+    return { x: box.centerX, y: box.top };
   }
 
-  function rightLaneRoute(source, target, bounds, gap, outsideLabel = false) {
-    const laneX = bounds.maxRight + 34;
-    const points = [
-      { x: source.right + gap, y: source.centerY },
-      { x: laneX, y: source.centerY },
-      { x: laneX, y: target.centerY },
-      { x: target.right + gap, y: target.centerY }
-    ];
+  function getBottomPort(box) {
+    return { x: box.centerX, y: box.bottom };
+  }
+
+  function getDecisionInputPort(diamond) {
+    return { x: diamond.centerX, y: diamond.top };
+  }
+
+  function getDecisionYesPort(diamond) {
+    return { x: diamond.left, y: diamond.centerY };
+  }
+
+  function getDecisionNoPort(diamond) {
+    return { x: diamond.right, y: diamond.centerY };
+  }
+
+  function decisionBranch(label) {
+    const normalized = String(label || "").trim().toLowerCase();
+    if (normalized.startsWith("oui")) return "yes";
+    if (normalized.startsWith("non")) return "no";
+    return "";
+  }
+
+  function pointDistance(first, second) {
+    return Math.abs(first.x - second.x) + Math.abs(first.y - second.y);
+  }
+
+  function normalizePoints(points) {
+    const compact = [];
+    points.forEach(point => {
+      const previous = compact[compact.length - 1];
+      if (!previous || previous.x !== point.x || previous.y !== point.y) compact.push(point);
+    });
+
+    let index = 1;
+    while (index < compact.length - 1) {
+      const previous = compact[index - 1];
+      const current = compact[index];
+      const next = compact[index + 1];
+      if ((previous.x === current.x && current.x === next.x) || (previous.y === current.y && current.y === next.y)) {
+        compact.splice(index, 1);
+      } else {
+        index += 1;
+      }
+    }
+    return compact;
+  }
+
+  function routeLength(points) {
+    return points.slice(1).reduce((total, point, index) => total + pointDistance(points[index], point), 0);
+  }
+
+  function exteriorLane(kind, bounds, side = "right") {
+    if (kind === "loop-left" || side === "left") return Math.max(24, bounds.minLeft - 52);
+    return bounds.maxRight + 52;
+  }
+
+  function branchLabel(points, source, target, kind, labelSide) {
+    const horizontalSegments = [];
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const first = points[index];
+      const second = points[index + 1];
+      if (first.y === second.y && first.x !== second.x) {
+        horizontalSegments.push({ first, second, length: Math.abs(second.x - first.x) });
+      }
+    }
+
+    const segment = horizontalSegments.sort((first, second) => second.length - first.length)[0];
+    if (!segment) {
+      return {
+        labelX: source.centerX + 18,
+        labelY: (source.bottom + target.top) / 2,
+        labelAnchor: "start"
+      };
+    }
+
+    if (kind === "loop-right") {
+      const laneX = Math.max(...points.map(point => point.x));
+      return {
+        labelX: laneX + 12,
+        labelY: (source.centerY + target.centerY) / 2 - 8,
+        labelAnchor: "start"
+      };
+    }
+
+    if (kind === "loop-left") {
+      const laneX = Math.min(...points.map(point => point.x));
+      return {
+        labelX: laneX + 10,
+        labelY: (source.centerY + target.centerY) / 2 - 8,
+        labelAnchor: "start"
+      };
+    }
+
+    const labelX = (segment.first.x + segment.second.x) / 2;
+    const labelY = segment.first.y + 14;
     return {
-      points,
-      d: pathData(points),
-      labelX: outsideLabel ? laneX + 12 : laneX - 12,
-      labelY: (source.centerY + target.centerY) / 2 - 8,
-      labelAnchor: outsideLabel ? "start" : "end",
-      extentRight: outsideLabel ? laneX + 82 : laneX
+      labelX,
+      labelY,
+      labelAnchor: labelSide || "middle"
     };
   }
 
-  // Construire un trajet orthogonal qui s’arrête avant le bloc cible.
-  function route(source, target, kind, bounds, options = {}) {
-    const gap = 11;
+  function placeDecisionLabel(branch, diamond, routePoints) {
+    const sign = branch === "yes" ? -1 : 1;
+    const first = routePoints[0];
+    const second = routePoints[1] || { x: first.x + sign * 44, y: first.y };
+    const horizontalLength = Math.abs(second.x - first.x);
+    const offset = Math.min(46, Math.max(24, horizontalLength * .55));
+    return {
+      labelX: first.x + sign * offset,
+      labelY: horizontalLength < 32 ? diamond.top - 8 : first.y - 9,
+      labelAnchor: branch === "yes" ? "end" : "start"
+    };
+  }
 
-    // Retour par le haut (legacy pour layout horizontal séance 1 ; conservé pour compatibilité).
-    if (kind === "loop-top") {
-      const laneX = Math.max(1062, bounds.maxRight + 32);
-      const topY = Math.max(18, bounds.minTop - 32);
-      const points = [
-        { x: source.centerX, y: source.bottom + gap },
-        { x: laneX, y: source.bottom + gap },
-        { x: laneX, y: topY },
-        { x: target.centerX, y: topY },
-        { x: target.centerX, y: target.top - gap }
-      ];
-      return {
-        points,
-        d: pathData(points),
-        labelX: laneX - 12,
-        labelY: Math.max(topY + 18, (source.bottom + topY) / 2),
-        labelAnchor: "end",
-        extentRight: laneX
-      };
-    }
-
-    // Les autres retours principaux rejoignent la cible par son côté droit.
-    if (kind === "loop-right") {
-      return rightLaneRoute(source, target, bounds, gap, options.outsideLoopLabel);
-    }
-
-    // La boucle corrective de maintenance utilise un couloir extérieur à gauche.
-    if (kind === "loop-left") {
-      const laneX = Math.max(24, bounds.minLeft - 34);
-      const points = [
-        { x: source.left - gap, y: source.centerY },
-        { x: laneX, y: source.centerY },
-        { x: laneX, y: target.centerY },
-        { x: target.left - gap, y: target.centerY }
-      ];
-      return {
-        points,
-        d: pathData(points),
-        labelX: laneX + 10,
-        labelY: (source.centerY + target.centerY) / 2 - 8,
-        labelAnchor: "start",
-        extentRight: bounds.maxRight
-      };
-    }
-
-    const horizontalDistance = target.centerX - source.centerX;
-    const verticalDistance = target.centerY - source.centerY;
-    const verticalOverlap = Math.min(source.bottom, target.bottom) - Math.max(source.top, target.top);
-
-    // Liaisons latérales, particulièrement utiles dans la séance 1 compacte.
-    if (verticalOverlap > Math.min(source.height, target.height) * .35 || Math.abs(verticalDistance) < 45) {
-      if (horizontalDistance >= 0) {
-        const startX = source.right + gap;
-        const endX = target.left - gap;
-        const middleX = startX + (endX - startX) / 2;
-        const points = [
-          { x: startX, y: source.centerY },
-          { x: middleX, y: source.centerY },
-          { x: middleX, y: target.centerY },
-          { x: endX, y: target.centerY }
-        ];
-        return {
-          points,
-          d: pathData(points),
-          labelX: middleX,
-          labelY: Math.min(source.centerY, target.centerY) - 10,
-          labelAnchor: "middle",
-          extentRight: Math.max(...points.map(point => point.x))
-        };
+  function approachYForTarget(target, targetAnchor, nodeMap, gap, lead) {
+    let approachY = targetAnchor.y - lead;
+    nodeMap.forEach((box, nodeId) => {
+      if (nodeId === target.id) return;
+      const verticalLineCanHit = target.centerX > box.left && target.centerX < box.right;
+      if (verticalLineCanHit && approachY < box.bottom && targetAnchor.y > box.top) {
+        approachY = Math.max(approachY, box.bottom + gap);
       }
+    });
+    return Math.min(approachY, targetAnchor.y - 1);
+  }
 
-      const startX = source.left - gap;
-      const endX = target.right + gap;
-      const middleX = startX + (endX - startX) / 2;
-      const points = [
-        { x: startX, y: source.centerY },
-        { x: middleX, y: source.centerY },
-        { x: middleX, y: target.centerY },
-        { x: endX, y: target.centerY }
-      ];
-      return {
-        points,
-        d: pathData(points),
-        labelX: middleX,
-        labelY: Math.min(source.centerY, target.centerY) - 10,
-        labelAnchor: "middle",
-        extentRight: Math.max(...points.map(point => point.x))
-      };
+  function routeScore(points, sourceId, targetId, nodeMap, penalty = 0, previousPaths = []) {
+    return {
+      blockCollisions: routingCollisions(points, sourceId, targetId, nodeMap).length,
+      crossings: countCandidateCrossings(points, previousPaths),
+      cost: penalty + routeLength(points)
+    };
+  }
+
+  function routeFromCandidates(candidates, source, target, kind, nodeMap, labelSide, validator, labelFactory, previousPaths = []) {
+    const valid = candidates
+      .map(candidate => ({
+        points: normalizePoints(candidate.points),
+        penalty: candidate.penalty || 0
+      }))
+      .filter(candidate => candidate.points.length >= 2)
+      .filter(candidate => validator(candidate.points))
+      .map(candidate => ({
+        ...candidate,
+        score: routeScore(candidate.points, source.id, target.id, nodeMap, candidate.penalty, previousPaths)
+      }))
+      .sort((first, second) =>
+        first.score.blockCollisions - second.score.blockCollisions ||
+        first.score.crossings - second.score.crossings ||
+        first.score.cost - second.score.cost
+      );
+
+    const best = valid[0] || candidates[0];
+    const points = normalizePoints(best.points);
+    const label = labelFactory ? labelFactory(points) : branchLabel(points, source, target, kind, labelSide);
+    return {
+      points,
+      d: pathData(points),
+      ...label,
+      extentRight: Math.max(...points.map(point => point.x), label.labelX + (label.labelAnchor === "start" ? 120 : 0))
+    };
+  }
+
+  function validSequential(points) {
+    const first = points[0];
+    const second = points[1];
+    const last = points[points.length - 1];
+    const previous = points[points.length - 2];
+    return first.x === second.x && second.y >= first.y && previous.x === last.x && previous.y <= last.y;
+  }
+
+  function validDecisionBranch(points, branch) {
+    const first = points[0];
+    const second = points[1];
+    const last = points[points.length - 1];
+    const previous = points[points.length - 2];
+    const sign = branch === "yes" ? -1 : 1;
+    return first.y === second.y && (second.x - first.x) * sign > 0 &&
+      previous.x === last.x && previous.y <= last.y;
+  }
+
+  function orthogonalIntersection(firstSegment, secondSegment) {
+    const firstHorizontal = firstSegment.first.y === firstSegment.second.y;
+    const secondHorizontal = secondSegment.first.y === secondSegment.second.y;
+    if (firstHorizontal === secondHorizontal) return null;
+
+    const horizontal = firstHorizontal ? firstSegment : secondSegment;
+    const vertical = firstHorizontal ? secondSegment : firstSegment;
+    const between = (value, first, second) => value > Math.min(first, second) && value < Math.max(first, second);
+    const point = { x: vertical.first.x, y: horizontal.first.y };
+    if (!between(point.x, horizontal.first.x, horizontal.second.x) ||
+      !between(point.y, vertical.first.y, vertical.second.y)) return null;
+    return point;
+  }
+
+  function pathSegments(points) {
+    const segments = [];
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const first = points[index];
+      const second = points[index + 1];
+      if (!near(first, second)) segments.push({ first, second });
+    }
+    return segments;
+  }
+
+  function countCandidateCrossings(points, previousPaths) {
+    const segments = pathSegments(points);
+    let crossings = 0;
+    previousPaths.forEach(previousPath => {
+      const previousSegments = pathSegments(previousPath.points);
+      segments.forEach(segment => {
+        previousSegments.forEach(previousSegment => {
+          if (orthogonalIntersection(segment, previousSegment)) crossings += 1;
+        });
+      });
+    });
+    return crossings;
+  }
+
+  function routeSequentialEdge(source, target, kind, bounds, nodeMap, previousPaths) {
+    const gap = 0;
+    const lead = 28;
+    const sourceAnchor = getBottomPort(source);
+    const targetAnchor = target.isDecision ? getDecisionInputPort(target) : getTopPort(target);
+    const rightLane = exteriorLane(kind, bounds, "right");
+    const leftLane = exteriorLane(kind, bounds, "left");
+    const preferredLane = kind === "loop-left" ? leftLane : rightLane;
+    const alternateLane = preferredLane === rightLane ? leftLane : rightLane;
+    const candidates = [];
+
+    const addCandidate = (points, penalty = 0) => candidates.push({ points, penalty });
+    const addExteriorCandidate = (laneX, penalty = 800) => {
+      const startLeadY = sourceAnchor.y + lead;
+      const targetLeadY = approachYForTarget(target, targetAnchor, nodeMap, gap, lead);
+      addCandidate([
+        sourceAnchor,
+        { x: sourceAnchor.x, y: startLeadY },
+        { x: laneX, y: startLeadY },
+        { x: laneX, y: targetLeadY },
+        { x: targetAnchor.x, y: targetLeadY },
+        targetAnchor
+      ], penalty);
+    };
+
+    if (kind === "merge-left" && targetAnchor.y > sourceAnchor.y) {
+      addExteriorCandidate(leftLane, 0);
+      return routeFromCandidates(candidates, source, target, kind, nodeMap, "middle", validSequential, null, previousPaths);
     }
 
-    // Flux principal descendant : sortie basse vers entrée haute.
-    if (target.top >= source.bottom) {
-      const routedGap = effectiveVerticalGap(source, target, gap);
-      const startY = source.bottom + routedGap;
-      const endY = target.top - routedGap;
+    if (targetAnchor.y > sourceAnchor.y) {
+      const middleY = (sourceAnchor.y + targetAnchor.y) / 2;
+      if (sourceAnchor.x === targetAnchor.x) addCandidate([sourceAnchor, targetAnchor], 0);
+      addCandidate([
+        sourceAnchor,
+        { x: sourceAnchor.x, y: middleY },
+        { x: targetAnchor.x, y: middleY },
+        targetAnchor
+      ], Math.abs(sourceAnchor.x - targetAnchor.x) > 1 ? 20 : 0);
 
-      if (Math.abs(horizontalDistance) < 1 && startY < endY) {
-        const points = [
-          { x: source.centerX, y: startY },
-          { x: target.centerX, y: endY }
-        ];
-        return {
-          points,
-          d: pathData(points),
-          labelX: source.centerX + 18,
-          labelY: (startY + endY) / 2 - 8,
-          labelAnchor: "start",
-          extentRight: Math.max(...points.map(point => point.x))
-        };
-      }
+      const startLeadY = Math.min(sourceAnchor.y + lead, middleY);
+      const targetLeadY = Math.max(approachYForTarget(target, targetAnchor, nodeMap, gap, lead), middleY);
+      addCandidate([
+        sourceAnchor,
+        { x: sourceAnchor.x, y: startLeadY },
+        { x: targetAnchor.x, y: startLeadY },
+        { x: targetAnchor.x, y: targetLeadY },
+        targetAnchor
+      ], 80);
 
-      if (startY >= endY) {
-        return rightLaneRoute(source, target, bounds, gap, options.outsideLoopLabel);
-      }
-
-      const middleY = (startY + endY) / 2;
-      const points = [
-        { x: source.centerX, y: startY },
-        { x: source.centerX, y: middleY },
-        { x: target.centerX, y: middleY },
-        { x: target.centerX, y: endY }
-      ];
-      return {
-        points,
-        d: pathData(points),
-        labelX: source.centerX + (target.centerX >= source.centerX ? 18 : -18),
-        labelY: middleY - 8,
-        labelAnchor: target.centerX >= source.centerX ? "start" : "end",
-        extentRight: Math.max(...points.map(point => point.x))
-      };
+      const lowApproachY = Math.min(targetAnchor.y - 1, Math.max(sourceAnchor.y + lead, targetAnchor.y - 12));
+      addCandidate([
+        sourceAnchor,
+        { x: sourceAnchor.x, y: sourceAnchor.y + lead },
+        { x: sourceAnchor.x, y: lowApproachY },
+        { x: targetAnchor.x, y: lowApproachY },
+        targetAnchor
+      ], 90);
+      addExteriorCandidate(preferredLane, 900);
+      addExteriorCandidate(alternateLane, 1200);
+    } else {
+      addExteriorCandidate(preferredLane, kind === "loop-left" || kind === "loop-right" ? 0 : 900);
+      addExteriorCandidate(alternateLane, 1200);
     }
 
-    // Sécurité pour un retour arrière non déclaré : utiliser un couloir droit dynamique.
-    return rightLaneRoute(source, target, bounds, gap, options.outsideLoopLabel);
+    return routeFromCandidates(candidates, source, target, kind, nodeMap, "middle", validSequential, null, previousPaths);
+  }
+
+  function routeDecisionBranch(source, target, label, bounds, nodeMap, previousPaths) {
+    const branch = decisionBranch(label);
+    const sign = branch === "yes" ? -1 : 1;
+    const lead = 30;
+    const sourceAnchor = branch === "yes" ? getDecisionYesPort(source) : getDecisionNoPort(source);
+    const targetAnchor = target.isDecision ? getDecisionInputPort(target) : getTopPort(target);
+    const targetLeadY = approachYForTarget(target, targetAnchor, nodeMap, 0, lead);
+    const ownLane = sourceAnchor.x + sign * 16;
+    const targetLane = targetAnchor.x;
+    const exterior = exteriorLane("", bounds, branch === "yes" ? "left" : "right");
+    const oppositeExterior = exteriorLane("", bounds, branch === "yes" ? "right" : "left");
+    const candidates = [];
+    const addCandidate = (points, penalty = 0) => candidates.push({ points, penalty });
+    const canUseTargetLane = (targetLane - sourceAnchor.x) * sign > 34;
+
+    if (canUseTargetLane) {
+      addCandidate([
+        sourceAnchor,
+        { x: targetLane, y: sourceAnchor.y },
+        { x: targetLane, y: targetLeadY },
+        targetAnchor
+      ], 0);
+    }
+
+    addCandidate([
+      sourceAnchor,
+      { x: ownLane, y: sourceAnchor.y },
+      { x: ownLane, y: targetLeadY },
+      { x: targetAnchor.x, y: targetLeadY },
+      targetAnchor
+    ], canUseTargetLane ? 80 : 0);
+
+    addCandidate([
+      sourceAnchor,
+      { x: exterior, y: sourceAnchor.y },
+      { x: exterior, y: targetLeadY },
+      { x: targetAnchor.x, y: targetLeadY },
+      targetAnchor
+    ], 420);
+
+    addCandidate([
+      sourceAnchor,
+      { x: ownLane, y: sourceAnchor.y },
+      { x: ownLane, y: sourceAnchor.y + lead },
+      { x: oppositeExterior, y: sourceAnchor.y + lead },
+      { x: oppositeExterior, y: targetLeadY },
+      { x: targetAnchor.x, y: targetLeadY },
+      targetAnchor
+    ], 1200);
+
+    return routeFromCandidates(
+      candidates,
+      source,
+      target,
+      "decision",
+      nodeMap,
+      branch === "yes" ? "end" : "start",
+      points => validDecisionBranch(points, branch),
+      points => placeDecisionLabel(branch, source, points),
+      previousPaths
+    );
+  }
+
+  function route(source, target, definition, bounds, nodeMap, previousPaths) {
+    if (source.isDecision) return routeDecisionBranch(source, target, definition.label, bounds, nodeMap, previousPaths);
+    return routeSequentialEdge(source, target, definition.kind, bounds, nodeMap, previousPaths);
   }
 
   // Détecter si un segment orthogonal traverse l’intérieur d’un autre bloc.
@@ -362,16 +589,186 @@
     return collisions;
   }
 
+  function boxesOverlap(first, second) {
+    return Math.max(first.left, second.left) < Math.min(first.right, second.right) &&
+      Math.max(first.top, second.top) < Math.min(first.bottom, second.bottom);
+  }
+
+  function blockOverlaps(nodeMap) {
+    const boxes = [...nodeMap.entries()];
+    const overlaps = [];
+    for (let firstIndex = 0; firstIndex < boxes.length; firstIndex += 1) {
+      for (let secondIndex = firstIndex + 1; secondIndex < boxes.length; secondIndex += 1) {
+        const [firstId, firstBox] = boxes[firstIndex];
+        const [secondId, secondBox] = boxes[secondIndex];
+        if (boxesOverlap(firstBox, secondBox)) overlaps.push(`${firstId}/${secondId}`);
+      }
+    }
+    return overlaps;
+  }
+
+  function near(first, second, tolerance = .5) {
+    return Math.abs(first.x - second.x) <= tolerance && Math.abs(first.y - second.y) <= tolerance;
+  }
+
+  function hasFoldedSegments(points) {
+    for (let index = 0; index < points.length - 2; index += 1) {
+      const first = points[index];
+      const second = points[index + 1];
+      const third = points[index + 2];
+      if (near(first, third) && !near(first, second)) return true;
+      if (near(first, second)) return true;
+    }
+    return false;
+  }
+
+  function connectionPortAudit(points, source, target, definition) {
+    const tolerance = .5;
+    const first = points[0];
+    const second = points[1];
+    const last = points[points.length - 1];
+    const previous = points[points.length - 2];
+    const branch = decisionBranch(definition.label);
+    const targetTop = target.isDecision ? getDecisionInputPort(target) : getTopPort(target);
+    const result = {
+      invalidDecisionInputs: 0,
+      invalidDecisionOutputs: 0,
+      decisionBottomOutputs: 0,
+      reversedDecisionLabels: 0,
+      ordinarySideEntries: 0,
+      ordinarySideExits: 0,
+      foldedSegments: hasFoldedSegments(points) ? 1 : 0,
+      danglingConnectors: points.length < 2 ? 1 : 0
+    };
+
+    if (!first || !second || !last || !previous) {
+      result.danglingConnectors += 1;
+      return result;
+    }
+
+    if (source.isDecision) {
+      const expected = branch === "yes" ? getDecisionYesPort(source) : getDecisionNoPort(source);
+      const sign = branch === "yes" ? -1 : 1;
+      if (!branch || !near(first, expected, tolerance) || first.y === source.bottom ||
+        first.x === source.centerX || first.y !== second.y || (second.x - first.x) * sign <= 0) {
+        result.invalidDecisionOutputs += 1;
+      }
+      if (first.y >= source.bottom - tolerance) result.decisionBottomOutputs += 1;
+      if ((definition.label || "").trim().toLowerCase().startsWith("oui") && first.x > source.centerX) {
+        result.reversedDecisionLabels += 1;
+      }
+      if ((definition.label || "").trim().toLowerCase().startsWith("non") && first.x < source.centerX) {
+        result.reversedDecisionLabels += 1;
+      }
+    } else if (!near(first, getBottomPort(source), tolerance) || second.x !== first.x || second.y < first.y) {
+      result.ordinarySideExits += 1;
+    }
+
+    const nearTargetSide = Math.min(Math.abs(last.x - target.left), Math.abs(last.x - target.right)) <= 2;
+    if (target.isDecision) {
+      if (!near(last, getDecisionInputPort(target), tolerance) || previous.x !== last.x || previous.y > last.y) {
+        result.invalidDecisionInputs += 1;
+      }
+    } else if (!near(last, targetTop, tolerance) || previous.x !== last.x || previous.y > last.y || nearTargetSide) {
+      result.ordinarySideEntries += 1;
+    }
+
+    return result;
+  }
+
+  function labelCollisions(layer, nodeMap) {
+    const collisions = [];
+    layer.querySelectorAll(".algorithm-branch-label").forEach(label => {
+      const box = label.getBBox();
+      const padded = {
+        left: box.x - 2,
+        right: box.x + box.width + 2,
+        top: box.y - 2,
+        bottom: box.y + box.height + 2
+      };
+      nodeMap.forEach((nodeBox, nodeId) => {
+        if (boxesOverlap(padded, nodeBox)) collisions.push(`${label.textContent.trim()} → ${nodeId}`);
+      });
+    });
+    return collisions;
+  }
+
   function svgElement(name, attributes = {}) {
     const element = document.createElementNS(SVG_NS, name);
     Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
     return element;
   }
 
+  function ensureRoutingMarkers(svg) {
+    const defs = svg.querySelector("defs") || svg.insertBefore(svgElement("defs"), svg.firstChild);
+    const upsertMarker = (id, fill) => {
+      defs.querySelector(`#${id}`)?.remove();
+      const marker = svgElement("marker", {
+        id,
+        viewBox: "0 0 10 10",
+        refX: "9",
+        refY: "5",
+        markerWidth: "10",
+        markerHeight: "10",
+        markerUnits: "userSpaceOnUse",
+        orient: "auto"
+      });
+      marker.appendChild(svgElement("path", {
+        d: "M 0 0 L 10 5 L 0 10 z",
+        fill
+      }));
+      defs.appendChild(marker);
+    };
+
+    upsertMarker("algorithmArrow", "#67e8f9");
+    upsertMarker("algorithmLoopArrow", "#fde047");
+  }
+
+  function countAmbiguousCrossings(paths) {
+    const intersections = [];
+    const endpointKey = point => `${point.x},${point.y}`;
+    const segmentList = [];
+    paths.forEach(path => {
+      for (let index = 0; index < path.points.length - 1; index += 1) {
+        const first = path.points[index];
+        const second = path.points[index + 1];
+        if (near(first, second)) continue;
+        segmentList.push({
+          edge: path.edge,
+          first,
+          second,
+          endpoints: new Set([endpointKey(first), endpointKey(second)])
+        });
+      }
+    });
+
+    const between = (value, first, second) => value > Math.min(first, second) && value < Math.max(first, second);
+    for (let firstIndex = 0; firstIndex < segmentList.length; firstIndex += 1) {
+      for (let secondIndex = firstIndex + 1; secondIndex < segmentList.length; secondIndex += 1) {
+        const a = segmentList[firstIndex];
+        const b = segmentList[secondIndex];
+        const aHorizontal = a.first.y === a.second.y;
+        const bHorizontal = b.first.y === b.second.y;
+        if (aHorizontal === bHorizontal) continue;
+
+        const horizontal = aHorizontal ? a : b;
+        const vertical = aHorizontal ? b : a;
+        const point = { x: vertical.first.x, y: horizontal.first.y };
+        if (!between(point.x, horizontal.first.x, horizontal.second.x) ||
+          !between(point.y, vertical.first.y, vertical.second.y)) continue;
+        const key = endpointKey(point);
+        if (horizontal.endpoints.has(key) || vertical.endpoints.has(key)) continue;
+        intersections.push(`${a.edge}/${b.edge}`);
+      }
+    }
+    return intersections;
+  }
+
   // Reconstruire les connecteurs afin qu’ils n’entrent plus dans les formes.
   // Les attributs inline stroke assurent visibilité et fonctionnement du SVG téléchargé seul.
   function rebuildEdges(svg, sessionId, nodeMap) {
     svg.querySelectorAll(".algorithm-connector,.algorithm-branch-label,.algorithm-layout-connectors").forEach(element => element.remove());
+    ensureRoutingMarkers(svg);
 
     const layer = svgElement("g", { class: "algorithm-layout-connectors", "aria-hidden": "true" });
     const firstNode = svg.querySelector(".algorithm-node");
@@ -380,41 +777,87 @@
 
     const bounds = graphBounds(nodeMap);
     const warnings = [];
+    const auditSummary = {
+      ok: true,
+      missingConnections: 0,
+      missingArrowheads: 0,
+      invalidDecisionInputs: 0,
+      invalidDecisionOutputs: 0,
+      decisionBottomOutputs: 0,
+      reversedDecisionLabels: 0,
+      ordinarySideEntries: 0,
+      ordinarySideExits: 0,
+      blockCollisions: 0,
+      nodeOverlaps: 0,
+      labelCollisions: 0,
+      foldedSegments: 0,
+      danglingConnectors: 0,
+      ambiguousCrossings: 0,
+      connectionCount: 0,
+      sideEntries: 0,
+      sideExits: 0,
+      blockOverlaps: 0
+    };
     let extentRight = bounds.maxRight;
+    const routedPaths = [];
 
     (SESSION_EDGES[sessionId] || []).forEach((definition, index) => {
       const source = nodeMap.get(definition.source);
       const target = nodeMap.get(definition.target);
       if (!source || !target) {
+        auditSummary.missingConnections += 1;
         warnings.push(`liaison ${definition.source} → ${definition.target} incomplète`);
         return;
       }
 
-      const geometry = route(source, target, definition.kind, bounds, {
-        outsideLoopLabel: sessionId === 1 && definition.kind === "loop-right"
-      });
+      const geometry = route(source, target, definition, bounds, nodeMap, routedPaths);
       extentRight = Math.max(extentRight, geometry.extentRight || bounds.maxRight);
+      auditSummary.connectionCount += 1;
+
+      const portWarnings = connectionPortAudit(geometry.points, source, target, definition);
+      Object.keys(portWarnings).forEach(key => {
+        auditSummary[key] += portWarnings[key];
+      });
+      auditSummary.sideExits = auditSummary.ordinarySideExits;
+      auditSummary.sideEntries = auditSummary.ordinarySideEntries;
+      if (portWarnings.invalidDecisionInputs) warnings.push(`${definition.source} → ${definition.target} entre dans un losange par un port non conforme`);
+      if (portWarnings.invalidDecisionOutputs) warnings.push(`${definition.source} → ${definition.target} sort d’un losange par un port non conforme`);
+      if (portWarnings.decisionBottomOutputs) warnings.push(`${definition.source} → ${definition.target} sort sous un losange`);
+      if (portWarnings.reversedDecisionLabels) warnings.push(`${definition.source} → ${definition.target} inverse Oui/Non`);
+      if (portWarnings.ordinarySideExits) warnings.push(`${definition.source} → ${definition.target} sort d’un bloc ordinaire par un port non conforme`);
+      if (portWarnings.ordinarySideEntries) warnings.push(`${definition.source} → ${definition.target} entre dans un bloc ordinaire par un port non conforme`);
+      if (portWarnings.foldedSegments) warnings.push(`${definition.source} → ${definition.target} contient un segment replié`);
+      if (portWarnings.danglingConnectors) warnings.push(`${definition.source} → ${definition.target} contient une liaison pendante`);
+
       const collisions = routingCollisions(geometry.points, definition.source, definition.target, nodeMap);
       if (collisions.length) {
+        auditSummary.blockCollisions += collisions.length;
         warnings.push(`${definition.source} → ${definition.target} traverse ${collisions.join(", ")}`);
       }
 
+      const isLoop = definition.kind.startsWith("loop");
+      const markerEnd = isLoop ? "url(#algorithmLoopArrow)" : "url(#algorithmArrow)";
       const path = svgElement("path", {
-        class: `algorithm-connector${definition.kind.startsWith("loop") ? " algorithm-loop-connector" : ""}`,
+        class: `algorithm-connector${isLoop ? " algorithm-loop-connector" : ""}`,
         d: geometry.d,
-        "marker-end": "url(#algorithmArrow)",
+        "marker-end": markerEnd,
         "data-edge-index": index,
         "data-source": definition.source,
         "data-target": definition.target,
+        "data-label": definition.label || "",
+        ...(source.isDecision ? { "data-decision-branch": decisionBranch(definition.label) } : {}),
         "vector-effect": "non-scaling-stroke",
         // Attributs inline pour visibilité garantie et SVG standalone (téléchargement/impression)
-        stroke: "#67e8f9",
+        stroke: isLoop ? "#fde047" : "#67e8f9",
         "stroke-width": "5",
         "stroke-opacity": "0.92",
         "stroke-linecap": "round",
-        "stroke-linejoin": "round"
+        "stroke-linejoin": "round",
+        ...(isLoop ? { "stroke-dasharray": "11 8" } : {})
       });
+      if (!markerEnd) auditSummary.missingArrowheads += 1;
       layer.appendChild(path);
+      routedPaths.push({ edge: `${definition.source}->${definition.target}`, points: geometry.points });
 
       if (definition.label) {
         const text = svgElement("text", {
@@ -428,9 +871,24 @@
       }
     });
 
+    const overlaps = blockOverlaps(nodeMap);
+    auditSummary.nodeOverlaps = overlaps.length;
+    auditSummary.blockOverlaps = overlaps.length;
+    if (overlaps.length) warnings.push(`blocs superposés : ${overlaps.join(", ")}`);
+
+    const labelHits = labelCollisions(layer, nodeMap);
+    auditSummary.labelCollisions = labelHits.length;
+    if (labelHits.length) warnings.push(`libellés superposés : ${labelHits.join(", ")}`);
+
+    const crossings = countAmbiguousCrossings(routedPaths);
+    auditSummary.ambiguousCrossings = crossings.length;
+    if (crossings.length) warnings.push(`croisements ambigus : ${crossings.join(", ")}`);
+
+    auditSummary.ok = warnings.length === 0;
     svg.dataset.routingAudit = warnings.length ? "warning" : "ok";
+    svg.dataset.routingAuditSummary = JSON.stringify(auditSummary);
     if (warnings.length) console.warn(`TechnoQuest — séance ${sessionId} :`, warnings);
-    return { bounds, extentRight, warnings };
+    return { bounds, extentRight, warnings, auditSummary };
   }
 
   function applyLayout(svg) {
@@ -449,6 +907,10 @@
       nodes.forEach(node => moveNode(node, SESSION_ONE_LAYOUT[node.dataset.node]));
       card.classList.add("algorithm-layout-compact");
     }
+    if (sessionId === 5) {
+      nodes.forEach(node => moveNode(node, SESSION_FIVE_LAYOUT[node.dataset.node]));
+    }
+    separateOverlappingNodes(nodes);
 
     const nodeMap = new Map();
     nodes.forEach(node => {
@@ -462,6 +924,7 @@
     svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     svg.setAttribute("preserveAspectRatio", "xMidYMin meet");
     card.dataset.algorithmRoutingAudit = svg.dataset.routingAudit;
+    card.dataset.algorithmRoutingAuditSummary = svg.dataset.routingAuditSummary;
   }
 
   function scan(root = document) {

@@ -276,7 +276,7 @@
       ${gradient("Amber", "#451a03", "#b45309")}
       <filter id="algorithmSoftGlow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       <filter id="algorithmStrongGlow" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="8" result="blur"/><feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.15  0 1 0 0 0.65  0 0 1 0 0.95  0 0 0 1 0"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      <marker id="algorithmArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#67e8f9"/></marker>
+      <marker id="algorithmArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#67e8f9"/></marker>
       <style>
         .algorithm-connector{fill:none;stroke:url(#algorithmConnectorGradient);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:url(#algorithmSoftGlow)}
         .algorithm-branch-label{fill:#dff7ff;font:900 12px Arial;paint-order:stroke;stroke:#06111b;stroke-width:4px}

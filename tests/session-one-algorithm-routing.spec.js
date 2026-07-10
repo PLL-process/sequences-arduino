@@ -177,7 +177,7 @@ test.describe("session 1 algorithm routing", () => {
         expect(path.length, `${path.source}->${path.target} length`).toBeGreaterThan(18);
         expect(path.height, `${path.source}->${path.target} height`).toBeGreaterThan(15);
         expect(path.folded, `${path.source}->${path.target} should not fold`).toBe(false);
-        expect(path.targetGap, `${path.source}->${path.target} target gap`).toBeGreaterThanOrEqual(8);
+        expect(Math.abs(path.targetGap), `${path.source}->${path.target} target top port`).toBeLessThanOrEqual(0.5);
         expect(path.markerEnd, `${path.source}->${path.target} marker`).toContain("algorithmArrow");
         expect(path.stroke, `${path.source}->${path.target} stroke`).toBe("#67e8f9");
       }

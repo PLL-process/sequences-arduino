@@ -45,7 +45,7 @@ window.TechnoQuestSessionTemplateConfig = {
 [
   "../code-harmony.css?v=6",
   "../mission-mode/mission-algorithms-premium.css?v=2",
-  "../mission-mode/mission-algorithms-layout-v3.css?v=1",
+  "../mission-mode/mission-algorithms-layout-v3.css?v=2",
   "../editor-visibility-guard.css?v=1"
 ].forEach(href => {
   const link = document.createElement("link");
@@ -58,8 +58,8 @@ window.TechnoQuestSessionTemplateConfig = {
 function loadPreviewEnhancements() {
   const sources = [
     "../code-harmony.js?v=3",
-    "../mission-mode/mission-algorithms-premium.js?v=2",
-    "../mission-mode/mission-algorithms-layout-v3.js?v=2",
+    "../mission-mode/mission-algorithms-premium.js?v=4",
+    "../mission-mode/mission-algorithms-layout-v3.js?v=5",
     "../editor-visibility-guard.js?v=1"
   ];
 
