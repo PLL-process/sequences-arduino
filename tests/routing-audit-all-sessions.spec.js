@@ -34,23 +34,20 @@ const expectedAudit = {
   ok: true,
   missingConnections: 0,
   missingArrowheads: 0,
-  invalidDecisionInputs: 0,
-  invalidDecisionOutputs: 0,
-  decisionBottomOutputs: 0,
-  reversedDecisionLabels: 0,
-  ordinarySideEntries: 0,
-  ordinarySideExits: 0,
+  zeroLengthSegments: 0,
   blockCollisions: 0,
   nodeOverlaps: 0,
   labelCollisions: 0,
+  edgeCrossings: 0,
   foldedSegments: 0,
   danglingConnectors: 0,
-  ambiguousCrossings: 0
+  sideEntries: 0,
+  sideExits: 0
 };
 
 test.describe("algorithm routing audit", () => {
   for (const viewport of viewports) {
-    test(`uses ordinary top/bottom ports and decision side outputs at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+    test(`uses bottom-to-top routing for every symbol at ${viewport.width}x${viewport.height}`, async ({ page }) => {
       await page.setViewportSize(viewport);
 
       for (const [sessionId, connectionCount] of expectedConnections.entries()) {
@@ -61,6 +58,7 @@ test.describe("algorithm routing audit", () => {
 
         await expect(svg).toBeVisible();
         await expect(svg).toHaveAttribute("data-routing-audit", "ok");
+        await expect(svg.locator(".algorithm-svg-title,.algorithm-svg-subtitle")).toHaveCount(0);
         await expect(svg.locator(".algorithm-node")).toHaveCount(expectedNodes.get(sessionId));
         await expect(svg.locator(".algorithm-layout-connectors path.algorithm-connector")).toHaveCount(connectionCount);
 
@@ -178,32 +176,22 @@ test.describe("algorithm routing audit", () => {
 
             if (source.isDecision) {
               const branch = path.dataset.decisionBranch;
-              const expectedStart = branch === "yes"
-                ? { x: source.left, y: source.centerY }
-                : { x: source.right, y: source.centerY };
-              const direction = branch === "yes" ? -1 : 1;
               if (!["yes", "no"].includes(branch)) pathFailures.push(`${edgeName}: missing decision branch`);
-              if (!close(first, expectedStart)) pathFailures.push(`${edgeName}: decision output port`);
-              if (first.y === source.bottom || first.y > source.bottom) pathFailures.push(`${edgeName}: decision bottom output`);
-              if (second.y !== first.y || (second.x - first.x) * direction <= 0) {
-                pathFailures.push(`${edgeName}: decision first segment`);
-              }
               decisionOutputs.set(sourceId, [...(decisionOutputs.get(sourceId) || []), branch]);
-            } else {
-              if (!close(first, { x: source.centerX, y: source.bottom })) pathFailures.push(`${edgeName}: ordinary source port`);
-              if (second.x !== first.x || second.y < first.y) pathFailures.push(`${edgeName}: ordinary first segment`);
             }
 
-            if (target.isDecision) {
-              if (!close(last, { x: target.centerX, y: target.top })) pathFailures.push(`${edgeName}: decision input port`);
-              if (previous.x !== last.x || previous.y > last.y) pathFailures.push(`${edgeName}: decision last segment`);
-              decisionInputs.set(targetId, (decisionInputs.get(targetId) || 0) + 1);
-            } else {
-              if (!close(last, { x: target.centerX, y: target.top })) pathFailures.push(`${edgeName}: ordinary target port`);
-              if (previous.x !== last.x || previous.y > last.y) pathFailures.push(`${edgeName}: ordinary last segment`);
-              if (Math.min(Math.abs(last.x - target.left), Math.abs(last.x - target.right)) <= 2) {
-                pathFailures.push(`${edgeName}: side target`);
-              }
+            if (target.isDecision) decisionInputs.set(targetId, (decisionInputs.get(targetId) || 0) + 1);
+
+            if (Math.abs(first.x - source.centerX) > 0.5 || first.y < source.bottom) {
+              pathFailures.push(`${edgeName}: source bottom port`);
+            }
+            if (second.x !== first.x || second.y < first.y) pathFailures.push(`${edgeName}: first segment`);
+            if (Math.abs(last.x - target.centerX) > 0.5 || last.y > target.top) {
+              pathFailures.push(`${edgeName}: target top port`);
+            }
+            if (previous.x !== last.x || previous.y > last.y) pathFailures.push(`${edgeName}: last segment`);
+            if (Math.min(Math.abs(last.x - target.left), Math.abs(last.x - target.right)) <= 2) {
+              pathFailures.push(`${edgeName}: side target`);
             }
 
             for (const [nodeId, box] of nodeBoxes.entries()) {
@@ -274,7 +262,7 @@ test.describe("algorithm routing audit", () => {
         });
         await page.screenshot({
           path: `test-results/routing-audit-session-${sessionId}-${viewport.width}x${viewport.height}.png`,
-          fullPage: false
+          fullPage: true
         });
       }
     });
@@ -301,6 +289,7 @@ test.describe("algorithm routing audit", () => {
         await expect(card).toHaveAttribute("data-level", level);
         await expect(card.locator(`[data-level="${level}"]`)).toHaveAttribute("aria-pressed", "true");
         await expect(card.locator("svg.algorithm-premium-svg")).toHaveAttribute("data-routing-audit", "ok");
+        await expect(card.locator(".algorithm-layout-connectors path.algorithm-connector")).toHaveCount(expectedConnections.get(sessionId));
       }
 
       await card.locator('[data-algorithm-action="play"]').click();

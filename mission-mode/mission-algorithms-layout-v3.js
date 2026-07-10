@@ -18,7 +18,8 @@
 
 (() => {
   const SVG_NS = "http://www.w3.org/2000/svg";
-  const VERSION = "7";
+  const VERSION = "8";
+  const PORT_GAP = 10;
 
   // Décrire les liaisons de chaque séance afin de pouvoir les recalculer après adaptation.
   const SESSION_EDGES = {
@@ -198,12 +199,12 @@
     return points.map((point, index) => `${index ? "L" : "M"} ${point.x} ${point.y}`).join(" ");
   }
 
-  function getTopPort(box) {
-    return { x: box.centerX, y: box.top };
+  function getTopPort(box, gap = 0) {
+    return { x: box.centerX, y: box.top - gap };
   }
 
-  function getBottomPort(box) {
-    return { x: box.centerX, y: box.bottom };
+  function getBottomPort(box, gap = 0) {
+    return { x: box.centerX, y: box.bottom + gap };
   }
 
   function getDecisionInputPort(diamond) {
@@ -305,16 +306,19 @@
     };
   }
 
-  function placeDecisionLabel(branch, diamond, routePoints) {
-    const sign = branch === "yes" ? -1 : 1;
-    const first = routePoints[0];
-    const second = routePoints[1] || { x: first.x + sign * 44, y: first.y };
-    const horizontalLength = Math.abs(second.x - first.x);
-    const offset = Math.min(46, Math.max(24, horizontalLength * .55));
+  function placeDecisionLabel(label, routePoints) {
+    const horizontalSegment = routePoints.slice(1).find((point, index) => {
+      const previous = routePoints[index];
+      return previous && previous.y === point.y && previous.x !== point.x;
+    });
+    const segmentIndex = routePoints.indexOf(horizontalSegment);
+    const previous = segmentIndex > 0 ? routePoints[segmentIndex - 1] : routePoints[1];
+    const first = previous || routePoints[0];
+    const second = horizontalSegment || routePoints[1] || first;
     return {
-      labelX: first.x + sign * offset,
-      labelY: horizontalLength < 32 ? diamond.top - 8 : first.y - 9,
-      labelAnchor: branch === "yes" ? "end" : "start"
+      labelX: (first.x + second.x) / 2,
+      labelY: first.y - 9,
+      labelAnchor: "middle"
     };
   }
 
@@ -380,8 +384,9 @@
     const second = points[1];
     const last = points[points.length - 1];
     const previous = points[points.length - 2];
-    const sign = branch === "yes" ? -1 : 1;
-    return first.y === second.y && (second.x - first.x) * sign > 0 &&
+    const third = points[2];
+    return first.x === second.x && second.y >= first.y &&
+      (!third || (third.y === second.y && third.x !== second.x)) &&
       previous.x === last.x && previous.y <= last.y;
   }
 
@@ -424,10 +429,10 @@
   }
 
   function routeSequentialEdge(source, target, kind, bounds, nodeMap, previousPaths) {
-    const gap = 0;
+    const gap = PORT_GAP;
     const lead = 28;
-    const sourceAnchor = getBottomPort(source);
-    const targetAnchor = target.isDecision ? getDecisionInputPort(target) : getTopPort(target);
+    const sourceAnchor = getBottomPort(source, gap);
+    const targetAnchor = getTopPort(target, gap);
     const rightLane = exteriorLane(kind, bounds, "right");
     const leftLane = exteriorLane(kind, bounds, "left");
     const preferredLane = kind === "loop-left" ? leftLane : rightLane;
@@ -493,39 +498,60 @@
 
   function routeDecisionBranch(source, target, label, bounds, nodeMap, previousPaths) {
     const branch = decisionBranch(label);
-    const sign = branch === "yes" ? -1 : 1;
+    const side = target.centerX < source.centerX ? "left" : target.centerX > source.centerX ? "right" : branch === "yes" ? "left" : "right";
     const lead = 30;
-    const sourceAnchor = branch === "yes" ? getDecisionYesPort(source) : getDecisionNoPort(source);
-    const targetAnchor = target.isDecision ? getDecisionInputPort(target) : getTopPort(target);
-    const targetLeadY = approachYForTarget(target, targetAnchor, nodeMap, 0, lead);
-    const ownLane = sourceAnchor.x + sign * 16;
+    const gap = PORT_GAP;
+    const sourceAnchor = getBottomPort(source, gap);
+    const targetAnchor = getTopPort(target, gap);
+    const stemY = sourceAnchor.y + 22;
+    const targetLeadY = approachYForTarget(target, targetAnchor, nodeMap, gap, lead);
     const targetLane = targetAnchor.x;
-    const exterior = exteriorLane("", bounds, branch === "yes" ? "left" : "right");
-    const oppositeExterior = exteriorLane("", bounds, branch === "yes" ? "right" : "left");
+    const sideLane = side === "left"
+      ? Math.min(targetLane, source.centerX - source.width * .58)
+      : Math.max(targetLane, source.centerX + source.width * .58);
+    const exterior = exteriorLane("", bounds, side);
+    const oppositeExterior = exteriorLane("", bounds, side === "left" ? "right" : "left");
     const candidates = [];
     const addCandidate = (points, penalty = 0) => candidates.push({ points, penalty });
-    const canUseTargetLane = (targetLane - sourceAnchor.x) * sign > 34;
-
-    if (canUseTargetLane) {
-      addCandidate([
-        sourceAnchor,
-        { x: targetLane, y: sourceAnchor.y },
-        { x: targetLane, y: targetLeadY },
-        targetAnchor
-      ], 0);
-    }
 
     addCandidate([
       sourceAnchor,
-      { x: ownLane, y: sourceAnchor.y },
-      { x: ownLane, y: targetLeadY },
+      { x: sourceAnchor.x, y: stemY },
+      { x: targetLane, y: stemY },
+      { x: targetLane, y: targetLeadY },
+      targetAnchor
+    ], 0);
+
+    addCandidate([
+      sourceAnchor,
+      { x: sourceAnchor.x, y: stemY },
+      { x: sideLane, y: stemY },
+      { x: sideLane, y: targetLeadY },
       { x: targetAnchor.x, y: targetLeadY },
       targetAnchor
-    ], canUseTargetLane ? 80 : 0);
+    ], 80);
 
     addCandidate([
       sourceAnchor,
-      { x: exterior, y: sourceAnchor.y },
+      { x: sourceAnchor.x, y: stemY },
+      { x: sourceAnchor.x, y: targetLeadY },
+      { x: targetAnchor.x, y: targetLeadY },
+      targetAnchor
+    ], 90);
+
+    const lowMergeY = Math.max(targetLeadY, targetAnchor.y - 8);
+    addCandidate([
+      sourceAnchor,
+      { x: sourceAnchor.x, y: stemY },
+      { x: sourceAnchor.x, y: lowMergeY },
+      { x: targetAnchor.x, y: lowMergeY },
+      targetAnchor
+    ], 110);
+
+    addCandidate([
+      sourceAnchor,
+      { x: sourceAnchor.x, y: stemY },
+      { x: exterior, y: stemY },
       { x: exterior, y: targetLeadY },
       { x: targetAnchor.x, y: targetLeadY },
       targetAnchor
@@ -533,9 +559,10 @@
 
     addCandidate([
       sourceAnchor,
-      { x: ownLane, y: sourceAnchor.y },
-      { x: ownLane, y: sourceAnchor.y + lead },
-      { x: oppositeExterior, y: sourceAnchor.y + lead },
+      { x: sourceAnchor.x, y: stemY },
+      { x: sideLane, y: stemY },
+      { x: sideLane, y: stemY + lead },
+      { x: oppositeExterior, y: stemY + lead },
       { x: oppositeExterior, y: targetLeadY },
       { x: targetAnchor.x, y: targetLeadY },
       targetAnchor
@@ -547,9 +574,9 @@
       target,
       "decision",
       nodeMap,
-      branch === "yes" ? "end" : "start",
+      "middle",
       points => validDecisionBranch(points, branch),
-      points => placeDecisionLabel(branch, source, points),
+      points => placeDecisionLabel(label, points),
       previousPaths
     );
   }
@@ -622,14 +649,22 @@
     return false;
   }
 
+  function countZeroLengthSegments(points) {
+    let count = 0;
+    for (let index = 0; index < points.length - 1; index += 1) {
+      if (near(points[index], points[index + 1])) count += 1;
+    }
+    return count;
+  }
+
   function connectionPortAudit(points, source, target, definition) {
     const tolerance = .5;
     const first = points[0];
     const second = points[1];
     const last = points[points.length - 1];
     const previous = points[points.length - 2];
-    const branch = decisionBranch(definition.label);
-    const targetTop = target.isDecision ? getDecisionInputPort(target) : getTopPort(target);
+    const sourceBottom = getBottomPort(source, PORT_GAP);
+    const targetTop = getTopPort(target, PORT_GAP);
     const result = {
       invalidDecisionInputs: 0,
       invalidDecisionOutputs: 0,
@@ -637,6 +672,7 @@
       reversedDecisionLabels: 0,
       ordinarySideEntries: 0,
       ordinarySideExits: 0,
+      zeroLengthSegments: countZeroLengthSegments(points),
       foldedSegments: hasFoldedSegments(points) ? 1 : 0,
       danglingConnectors: points.length < 2 ? 1 : 0
     };
@@ -646,30 +682,12 @@
       return result;
     }
 
-    if (source.isDecision) {
-      const expected = branch === "yes" ? getDecisionYesPort(source) : getDecisionNoPort(source);
-      const sign = branch === "yes" ? -1 : 1;
-      if (!branch || !near(first, expected, tolerance) || first.y === source.bottom ||
-        first.x === source.centerX || first.y !== second.y || (second.x - first.x) * sign <= 0) {
-        result.invalidDecisionOutputs += 1;
-      }
-      if (first.y >= source.bottom - tolerance) result.decisionBottomOutputs += 1;
-      if ((definition.label || "").trim().toLowerCase().startsWith("oui") && first.x > source.centerX) {
-        result.reversedDecisionLabels += 1;
-      }
-      if ((definition.label || "").trim().toLowerCase().startsWith("non") && first.x < source.centerX) {
-        result.reversedDecisionLabels += 1;
-      }
-    } else if (!near(first, getBottomPort(source), tolerance) || second.x !== first.x || second.y < first.y) {
+    if (!near(first, sourceBottom, tolerance) || second.x !== first.x || second.y < first.y) {
       result.ordinarySideExits += 1;
     }
 
     const nearTargetSide = Math.min(Math.abs(last.x - target.left), Math.abs(last.x - target.right)) <= 2;
-    if (target.isDecision) {
-      if (!near(last, getDecisionInputPort(target), tolerance) || previous.x !== last.x || previous.y > last.y) {
-        result.invalidDecisionInputs += 1;
-      }
-    } else if (!near(last, targetTop, tolerance) || previous.x !== last.x || previous.y > last.y || nearTargetSide) {
+    if (!near(last, targetTop, tolerance) || previous.x !== last.x || previous.y > last.y || nearTargetSide) {
       result.ordinarySideEntries += 1;
     }
 
@@ -790,9 +808,11 @@
       blockCollisions: 0,
       nodeOverlaps: 0,
       labelCollisions: 0,
+      zeroLengthSegments: 0,
       foldedSegments: 0,
       danglingConnectors: 0,
       ambiguousCrossings: 0,
+      edgeCrossings: 0,
       connectionCount: 0,
       sideEntries: 0,
       sideExits: 0,
@@ -826,6 +846,7 @@
       if (portWarnings.reversedDecisionLabels) warnings.push(`${definition.source} → ${definition.target} inverse Oui/Non`);
       if (portWarnings.ordinarySideExits) warnings.push(`${definition.source} → ${definition.target} sort d’un bloc ordinaire par un port non conforme`);
       if (portWarnings.ordinarySideEntries) warnings.push(`${definition.source} → ${definition.target} entre dans un bloc ordinaire par un port non conforme`);
+      if (portWarnings.zeroLengthSegments) warnings.push(`${definition.source} → ${definition.target} contient un segment nul`);
       if (portWarnings.foldedSegments) warnings.push(`${definition.source} → ${definition.target} contient un segment replié`);
       if (portWarnings.danglingConnectors) warnings.push(`${definition.source} → ${definition.target} contient une liaison pendante`);
 
@@ -882,6 +903,7 @@
 
     const crossings = countAmbiguousCrossings(routedPaths);
     auditSummary.ambiguousCrossings = crossings.length;
+    auditSummary.edgeCrossings = crossings.length;
     if (crossings.length) warnings.push(`croisements ambigus : ${crossings.join(", ")}`);
 
     auditSummary.ok = warnings.length === 0;

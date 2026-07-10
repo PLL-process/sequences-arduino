@@ -59,7 +59,7 @@ function loadPreviewEnhancements() {
   const sources = [
     "../code-harmony.js?v=3",
     "../mission-mode/mission-algorithms-premium.js?v=4",
-    "../mission-mode/mission-algorithms-layout-v3.js?v=5",
+    "../mission-mode/mission-algorithms-layout-v3.js?v=6",
     "../editor-visibility-guard.js?v=1"
   ];
 
