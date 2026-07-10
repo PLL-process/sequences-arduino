@@ -79,10 +79,10 @@
   // Layouts explicites : les x sont des centres, pour aligner vraiment les formes de largeur variable.
   const SESSION_LAYOUTS = {
     1: {
-      start: { centerX: 300, y: 35 }, setup: { centerX: 300, y: 170 },
-      read: { centerX: 300, y: 305 }, display: { centerX: 300, y: 435 },
-      safe: { centerX: 300, y: 565 }, wait: { centerX: 300, y: 695 },
-      loop: { centerX: 300, y: 825 }
+      start: { centerX: 300, y: 35 }, setup: { centerX: 300, y: 190 },
+      read: { centerX: 300, y: 345 }, display: { centerX: 300, y: 500 },
+      safe: { centerX: 300, y: 655 }, wait: { centerX: 300, y: 810 },
+      loop: { centerX: 300, y: 965 }
     },
     2: {
       start: { centerX: 520, y: 35 }, setup: { centerX: 520, y: 165 },
@@ -1015,6 +1015,9 @@
       asymmetricalBranches: 0,
       missingJunctionDots: 0,
       titleOverlaps: 0,
+      textOverflows: 0,
+      numberTextOverlaps: 0,
+      shapeTextCollisions: 0,
       blockCollisions: 0,
       nodeOverlaps: 0,
       labelCollisions: 0,
@@ -1193,6 +1196,10 @@
     svg.setAttribute("preserveAspectRatio", "xMidYMin meet");
     card.dataset.algorithmRoutingAudit = svg.dataset.routingAudit;
     card.dataset.algorithmRoutingAuditSummary = svg.dataset.routingAuditSummary;
+    svg.dispatchEvent(new CustomEvent("technoquest:algorithm-layout-ready", {
+      bubbles: true,
+      detail: { sessionId, auditSummary: audit.auditSummary }
+    }));
   }
 
   function scan(root = document) {

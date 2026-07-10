@@ -1,513 +1,398 @@
 /*
- * TechnoQuest — finition visuelle et pédagogique des algorigrammes.
- * - garantit la visibilité des liaisons et des flèches ;
- * - anime le flux pendant la lecture ;
- * - distingue Traitement (rectangle) et Entrée/Sortie (parallélogramme) ;
- * - contient les textes dans les formes ;
- * - ajoute le téléchargement PNG et le plein écran.
+ * TechnoQuest — finition robuste des algorigrammes après routage.
+ * Ce module dépend du SVG final produit par mission-algorithms-layout-v3.js.
  */
 "use strict";
 
 (() => {
+  const VERSION = "2";
   const SVG_NS = "http://www.w3.org/2000/svg";
-  const POLISH_VERSION = "2";
-  const GAP = 10;
+  const TEXT_AUDIT_KEYS = ["textOverflows", "numberTextOverlaps", "shapeTextCollisions"];
 
-  const EDGES = {
-    1: [["start","setup"],["setup","read"],["read","display"],["display","safe"],["safe","wait"],["wait","loop"],["loop","read","Boucle","loop-right"]],
-    2: [["start","setup"],["setup","read"],["read","compare"],["compare","dry","Oui"],["compare","wet","Non"],["dry","safe"],["wet","safe"],["safe","loop"],["loop","read","Retour","loop-right"]],
-    3: [["start","read"],["read","compare"],["compare","pump","Oui"],["compare","stop","Non"],["pump","cut"],["cut","wait"],["stop","wait"],["wait","loop"],["loop","read","Retour","loop-right"]],
-    4: [["start","read"],["read","water"],["water","alert","Oui"],["water","soil","Non"],["soil","pump","Oui"],["soil","stop","Non"],["pump","wait"],["stop","wait"],["alert","wait"],["wait","loop"],["loop","read","Retour","loop-right"]],
-    5: [["start","read"],["read","water"],["water","forceStop","Oui"],["water","low","Non"],["low","startPump","Oui"],["low","high","Non"],["high","stopPump","Oui"],["high","keep","Non"],["forceStop","command"],["startPump","command"],["stopPump","command"],["keep","command"],["command","wait"],["wait","loop"],["loop","read","Retour","loop-right"]],
-    6: [["start","read"],["read","display"],["display","decision"],["decision","pump","Oui"],["decision","stop","Non"],["pump","wait"],["stop","wait"],["wait","loop"],["loop","read","Retour","loop-right"]],
-    7: [["start","inspect"],["inspect","calibrate"],["calibrate","read"],["read","plausible"],["plausible","repair","Non"],["plausible","water","Oui"],["repair","calibrate","Recalibrer","loop-left"],["water","pump","Oui"],["water","stop","Non"],["pump","loop"],["stop","loop"],["loop","inspect","Nouveau contrôle","loop-right"]],
-    8: [["start","read"],["read","coherent"],["coherent","sensorError","Non"],["coherent","water","Oui"],["water","waterError","Oui"],["water","multi","Non"],["multi","pump","Oui"],["multi","stop","Non"],["sensorError","display"],["waterError","display"],["pump","display"],["stop","display"],["display","wait"],["wait","loop"],["loop","read","Retour","loop-right"]]
-  };
-
-  function svgElement(name, attributes = {}) {
-    const element = document.createElementNS(SVG_NS, name);
-    Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, String(value)));
-    return element;
+  function parseJson(value, fallback = {}) {
+    try {
+      return JSON.parse(value || "");
+    } catch {
+      return fallback;
+    }
   }
 
   function number(value) {
     return Number.parseFloat(value || "0") || 0;
   }
 
-  function nodeBox(node) {
-    const shape = node?.querySelector(".algorithm-node-shape");
-    if (!shape) return null;
-    const local = shape.getBBox();
-    const dx = number(node.dataset.layoutDx);
-    const dy = number(node.dataset.layoutDy);
+  function boxInside(inner, outer, tolerance = 1.5) {
+    return inner.left >= outer.left - tolerance &&
+      inner.right <= outer.right + tolerance &&
+      inner.top >= outer.top - tolerance &&
+      inner.bottom <= outer.bottom + tolerance;
+  }
+
+  function boxesOverlap(first, second) {
+    return Math.max(first.left, second.left) < Math.min(first.right, second.right) &&
+      Math.max(first.top, second.top) < Math.min(first.bottom, second.bottom);
+  }
+
+  function rectFromBBox(box) {
     return {
-      left: local.x + dx,
-      right: local.x + local.width + dx,
-      top: local.y + dy,
-      bottom: local.y + local.height + dy,
-      width: local.width,
-      height: local.height,
-      centerX: local.x + local.width / 2 + dx,
-      centerY: local.y + local.height / 2 + dy,
-      localCenterX: local.x + local.width / 2,
-      localCenterY: local.y + local.height / 2,
-      isDecision: node.classList.contains("algorithm-node--decision")
+      left: box.x,
+      right: box.x + box.width,
+      top: box.y,
+      bottom: box.y + box.height,
+      width: box.width,
+      height: box.height
     };
   }
 
-  function nodeMap(svg) {
-    return new Map([...svg.querySelectorAll(".algorithm-node")].map(node => [node.dataset.node, nodeBox(node)]));
+  function unionBoxes(boxes) {
+    if (!boxes.length) return null;
+    const left = Math.min(...boxes.map(box => box.left));
+    const right = Math.max(...boxes.map(box => box.right));
+    const top = Math.min(...boxes.map(box => box.top));
+    const bottom = Math.max(...boxes.map(box => box.bottom));
+    return { left, right, top, bottom, width: right - left, height: bottom - top };
   }
 
-  function ensureMarkers(svg) {
-    const defs = svg.querySelector("defs") || svg.insertBefore(svgElement("defs"), svg.firstChild);
-    const upsert = (id, fill) => {
-      defs.querySelector(`#${id}`)?.remove();
-      const marker = svgElement("marker", { id, viewBox: "0 0 14 14", refX: "12.2", refY: "7", markerWidth: "13", markerHeight: "13", markerUnits: "userSpaceOnUse", orient: "auto", overflow: "visible" });
-      marker.appendChild(svgElement("path", { d: "M 0 1 L 13 7 L 0 13 z", fill, stroke: "#031019", "stroke-width": "1", "paint-order": "stroke fill" }));
-      defs.appendChild(marker);
+  function setTextX(text, x) {
+    if (!text) return;
+    text.setAttribute("x", x);
+    text.querySelectorAll("tspan").forEach(tspan => tspan.setAttribute("x", x));
+  }
+
+  function setFontSize(text, size) {
+    if (!text) return;
+    text.style.fontSize = `${size}px`;
+    text.querySelectorAll("tspan").forEach(tspan => {
+      tspan.style.fontSize = `${size}px`;
+    });
+  }
+
+  function textBoxFor(node) {
+    const boxes = [...node.querySelectorAll(".algorithm-node-label,.algorithm-node-caption")]
+      .filter(text => text.textContent.trim())
+      .map(text => rectFromBBox(text.getBBox()));
+    return unionBoxes(boxes);
+  }
+
+  function availableTextBox(node, shapeBox, numberBox) {
+    const symbol = node.dataset.symbol || "process";
+    const horizontal = symbol === "decision" ? 42 : symbol === "io" ? 36 : 18;
+    const vertical = symbol === "decision" ? 24 : 13;
+    const leftReservedForNumber = numberBox ? numberBox.right + 8 : shapeBox.left + horizontal;
+    return {
+      left: Math.max(shapeBox.left + horizontal, leftReservedForNumber),
+      right: shapeBox.right - horizontal,
+      top: shapeBox.top + vertical,
+      bottom: shapeBox.bottom - vertical
     };
-    upsert("algorithmArrowFinal", "#67e8f9");
-    upsert("algorithmLoopArrowFinal", "#fde047");
   }
 
-  function ensureConnectorLayer(svg) {
-    let layer = svg.querySelector(".algorithm-layout-connectors");
-    if (layer) return layer;
-    layer = svgElement("g", { class: "algorithm-layout-connectors", "aria-hidden": "true" });
-    const firstNode = svg.querySelector(".algorithm-node");
-    if (firstNode) svg.insertBefore(layer, firstNode);
-    else svg.appendChild(layer);
-    return layer;
+  function fitNodeText(node) {
+    const shape = node.querySelector(".algorithm-node-shape");
+    const label = node.querySelector(".algorithm-node-label");
+    const caption = node.querySelector(".algorithm-node-caption");
+    const numberDisc = node.querySelector(".algorithm-node-number-disc");
+    if (!shape || !label) return { textOverflows: 0, numberTextOverlaps: 0, shapeTextCollisions: 0 };
+
+    const shapeBox = rectFromBBox(shape.getBBox());
+    const numberBox = numberDisc ? rectFromBBox(numberDisc.getBBox()) : null;
+    const available = availableTextBox(node, shapeBox, numberBox);
+    const targetX = (available.left + available.right) / 2;
+    setTextX(label, targetX);
+    setTextX(caption, targetX);
+
+    for (let labelSize = 14; labelSize >= 10; labelSize -= 1) {
+      const captionSize = Math.max(8, labelSize - 3);
+      setFontSize(label, labelSize);
+      setFontSize(caption, captionSize);
+      const textBox = textBoxFor(node);
+      if (!textBox || (boxInside(textBox, shapeBox) && boxInside(textBox, available, 5))) break;
+    }
+
+    const textBox = textBoxFor(node);
+    if (!textBox) return { textOverflows: 0, numberTextOverlaps: 0, shapeTextCollisions: 0 };
+
+    return {
+      textOverflows: boxInside(textBox, shapeBox) ? 0 : 1,
+      numberTextOverlaps: numberBox && boxesOverlap(textBox, numberBox) ? 1 : 0,
+      shapeTextCollisions: boxInside(textBox, available, 5) ? 0 : 1
+    };
   }
 
-  function isIoNode(node) {
-    if (!node) return false;
-    if (node.classList.contains("algorithm-node--sensor") || node.classList.contains("algorithm-node--communication")) return true;
-    const label = node.querySelector(".algorithm-node-label")?.textContent?.trim() || "";
-    return /^(Lire|Afficher|Écrire|Commander D6\b)/i.test(label);
-  }
-
-  function normalizeSymbols(svg) {
+  function auditAndFitText(svg) {
+    const audit = { textOverflows: 0, numberTextOverlaps: 0, shapeTextCollisions: 0 };
     svg.querySelectorAll(".algorithm-node").forEach(node => {
-      const shape = node.querySelector(".algorithm-node-shape");
-      if (!shape || !isIoNode(node) || shape.tagName.toLowerCase() === "polygon") return;
-      const box = shape.getBBox();
-      const slant = Math.max(14, Math.min(28, box.width * 0.12));
-      const polygon = svgElement("polygon", { class: shape.getAttribute("class") || "algorithm-node-shape", points: `${box.x + slant},${box.y} ${box.x + box.width},${box.y} ${box.x + box.width - slant},${box.y + box.height} ${box.x},${box.y + box.height}` });
-      [...shape.attributes].forEach(attribute => {
-        if (!["x","y","width","height","rx","class"].includes(attribute.name)) polygon.setAttribute(attribute.name, attribute.value);
+      const result = fitNodeText(node);
+      TEXT_AUDIT_KEYS.forEach(key => {
+        audit[key] += result[key];
       });
-      shape.replaceWith(polygon);
-      node.classList.add("algorithm-node--io");
-      node.dataset.symbolKind = "input-output";
     });
-    svg.querySelectorAll(".algorithm-node:not(.algorithm-node--decision):not(.algorithm-node--start):not(.algorithm-node--end):not(.algorithm-node--io)").forEach(node => {
-      node.dataset.symbolKind = "treatment";
-    });
+    return audit;
   }
 
-  function defaultRoute(source, target, label = "", kind = "") {
-    const loop = kind.startsWith("loop");
-    if (loop) {
-      const laneX = kind === "loop-left" ? Math.min(source.left, target.left) - 80 : Math.max(source.right, target.right) + 80;
-      const start = { x: source.centerX, y: source.bottom + GAP };
-      const end = { x: target.centerX, y: target.top - GAP };
-      return `M ${start.x} ${start.y} L ${start.x} ${start.y + 24} L ${laneX} ${start.y + 24} L ${laneX} ${end.y - 24} L ${end.x} ${end.y - 24} L ${end.x} ${end.y}`;
-    }
-    if (source.isDecision) {
-      const yes = String(label).trim().toLowerCase().startsWith("oui");
-      const start = { x: yes ? source.left : source.right, y: source.centerY };
-      const end = { x: target.centerX, y: target.top - GAP };
-      return `M ${start.x} ${start.y} L ${end.x} ${start.y} L ${end.x} ${end.y}`;
-    }
-    const start = { x: source.centerX, y: source.bottom + GAP };
-    const end = { x: target.centerX, y: target.top - GAP };
-    if (Math.abs(start.x - end.x) <= 1) return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
-    const middleY = start.y + Math.max(24, (end.y - start.y) / 2);
-    return `M ${start.x} ${start.y} L ${start.x} ${middleY} L ${end.x} ${middleY} L ${end.x} ${end.y}`;
-  }
-
-  function ensureExpectedEdges(svg, sessionId, boxes) {
-    const layer = ensureConnectorLayer(svg);
-    (EDGES[sessionId] || []).forEach(([sourceId, targetId, label = "", kind = ""]) => {
-      let path = layer.querySelector(`.algorithm-connector[data-source="${CSS.escape(sourceId)}"][data-target="${CSS.escape(targetId)}"]`);
-      if (path) return;
-      const source = boxes.get(sourceId);
-      const target = boxes.get(targetId);
-      if (!source || !target) return;
-      path = svgElement("path", { class: `algorithm-connector${kind.startsWith("loop") ? " algorithm-loop-connector" : ""}`, d: defaultRoute(source, target, label, kind), "data-source": sourceId, "data-target": targetId, "data-label": label, "data-generated-by-polish": "true", fill: "none" });
-      layer.appendChild(path);
-      if (label) {
-        const text = svgElement("text", { class: `algorithm-branch-label${kind.startsWith("loop") ? " algorithm-loop-label" : ""}` });
-        text.textContent = label;
-        try {
-          const length = path.getTotalLength();
-          const point = path.getPointAtLength(Math.min(length * 0.22, 54));
-          text.setAttribute("x", point.x + (label.toLowerCase().startsWith("non") ? 10 : -10));
-          text.setAttribute("y", point.y - 8);
-          text.setAttribute("text-anchor", label.toLowerCase().startsWith("non") ? "start" : "end");
-        } catch (_error) {
-          text.setAttribute("x", source.centerX);
-          text.setAttribute("y", source.centerY - 12);
-        }
-        layer.appendChild(text);
-      }
+  function mergeAudit(svg, textAudit) {
+    const card = svg.closest(".algorithm-premium-card");
+    const summary = parseJson(svg.dataset.routingAuditSummary, {});
+    const wasOk = summary.ok !== false && svg.dataset.routingAudit !== "warning";
+    TEXT_AUDIT_KEYS.forEach(key => {
+      summary[key] = textAudit[key] || 0;
     });
-  }
-
-  function straightenAlignedEdges(svg, boxes) {
-    svg.querySelectorAll(".algorithm-layout-connectors .algorithm-connector").forEach(path => {
-      if (path.classList.contains("algorithm-loop-connector")) return;
-      const source = boxes.get(path.dataset.source);
-      const target = boxes.get(path.dataset.target);
-      if (!source || !target || source.isDecision || target.top <= source.bottom) return;
-      if (Math.abs(source.centerX - target.centerX) > 1) return;
-      path.setAttribute("d", `M ${source.centerX} ${source.bottom + GAP} L ${target.centerX} ${target.top - GAP}`);
-      path.dataset.straightened = "true";
-    });
-  }
-
-  function styleConnectors(svg) {
-    ensureMarkers(svg);
-    svg.querySelectorAll(".algorithm-connector-underlay,.algorithm-flow-pulse,.algorithm-no-slash,.algorithm-loop-junction-dot").forEach(element => element.remove());
-    svg.querySelectorAll(".algorithm-layout-connectors .algorithm-connector").forEach(path => {
-      const loop = path.classList.contains("algorithm-loop-connector");
-      const color = loop ? "#fde047" : "#67e8f9";
-      path.setAttribute("fill", "none");
-      path.setAttribute("stroke", color);
-      path.setAttribute("stroke-width", loop ? "5.4" : "5.8");
-      path.setAttribute("stroke-opacity", "1");
-      path.setAttribute("stroke-linecap", "round");
-      path.setAttribute("stroke-linejoin", "round");
-      path.setAttribute("vector-effect", "non-scaling-stroke");
-      path.setAttribute("marker-end", loop ? "url(#algorithmLoopArrowFinal)" : "url(#algorithmArrowFinal)");
-      path.setAttribute("pathLength", "100");
-      path.style.setProperty("display", "inline", "important");
-      path.style.setProperty("visibility", "visible", "important");
-      path.style.setProperty("opacity", "1", "important");
-      const underlay = path.cloneNode(false);
-      underlay.removeAttribute("marker-end");
-      underlay.removeAttribute("data-edge-index");
-      underlay.classList.remove("algorithm-connector", "algorithm-loop-connector");
-      underlay.classList.add("algorithm-connector-underlay");
-      underlay.setAttribute("stroke", "#020a10");
-      underlay.setAttribute("stroke-width", loop ? "10" : "11");
-      underlay.setAttribute("stroke-opacity", ".86");
-      path.parentNode.insertBefore(underlay, path);
-      const pulse = path.cloneNode(false);
-      pulse.removeAttribute("marker-end");
-      pulse.removeAttribute("data-edge-index");
-      pulse.classList.remove("algorithm-connector", "algorithm-loop-connector");
-      pulse.classList.add("algorithm-flow-pulse");
-      if (loop) pulse.classList.add("algorithm-flow-pulse--loop");
-      pulse.setAttribute("stroke", loop ? "#fff7a8" : "#effcff");
-      pulse.setAttribute("stroke-width", loop ? "2.2" : "2.6");
-      pulse.setAttribute("stroke-dasharray", loop ? "7 13" : "9 15");
-      pulse.setAttribute("stroke-opacity", "0");
-      pulse.setAttribute("pathLength", "100");
-      path.parentNode.insertBefore(pulse, path.nextSibling);
-    });
-  }
-
-  function midpoint(path) {
-    try {
-      const length = path.getTotalLength();
-      return length > 0 ? path.getPointAtLength(length / 2) : null;
-    } catch (_error) {
-      return null;
+    const textOk = TEXT_AUDIT_KEYS.every(key => !summary[key]);
+    summary.ok = wasOk && textOk;
+    svg.dataset.routingAuditSummary = JSON.stringify(summary);
+    svg.dataset.routingAudit = summary.ok ? "ok" : "warning";
+    if (card) {
+      card.dataset.algorithmRoutingAudit = svg.dataset.routingAudit;
+      card.dataset.algorithmRoutingAuditSummary = svg.dataset.routingAuditSummary;
     }
   }
 
-  function rerouteLoopsToJunction(svg) {
-    const layer = svg.querySelector(".algorithm-layout-connectors");
-    if (!layer) return;
-    layer.querySelectorAll(".algorithm-loop-connector").forEach(loopPath => {
-      const targetId = loopPath.dataset.target || "";
-      const incoming = [...layer.querySelectorAll(`.algorithm-connector[data-target="${CSS.escape(targetId)}"]`)].find(path => path !== loopPath && !path.classList.contains("algorithm-loop-connector"));
-      const junction = incoming ? midpoint(incoming) : null;
-      if (!junction) return;
-      let start;
-      try {
-        start = loopPath.getPointAtLength(0);
-      } catch (_error) {
-        return;
-      }
-      const useLeft = String(loopPath.dataset.label || "").toLowerCase().includes("recalibrer");
-      const laneX = useLeft ? Math.min(start.x, junction.x) - 120 : Math.max(start.x, junction.x) + 170;
-      const leadY = start.y + 26;
-      loopPath.setAttribute("d", `M ${start.x} ${start.y} L ${start.x} ${leadY} L ${laneX} ${leadY} L ${laneX} ${junction.y} L ${junction.x} ${junction.y}`);
-      loopPath.dataset.junctionTarget = "incoming-midpoint";
-      layer.appendChild(svgElement("circle", { class: "algorithm-loop-junction-dot", cx: junction.x, cy: junction.y, r: "5.8", fill: "#fde047", stroke: "#67e8f9", "stroke-width": "2.5", "vector-effect": "non-scaling-stroke" }));
-    });
+  function ensureButton(actions, action, label, afterAction = null) {
+    let button = actions.querySelector(`[data-algorithm-action="${action}"]`);
+    if (!button) {
+      button = document.createElement("button");
+      button.className = "algorithm-action-button";
+      button.type = "button";
+      button.dataset.algorithmAction = action;
+      button.textContent = label;
+      const after = afterAction ? actions.querySelector(`[data-algorithm-action="${afterAction}"]`) : null;
+      if (after?.nextSibling) actions.insertBefore(button, after.nextSibling);
+      else actions.appendChild(button);
+    }
+    return button;
+  }
+
+  function ensureReminder(card) {
+    if (card.querySelector(".algorithm-symbol-reminder")) return;
+    const toolbar = card.querySelector(".algorithm-premium-toolbar");
+    const details = document.createElement("details");
+    details.className = "algorithm-symbol-reminder";
+    details.innerHTML = `<summary>Rappel — symboles normalisés de l’algorigramme</summary>
+      <div>
+        <p><strong>Début / fin :</strong> forme arrondie.</p>
+        <p><strong>Traitement :</strong> rectangle. Le rectangle représente une instruction ou une action : affecter une valeur, effectuer un calcul, appeler une fonction, commander un actionneur ou réaliser une pause.</p>
+        <p><strong>Entrée / sortie :</strong> parallélogramme. Le parallélogramme représente une lecture ou une écriture : lire une valeur fournie par un utilisateur ou un capteur, afficher un résultat ou communiquer une information.</p>
+        <p><strong>Test :</strong> losange.</p>
+        <p><strong>Liaison :</strong> ligne orientée terminée par une flèche.</p>
+        <p><strong>Jonction :</strong> point visible.</p>
+      </div>`;
+    toolbar?.insertAdjacentElement("afterend", details);
   }
 
   function addNoSlashes(svg) {
     const layer = svg.querySelector(".algorithm-layout-connectors");
     if (!layer) return;
-    layer.querySelectorAll('.algorithm-connector[data-label]').forEach(path => {
+    layer.querySelectorAll(".algorithm-no-slash").forEach(element => element.remove());
+    layer.querySelectorAll(".algorithm-connector[data-label]").forEach(path => {
       if (!String(path.dataset.label || "").trim().toLowerCase().startsWith("non")) return;
       try {
         const length = path.getTotalLength();
         const point = path.getPointAtLength(Math.min(26, Math.max(14, length * 0.12)));
-        layer.appendChild(svgElement("line", { class: "algorithm-no-slash", x1: point.x - 5.5, y1: point.y - 7, x2: point.x + 5.5, y2: point.y + 7, stroke: "#ffffff", "stroke-width": "2.4", "stroke-linecap": "round", "vector-effect": "non-scaling-stroke", "aria-hidden": "true" }));
-      } catch (_error) {}
-    });
-  }
-
-  const measureCanvas = document.createElement("canvas");
-  const measureContext = measureCanvas.getContext("2d");
-
-  function measure(text, size, weight = 800) {
-    if (!measureContext) return String(text).length * size * 0.56;
-    measureContext.font = `${weight} ${size}px Arial, sans-serif`;
-    return measureContext.measureText(String(text)).width;
-  }
-
-  function splitWord(word, maxWidth, size, weight) {
-    const chunks = [];
-    let current = "";
-    [...word].forEach(character => {
-      const candidate = current + character;
-      if (current && measure(candidate, size, weight) > maxWidth) {
-        chunks.push(current);
-        current = character;
-      } else current = candidate;
-    });
-    if (current) chunks.push(current);
-    return chunks;
-  }
-
-  function wrapText(value, maxWidth, size, weight, maxLines) {
-    const words = String(value || "").trim().split(/\s+/).filter(Boolean).flatMap(word => measure(word, size, weight) > maxWidth ? splitWord(word, maxWidth, size, weight) : [word]);
-    const lines = [];
-    let line = "";
-    words.forEach(word => {
-      const candidate = line ? `${line} ${word}` : word;
-      if (line && measure(candidate, size, weight) > maxWidth) {
-        lines.push(line);
-        line = word;
-      } else line = candidate;
-    });
-    if (line) lines.push(line);
-    if (lines.length > maxLines) {
-      const clipped = lines.slice(0, maxLines);
-      let last = clipped[maxLines - 1];
-      while (last.length > 1 && measure(`${last}…`, size, weight) > maxWidth) last = last.slice(0, -1);
-      clipped[maxLines - 1] = `${last}…`;
-      return clipped;
-    }
-    return lines;
-  }
-
-  function replaceTspans(textElement, lines, x, firstY, lineHeight) {
-    textElement.textContent = "";
-    lines.forEach((line, index) => {
-      const tspan = svgElement("tspan", { x, y: firstY + index * lineHeight });
-      tspan.textContent = line;
-      textElement.appendChild(tspan);
-    });
-  }
-
-  function fitNodeText(node) {
-    const box = nodeBox(node);
-    if (!box) return;
-    const labelElement = node.querySelector(".algorithm-node-label");
-    const captionElement = node.querySelector(".algorithm-node-caption");
-    if (!labelElement || !captionElement) return;
-    if (!node.dataset.originalLabel) node.dataset.originalLabel = labelElement.textContent.trim();
-    if (!node.dataset.originalCaption) node.dataset.originalCaption = captionElement.textContent.trim();
-    const decision = node.classList.contains("algorithm-node--decision");
-    const io = node.classList.contains("algorithm-node--io");
-    const maxWidth = decision ? box.width * 0.58 : box.width - (io ? 66 : 48);
-    const centerX = box.localCenterX + (decision ? 0 : 7);
-    const maxHeight = box.height - 18;
-    let labelSize = decision ? 14 : 15;
-    let captionSize = decision ? 10.5 : 11;
-    let labelLines;
-    let captionLines;
-    let totalHeight;
-    do {
-      labelLines = wrapText(node.dataset.originalLabel, maxWidth, labelSize, 900, 3);
-      captionLines = wrapText(node.dataset.originalCaption, maxWidth, captionSize, 750, 2);
-      totalHeight = labelLines.length * (labelSize + 2) + captionLines.length * (captionSize + 2) + (captionLines.length ? 3 : 0);
-      if (totalHeight <= maxHeight && labelLines.every(line => measure(line, labelSize, 900) <= maxWidth + 1)) break;
-      labelSize -= 0.5;
-      captionSize = Math.max(8.5, captionSize - 0.35);
-    } while (labelSize > 10.5);
-    const labelLineHeight = labelSize + 2;
-    const captionLineHeight = captionSize + 2;
-    const startY = box.localCenterY - totalHeight / 2 + labelSize;
-    replaceTspans(labelElement, labelLines, centerX, startY, labelLineHeight);
-    replaceTspans(captionElement, captionLines, centerX, startY + labelLines.length * labelLineHeight + 3, captionLineHeight);
-    labelElement.setAttribute("font-size", labelSize.toFixed(1));
-    captionElement.setAttribute("font-size", captionSize.toFixed(1));
-  }
-
-  function fitAllTexts(svg) {
-    svg.querySelectorAll(".algorithm-node").forEach(fitNodeText);
-  }
-
-  function courseReminderHtml() {
-    return `<details class="algorithm-symbol-course"><summary>Rappel de cours — symboles normalisés de l’algorigramme</summary><div class="algorithm-symbol-grid"><article class="algorithm-symbol-card"><span class="algorithm-symbol-icon algorithm-symbol-icon--process" aria-hidden="true"></span><div><h3>Traitement — rectangle</h3><p>On l’utilise pour affecter une valeur à une variable, calculer une expression, appeler une fonction ou réaliser une action, par exemple une pause.</p><p class="algorithm-symbol-example"><strong>Exemples :</strong> <code>pompeActive = false</code>, <code>Attendre 1 seconde</code>, activer ou arrêter un relais.</p></div></article><article class="algorithm-symbol-card"><span class="algorithm-symbol-icon algorithm-symbol-icon--io" aria-hidden="true"></span><div><h3>Entrée / Sortie — parallélogramme</h3><p>On l’utilise pour dialoguer avec un utilisateur, lire un capteur, écrire une information, communiquer sur un réseau ou commander explicitement une sortie.</p><p class="algorithm-symbol-example"><strong>Pseudo-code :</strong> <code>Lire humidité</code> ; <code>Écrire résultat</code>.</p></div></article></div></details>`;
-  }
-
-  function ensureCourseReminder(card) {
-    if (card.querySelector(".algorithm-symbol-course")) return;
-    const toolbar = card.querySelector(".algorithm-premium-toolbar");
-    if (toolbar) toolbar.insertAdjacentHTML("afterend", courseReminderHtml());
-  }
-
-  function serializeSvg(svg) {
-    const clone = svg.cloneNode(true);
-    clone.setAttribute("xmlns", SVG_NS);
-    clone.querySelectorAll(".algorithm-flow-pulse").forEach(element => element.remove());
-    const viewBox = clone.viewBox.baseVal;
-    clone.setAttribute("width", String(viewBox.width || 1100));
-    clone.setAttribute("height", String(viewBox.height || 900));
-    return new XMLSerializer().serializeToString(clone);
-  }
-
-  function downloadPng(card, sessionId) {
-    const svg = card.querySelector("svg.algorithm-premium-svg");
-    if (!svg) return;
-    const source = serializeSvg(svg);
-    const blob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const image = new Image();
-    image.onload = () => {
-      const viewBox = svg.viewBox.baseVal;
-      const scale = 2;
-      const canvas = document.createElement("canvas");
-      canvas.width = Math.max(1, Math.round((viewBox.width || 1100) * scale));
-      canvas.height = Math.max(1, Math.round((viewBox.height || 900) * scale));
-      const context = canvas.getContext("2d");
-      if (!context) {
-        URL.revokeObjectURL(url);
-        return;
+        const slash = document.createElementNS(SVG_NS, "line");
+        [
+          ["class", "algorithm-no-slash"],
+          ["x1", point.x - 5.5],
+          ["y1", point.y - 7],
+          ["x2", point.x + 5.5],
+          ["y2", point.y + 7],
+          ["stroke", "#ffffff"],
+          ["stroke-width", "2.4"],
+          ["stroke-linecap", "round"],
+          ["vector-effect", "non-scaling-stroke"],
+          ["aria-hidden", "true"]
+        ].forEach(([name, value]) => slash.setAttribute(name, String(value)));
+        layer.appendChild(slash);
+      } catch (_error) {
+        // Une liaison momentanément non mesurable sera retraitée au prochain événement de rendu.
       }
-      context.scale(scale, scale);
-      context.fillStyle = "#06131e";
-      context.fillRect(0, 0, canvas.width / scale, canvas.height / scale);
-      context.drawImage(image, 0, 0, viewBox.width || 1100, viewBox.height || 900);
-      canvas.toBlob(pngBlob => {
-        if (!pngBlob) return;
-        const pngUrl = URL.createObjectURL(pngBlob);
-        const link = document.createElement("a");
-        link.href = pngUrl;
-        link.download = `technoquest-seance-${sessionId}-algorigramme.png`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.setTimeout(() => URL.revokeObjectURL(pngUrl), 500);
-      }, "image/png");
+    });
+  }
+
+  function svgSize(svg) {
+    const viewBox = String(svg.getAttribute("viewBox") || "").trim().split(/\s+/).map(Number);
+    if (viewBox.length === 4 && viewBox.every(Number.isFinite)) {
+      return { x: viewBox[0], y: viewBox[1], width: viewBox[2], height: viewBox[3] };
+    }
+    const box = svg.getBBox();
+    return { x: 0, y: 0, width: Math.max(1, box.width), height: Math.max(1, box.height) };
+  }
+
+  function exportableSvgClone(svg) {
+    const clone = svg.cloneNode(true);
+    const size = svgSize(svg);
+    clone.setAttribute("xmlns", SVG_NS);
+    clone.setAttribute("width", size.width);
+    clone.setAttribute("height", size.height);
+    clone.setAttribute("viewBox", `${size.x} ${size.y} ${size.width} ${size.height}`);
+    clone.querySelectorAll(".is-active,.is-flowing").forEach(element => {
+      element.classList.remove("is-active", "is-flowing");
+      element.removeAttribute("style");
+    });
+    const background = document.createElementNS(SVG_NS, "rect");
+    background.setAttribute("x", size.x);
+    background.setAttribute("y", size.y);
+    background.setAttribute("width", size.width);
+    background.setAttribute("height", size.height);
+    background.setAttribute("fill", "#06131e");
+    background.setAttribute("aria-hidden", "true");
+    const defs = clone.querySelector("defs");
+    if (defs?.nextSibling) clone.insertBefore(background, defs.nextSibling);
+    else clone.insertBefore(background, clone.firstChild);
+    clone.querySelectorAll("path.algorithm-connector").forEach(path => {
+      const isLoop = path.classList.contains("algorithm-loop-connector");
+      path.classList.remove("is-flowing", "is-active");
+      path.removeAttribute("style");
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", isLoop ? "#fde047" : "#67e8f9");
+      path.setAttribute("stroke-width", "5");
+      path.setAttribute("stroke-opacity", "0.95");
+      path.setAttribute("stroke-linecap", "round");
+      path.setAttribute("stroke-linejoin", "round");
+      path.setAttribute("stroke-dashoffset", "0");
+      if (isLoop) path.setAttribute("stroke-dasharray", "11 8");
+      else path.removeAttribute("stroke-dasharray");
+      path.style.setProperty("filter", "none", "important");
+      path.style.setProperty("stroke", isLoop ? "#fde047" : "#67e8f9", "important");
+      path.style.setProperty("stroke-width", "5", "important");
+      path.style.setProperty("stroke-opacity", "0.95", "important");
+      path.style.setProperty("stroke-linecap", "round", "important");
+      path.style.setProperty("stroke-linejoin", "round", "important");
+      path.style.setProperty("stroke-dashoffset", "0", "important");
+      if (isLoop) path.style.setProperty("stroke-dasharray", "11 8", "important");
+      else path.style.removeProperty("stroke-dasharray");
+    });
+    return { clone, size };
+  }
+
+  async function downloadPng(card) {
+    const svg = card.querySelector("svg.algorithm-premium-svg");
+    const sessionId = Number(card.dataset.session || document.body.dataset.session || 0);
+    if (!svg || !sessionId) return;
+    const { clone, size } = exportableSvgClone(svg);
+    const source = `<?xml version="1.0" encoding="UTF-8"?>\n${new XMLSerializer().serializeToString(clone)}`;
+    const svgBlob = new Blob([source], { type: "image/svg+xml;charset=utf-8" });
+    const url = URL.createObjectURL(svgBlob);
+    const image = new Image();
+    const scale = Math.max(2, Math.ceil(window.devicePixelRatio || 1));
+
+    try {
+      await new Promise((resolve, reject) => {
+        image.onload = resolve;
+        image.onerror = reject;
+        image.src = url;
+      });
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.ceil(size.width * scale);
+      canvas.height = Math.ceil(size.height * scale);
+      const context = canvas.getContext("2d");
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+      context.drawImage(image, 0, 0, size.width, size.height);
+      const pngBlob = await new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+      if (!pngBlob) throw new Error("PNG export failed");
+      const pngUrl = URL.createObjectURL(pngBlob);
+      const link = document.createElement("a");
+      link.href = pngUrl;
+      link.download = `algorigramme-seance-${sessionId}.png`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(pngUrl), 1500);
+    } finally {
       URL.revokeObjectURL(url);
-    };
-    image.onerror = () => URL.revokeObjectURL(url);
-    image.src = url;
+    }
+  }
+
+  function exitFallbackFullscreen() {
+    document.querySelectorAll(".algorithm-fullscreen-fallback").forEach(card => {
+      card.classList.remove("algorithm-fullscreen-fallback");
+    });
+    document.body.classList.remove("algorithm-fullscreen-lock");
   }
 
   async function toggleFullscreen(card) {
-    if (document.fullscreenElement === card) {
-      await document.exitFullscreen?.();
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
       return;
     }
     if (card.requestFullscreen) {
       try {
         await card.requestFullscreen();
         return;
-      } catch (_error) {}
+      } catch (_error) {
+        // Le mode CSS ci-dessous reste disponible si l’API est refusée ou indisponible.
+      }
     }
-    const active = card.classList.toggle("is-algorithm-fullscreen-fallback");
-    document.body.classList.toggle("algorithm-fullscreen-fallback-open", active);
+    card.classList.toggle("algorithm-fullscreen-fallback");
+    document.body.classList.toggle("algorithm-fullscreen-lock", card.classList.contains("algorithm-fullscreen-fallback"));
   }
 
-  function ensureActions(card, sessionId) {
+  function bindControls(card) {
     const actions = card.querySelector(".algorithm-actions");
     if (!actions) return;
-    if (!actions.querySelector('[data-algorithm-action="download-png"]')) {
-      const button = document.createElement("button");
-      button.className = "algorithm-action-button";
-      button.type = "button";
-      button.dataset.algorithmAction = "download-png";
-      button.textContent = "⇩ Télécharger PNG";
-      button.addEventListener("click", () => downloadPng(card, sessionId));
-      actions.appendChild(button);
+    const pngButton = ensureButton(actions, "download-png", "⇩ Télécharger PNG", "download");
+    const fullscreenButton = ensureButton(actions, "fullscreen", "⛶ Plein écran", "print");
+    if (!pngButton.dataset.finalPolishBound) {
+      pngButton.dataset.finalPolishBound = "true";
+      pngButton.addEventListener("click", () => downloadPng(card));
     }
-    if (!actions.querySelector('[data-algorithm-action="fullscreen"]')) {
-      const button = document.createElement("button");
-      button.className = "algorithm-action-button algorithm-fullscreen-button";
-      button.type = "button";
-      button.dataset.algorithmAction = "fullscreen";
-      button.textContent = "⛶ Plein écran";
-      button.addEventListener("click", () => toggleFullscreen(card));
-      actions.appendChild(button);
+    if (!fullscreenButton.dataset.finalPolishBound) {
+      fullscreenButton.dataset.finalPolishBound = "true";
+      fullscreenButton.addEventListener("click", () => toggleFullscreen(card));
     }
+
     const stage = card.querySelector(".algorithm-premium-stage");
-    if (stage && !stage.dataset.fullscreenBound) {
-      stage.dataset.fullscreenBound = "true";
-      stage.title = "Double-cliquer pour afficher ou quitter le plein écran";
-      stage.addEventListener("dblclick", event => {
-        if (event.target.closest("button,a,input,textarea,select")) return;
-        toggleFullscreen(card);
-      });
+    if (stage && !stage.dataset.finalPolishFullscreenBound) {
+      stage.dataset.finalPolishFullscreenBound = "true";
+      stage.addEventListener("dblclick", () => toggleFullscreen(card));
     }
   }
 
-  function polish(svg) {
-    const card = svg.closest(".algorithm-premium-card");
-    if (!card) return;
-    const sessionId = Number(card.dataset.session || document.body.dataset.session || 0);
-    if (!EDGES[sessionId]) return;
-    normalizeSymbols(svg);
-    const boxes = nodeMap(svg);
-    ensureExpectedEdges(svg, sessionId, boxes);
-    straightenAlignedEdges(svg, boxes);
-    styleConnectors(svg);
-    rerouteLoopsToJunction(svg);
-    styleConnectors(svg);
+  function polishCard(card) {
+    const svg = card.querySelector("svg.algorithm-premium-svg");
+    if (!svg) return;
+    bindControls(card);
+    ensureReminder(card);
     addNoSlashes(svg);
-    fitAllTexts(svg);
-    ensureCourseReminder(card);
-    ensureActions(card, sessionId);
-    svg.dataset.finalPolishVersion = POLISH_VERSION;
-    svg.dataset.visibleConnectorCount = String(svg.querySelectorAll(".algorithm-layout-connectors .algorithm-connector").length);
-    card.dataset.finalPolish = "ready";
+    mergeAudit(svg, auditAndFitText(svg));
+    card.dataset.finalPolishVersion = VERSION;
   }
 
-  function schedule(svg) {
-    window.requestAnimationFrame(() => {
-      window.setTimeout(() => polish(svg), 80);
-      window.setTimeout(() => polish(svg), 260);
-    });
-  }
-
+  let scheduled = false;
   function scan(root = document) {
-    root.querySelectorAll?.("svg.algorithm-premium-svg").forEach(schedule);
+    if (root.matches?.(".algorithm-premium-card")) polishCard(root);
+    root.querySelectorAll?.(".algorithm-premium-card").forEach(polishCard);
+  }
+
+  function schedule(root = document) {
+    if (scheduled) return;
+    scheduled = true;
+    window.requestAnimationFrame(() => {
+      scheduled = false;
+      scan(root);
+    });
   }
 
   function initialize() {
     scan(document);
+    document.addEventListener("technoquest:algorithm-rendered", event => schedule(event.target.closest?.(".algorithm-premium-card") || document));
+    document.addEventListener("technoquest:algorithm-layout-ready", event => schedule(event.target.closest?.(".algorithm-premium-card") || document));
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") exitFallbackFullscreen();
+    });
     const observer = new MutationObserver(mutations => {
-      mutations.forEach(mutation => mutation.addedNodes.forEach(node => {
-        if (node.nodeType !== Node.ELEMENT_NODE) return;
-        if (node.matches?.("svg.algorithm-premium-svg")) schedule(node);
-        node.querySelectorAll?.("svg.algorithm-premium-svg").forEach(schedule);
-      }));
+      if (mutations.some(mutation => [...mutation.addedNodes].some(node =>
+        node.nodeType === Node.ELEMENT_NODE &&
+        (node.matches?.(".algorithm-premium-card,svg.algorithm-premium-svg") || node.querySelector?.(".algorithm-premium-card,svg.algorithm-premium-svg"))
+      ))) {
+        schedule(document);
+      }
     });
     observer.observe(document.body, { childList: true, subtree: true });
-    document.addEventListener("fullscreenchange", () => {
-      document.querySelectorAll(".algorithm-premium-card").forEach(card => {
-        if (document.fullscreenElement !== card) card.classList.remove("is-algorithm-fullscreen-fallback");
-      });
-    });
-    document.addEventListener("keydown", event => {
-      if (event.key !== "Escape") return;
-      document.querySelectorAll(".algorithm-premium-card.is-algorithm-fullscreen-fallback").forEach(card => card.classList.remove("is-algorithm-fullscreen-fallback"));
-      document.body.classList.remove("algorithm-fullscreen-fallback-open");
-    });
   }
 
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", initialize, { once: true });
-  else initialize();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initialize, { once: true });
+  } else {
+    initialize();
+  }
 })();

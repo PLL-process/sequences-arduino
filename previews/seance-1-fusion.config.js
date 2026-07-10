@@ -44,8 +44,8 @@ window.TechnoQuestSessionTemplateConfig = {
 // Charger immédiatement les feuilles de style communes.
 [
   "../code-harmony.css?v=6",
-  "../mission-mode/mission-algorithms-premium.css?v=2",
-  "../mission-mode/mission-algorithms-layout-v3.css?v=3",
+  "../mission-mode/mission-algorithms-premium.css?v=4",
+  "../mission-mode/mission-algorithms-layout-v3.css?v=4",
   "../mission-mode/mission-algorithms-final-polish.css?v=1",
   "../editor-visibility-guard.css?v=1"
 ].forEach(href => {
@@ -59,9 +59,9 @@ window.TechnoQuestSessionTemplateConfig = {
 function loadPreviewEnhancements() {
   const sources = [
     "../code-harmony.js?v=3",
-    "../mission-mode/mission-algorithms-premium.js?v=4",
-    "../mission-mode/mission-algorithms-layout-v3.js?v=10",
-    "../mission-mode/mission-algorithms-final-polish.js?v=1",
+    "../mission-mode/mission-algorithms-premium.js?v=6",
+    "../mission-mode/mission-algorithms-layout-v3.js?v=11",
+    "../mission-mode/mission-algorithms-final-polish.js?v=3",
     "../editor-visibility-guard.js?v=1"
   ];
 

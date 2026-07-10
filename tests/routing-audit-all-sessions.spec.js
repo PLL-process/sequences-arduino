@@ -47,6 +47,9 @@ const expectedAudit = {
   asymmetricalBranches: 0,
   missingJunctionDots: 0,
   titleOverlaps: 0,
+  textOverflows: 0,
+  numberTextOverlaps: 0,
+  shapeTextCollisions: 0,
   zeroLengthSegments: 0,
   blockCollisions: 0,
   nodeOverlaps: 0,
@@ -70,6 +73,13 @@ const expectedMinimumJunctions = new Map([
   [8, 1]
 ]);
 
+const expectedSymbolForClass = className => {
+  if (className.includes("algorithm-node--start") || className.includes("algorithm-node--end")) return { symbol: "terminal", tag: "rect" };
+  if (className.includes("algorithm-node--decision")) return { symbol: "decision", tag: "polygon" };
+  if (className.includes("algorithm-node--sensor") || className.includes("algorithm-node--communication")) return { symbol: "io", tag: "polygon" };
+  return { symbol: "process", tag: "rect" };
+};
+
 test.describe("algorithm routing audit", () => {
   for (const viewport of viewports) {
     test(`uses lateral decision exits and top target entries at ${viewport.width}x${viewport.height}`, async ({ page }) => {
@@ -83,10 +93,16 @@ test.describe("algorithm routing audit", () => {
 
         await expect(svg).toBeVisible();
         await expect(svg).toHaveAttribute("data-routing-audit", "ok");
+        await expect.poll(async () => svg.evaluate(svgElement => "textOverflows" in JSON.parse(svgElement.dataset.routingAuditSummary || "{}")), {
+          message: `session ${sessionId} final polish audit is present`
+        }).toBe(true);
         await expect(svg.locator("title,.algorithm-svg-title,.algorithm-svg-subtitle")).toHaveCount(0);
         await expect(svg.locator(".algorithm-node")).toHaveCount(expectedNodes.get(sessionId));
         await expect(svg.locator(".algorithm-layout-connectors path.algorithm-connector")).toHaveCount(connectionCount);
         await expect(svg.locator(".algorithm-layout-connectors path.algorithm-connector[marker-end]")).toHaveCount(connectionCount);
+        await expect(card.locator('[data-algorithm-action="download-png"]')).toBeVisible();
+        await expect(card.locator('[data-algorithm-action="fullscreen"]')).toBeVisible();
+        await expect(card.locator(".algorithm-symbol-reminder")).toHaveCount(1);
 
         const audit = await svg.evaluate(svgElement => {
           const number = value => Number.parseFloat(value || "0") || 0;
@@ -107,6 +123,7 @@ test.describe("algorithm routing audit", () => {
             const transform = node.transform.baseVal.consolidate()?.matrix;
             const dx = transform?.e || 0;
             const dy = transform?.f || 0;
+            const isDecision = node.classList.contains("algorithm-node--decision");
 
             if (shape.tagName.toLowerCase() === "rect") {
               const x = number(shape.getAttribute("x")) + dx;
@@ -120,7 +137,7 @@ test.describe("algorithm routing audit", () => {
                 bottom: y + height,
                 centerX: x + width / 2,
                 centerY: y + height / 2,
-                isDecision: false
+                isDecision
               };
             }
 
@@ -142,7 +159,7 @@ test.describe("algorithm routing audit", () => {
               bottom,
               centerX: (left + right) / 2,
               centerY: (top + bottom) / 2,
-              isDecision: true
+              isDecision
             };
           };
 
@@ -319,12 +336,33 @@ test.describe("algorithm routing audit", () => {
             });
           });
 
+          const symbolFailures = [];
+          [...svgElement.querySelectorAll(".algorithm-node")].forEach(node => {
+            const expected = (() => {
+              const className = node.getAttribute("class") || "";
+              if (className.includes("algorithm-node--start") || className.includes("algorithm-node--end")) return { symbol: "terminal", tag: "rect" };
+              if (className.includes("algorithm-node--decision")) return { symbol: "decision", tag: "polygon" };
+              if (className.includes("algorithm-node--sensor") || className.includes("algorithm-node--communication")) return { symbol: "io", tag: "polygon" };
+              return { symbol: "process", tag: "rect" };
+            })();
+            const shape = node.querySelector(".algorithm-node-shape");
+            const actualTag = shape?.tagName.toLowerCase();
+            const actualSymbol = node.dataset.symbol || shape?.dataset.symbol || "";
+            if (actualTag !== expected.tag || actualSymbol !== expected.symbol) {
+              symbolFailures.push(`${node.dataset.node}: ${actualTag}/${actualSymbol} expected ${expected.tag}/${expected.symbol}`);
+            }
+            if (expected.symbol === "process" && number(shape?.getAttribute("rx")) > 8) {
+              symbolFailures.push(`${node.dataset.node}: process rounded too much`);
+            }
+          });
+
           return {
             summary: JSON.parse(svgElement.dataset.routingAuditSummary || "{}"),
             blockOverlaps,
             pathFailures,
             labelOverlaps,
-            junctionCount: svgElement.querySelectorAll(".algorithm-junction-dot").length
+            junctionCount: svgElement.querySelectorAll(".algorithm-junction-dot").length,
+            symbolFailures
           };
         });
 
@@ -339,6 +377,7 @@ test.describe("algorithm routing audit", () => {
         expect(audit.blockOverlaps, `session ${sessionId} block overlaps`).toEqual([]);
         expect(audit.pathFailures, `session ${sessionId} path failures`).toEqual([]);
         expect(audit.labelOverlaps, `session ${sessionId} label overlaps`).toEqual([]);
+        expect(audit.symbolFailures, `session ${sessionId} symbol failures`).toEqual([]);
 
         await card.scrollIntoViewIfNeeded();
         await card.locator(".algorithm-premium-stage").evaluate(stage => {
@@ -387,23 +426,57 @@ test.describe("algorithm routing audit", () => {
         window.__printCalls += 1;
         window.dispatchEvent(new Event("afterprint"));
       };
+      window.__fullscreenTarget = null;
+      Object.defineProperty(document, "fullscreenElement", {
+        configurable: true,
+        get: () => window.__fullscreenTarget
+      });
+      Element.prototype.requestFullscreen = function requestFullscreen() {
+        window.__fullscreenTarget = this;
+        document.dispatchEvent(new Event("fullscreenchange"));
+        return Promise.resolve();
+      };
+      document.exitFullscreen = () => {
+        window.__fullscreenTarget = null;
+        document.dispatchEvent(new Event("fullscreenchange"));
+        return Promise.resolve();
+      };
     });
 
     for (const sessionId of expectedConnections.keys()) {
       await page.goto(`/seance-${sessionId}.html`);
       const card = page.locator(`.algorithm-premium-card[data-session='${sessionId}']`);
       await expect(card.locator("svg.algorithm-premium-svg")).toHaveAttribute("data-routing-audit", "ok");
+      await expect(card.locator('[data-algorithm-action="download-png"]')).toBeVisible();
+      await expect(card.locator('[data-algorithm-action="fullscreen"]')).toBeVisible();
+
+      const [pngDownload] = await Promise.all([
+        page.waitForEvent("download"),
+        card.locator('[data-algorithm-action="download-png"]').click()
+      ]);
+      expect(pngDownload.suggestedFilename()).toBe(`algorigramme-seance-${sessionId}.png`);
+      const exportedPngPath = `test-results/algorigramme-seance-${sessionId}.png`;
+      await pngDownload.saveAs(exportedPngPath);
+      const downloadedPngPath = exportedPngPath;
+      const png = fs.readFileSync(downloadedPngPath);
+      expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+      expect(png.length).toBeGreaterThan(10000);
 
       for (const level of ["guided", "supported", "autonomous"]) {
         await card.locator(`[data-level="${level}"]`).click();
         await expect(card).toHaveAttribute("data-level", level);
         await expect(card.locator(`[data-level="${level}"]`)).toHaveAttribute("aria-pressed", "true");
         await expect(card.locator("svg.algorithm-premium-svg")).toHaveAttribute("data-routing-audit", "ok");
+        await expect.poll(async () => card.locator("svg.algorithm-premium-svg").evaluate(svg => "textOverflows" in JSON.parse(svg.dataset.routingAuditSummary || "{}"))).toBe(true);
         await expect(card.locator(".algorithm-layout-connectors path.algorithm-connector")).toHaveCount(expectedConnections.get(sessionId));
       }
 
       await card.locator('[data-algorithm-action="play"]').click();
       await expect(card).toHaveClass(/is-playing/);
+      await expect.poll(
+        () => card.locator(".algorithm-layout-connectors path.algorithm-connector.is-flowing").count(),
+        { message: `session ${sessionId} flow path animates`, timeout: 2000 }
+      ).toBeGreaterThan(0);
       await expect.poll(
         () => card.evaluate(element => element.classList.contains("is-playing")),
         { message: `session ${sessionId} animation completes`, timeout: 10000 }
@@ -418,6 +491,22 @@ test.describe("algorithm routing audit", () => {
       const downloadedSvg = fs.readFileSync(downloadedPath, "utf8");
       expect(downloadedSvg).toContain("marker-end");
       expect(downloadedSvg).toContain("algorithmArrow");
+
+      await card.locator('[data-algorithm-action="fullscreen"]').click();
+      await expect.poll(
+        () => page.evaluate(() => Boolean(document.fullscreenElement || document.querySelector(".algorithm-fullscreen-fallback"))),
+        { message: `session ${sessionId} fullscreen entered`, timeout: 1000 }
+      ).toBe(true);
+      await page.evaluate(() => document.fullscreenElement && document.exitFullscreen());
+
+      await page.evaluate(() => {
+        Element.prototype.requestFullscreen = undefined;
+        window.__fullscreenTarget = null;
+      });
+      await card.locator(".algorithm-premium-stage").dblclick();
+      await expect(card).toHaveClass(/algorithm-fullscreen-fallback/);
+      await page.keyboard.press("Escape");
+      await expect(card).not.toHaveClass(/algorithm-fullscreen-fallback/);
 
       await card.locator('[data-algorithm-action="print"]').click();
       await expect.poll(

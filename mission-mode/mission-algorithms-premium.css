@@ -203,7 +203,7 @@
   stroke-width: 4;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: url(#algorithmSoftGlow);
+  filter: drop-shadow(0 0 5px rgba(103,232,249,.75));
 }
 
 .algorithm-branch-label {
@@ -392,6 +392,67 @@
   opacity: .58;
 }
 
+.algorithm-premium-card.is-playing .algorithm-connector.is-flowing {
+  stroke-opacity: 1;
+  filter: url(#algorithmStrongGlow);
+}
+
+.algorithm-symbol-reminder {
+  margin: .85rem 1rem 0;
+  border: 1px solid rgba(125,211,252,.24);
+  border-radius: 12px;
+  background: rgba(6,19,30,.78);
+  color: #d8edf6;
+}
+
+.algorithm-symbol-reminder summary {
+  cursor: pointer;
+  padding: .7rem .85rem;
+  color: #f8fcff;
+  font-size: .78rem;
+  font-weight: 900;
+  letter-spacing: .01em;
+}
+
+.algorithm-symbol-reminder div {
+  display: grid;
+  gap: .45rem;
+  padding: 0 .85rem .85rem;
+  font-size: .74rem;
+  line-height: 1.45;
+}
+
+.algorithm-symbol-reminder p {
+  margin: 0;
+}
+
+.algorithm-fullscreen-fallback {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 9999 !important;
+  display: block !important;
+  width: auto !important;
+  height: auto !important;
+  margin: 0 !important;
+  overflow: auto !important;
+  border-radius: 0 !important;
+  background: #06111b !important;
+}
+
+body.algorithm-fullscreen-lock {
+  overflow: hidden;
+}
+
+.algorithm-fullscreen-fallback .algorithm-premium-stage {
+  min-height: 100vh;
+  padding: 1rem;
+}
+
+.algorithm-fullscreen-fallback .algorithm-premium-svg {
+  max-width: min(1400px, 96vw);
+  margin: 0 auto;
+}
+
 @media print {
   body.algorithm-print-mode > *:not(.algorithm-print-target) {
     display: none !important;
@@ -447,7 +508,9 @@
 @media (prefers-reduced-motion: reduce) {
   .algorithm-node-shape,
   .algorithm-level-button,
-  .algorithm-action-button {
+  .algorithm-action-button,
+  .algorithm-connector {
     transition: none;
+    animation: none;
   }
 }

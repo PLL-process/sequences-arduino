@@ -247,6 +247,13 @@
     return lines.slice(0, 3);
   }
 
+  function symbolForType(type) {
+    if (type === "start" || type === "end") return "terminal";
+    if (type === "decision") return "decision";
+    if (type === "sensor" || type === "communication") return "io";
+    return "process";
+  }
+
   // Calculer la hauteur requise par un diagramme.
   function diagramHeight(algorithm) {
     return Math.max(820, ...algorithm.nodes.map(node => node.y + node.height + 70));
@@ -278,7 +285,7 @@
       <filter id="algorithmStrongGlow" x="-70%" y="-70%" width="240%" height="240%"><feGaussianBlur stdDeviation="8" result="blur"/><feColorMatrix in="blur" type="matrix" values="1 0 0 0 0.15  0 1 0 0 0.65  0 0 1 0 0.95  0 0 0 1 0"/><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       <marker id="algorithmArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="10" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#67e8f9"/></marker>
       <style>
-        .algorithm-connector{fill:none;stroke:url(#algorithmConnectorGradient);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:url(#algorithmSoftGlow)}
+        .algorithm-connector{fill:none;stroke:url(#algorithmConnectorGradient);stroke-width:4;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 0 5px rgba(103,232,249,.75))}
         .algorithm-branch-label{fill:#dff7ff;font:900 12px Arial;paint-order:stroke;stroke:#06111b;stroke-width:4px}
         .algorithm-node-shape{stroke-width:3}.algorithm-node-label{fill:#fff;font:950 14px Arial;text-anchor:middle;paint-order:stroke;stroke:rgba(3,9,15,.92);stroke-width:5px;stroke-linejoin:round}.algorithm-node-caption{fill:#d7edf5;font:750 11px Arial;text-anchor:middle;paint-order:stroke;stroke:rgba(3,9,15,.92);stroke-width:4px}.algorithm-node-number{fill:#05111b;font:950 11px Arial;text-anchor:middle;dominant-baseline:middle}.algorithm-node-number-disc{fill:#eafcff;stroke:#05111b;stroke-width:2}.algorithm-node--start .algorithm-node-shape,.algorithm-node--end .algorithm-node-shape{fill:url(#algorithmGreenGradient);stroke:#86efac}.algorithm-node--process .algorithm-node-shape,.algorithm-node--sensor .algorithm-node-shape{fill:url(#algorithmBlueGradient);stroke:#7dd3fc}.algorithm-node--decision .algorithm-node-shape{fill:url(#algorithmVioletGradient);stroke:#d8b4fe}.algorithm-node--safety .algorithm-node-shape{fill:url(#algorithmRoseGradient);stroke:#fda4af}.algorithm-node--energy .algorithm-node-shape{fill:url(#algorithmOrangeGradient);stroke:#fdba74}.algorithm-node--communication .algorithm-node-shape{fill:url(#algorithmCyanGradient);stroke:#a5f3fc}.algorithm-node--memory .algorithm-node-shape{fill:url(#algorithmYellowGradient);stroke:#fde68a}.algorithm-node--maintenance .algorithm-node-shape{fill:url(#algorithmAmberGradient);stroke:#fcd34d}
       </style>
@@ -304,19 +311,23 @@
     const hidden = masked.has(node.id);
     const label = hidden ? "À compléter" : node.label;
     const caption = hidden ? "________________" : node.caption;
+    const symbol = symbolForType(node.type);
     const labelLines = wrapText(label, node.type === "decision" ? 27 : 29);
     const captionLines = wrapText(caption, 34);
-    const shape = node.type === "decision"
-      ? `<polygon class="algorithm-node-shape" points="${centerX},${node.y} ${node.x + node.width},${centerY} ${centerX},${node.y + node.height} ${node.x},${centerY}"/>`
-      : node.type === "start" || node.type === "end"
-        ? `<rect class="algorithm-node-shape" x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="${node.height / 2}"/>`
-        : `<rect class="algorithm-node-shape" x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="18"/>`;
+    const skew = Math.min(30, Math.max(22, node.width * .12));
+    const shape = symbol === "decision"
+      ? `<polygon class="algorithm-node-shape" data-symbol="${symbol}" points="${centerX},${node.y} ${node.x + node.width},${centerY} ${centerX},${node.y + node.height} ${node.x},${centerY}"/>`
+      : symbol === "terminal"
+        ? `<rect class="algorithm-node-shape" data-symbol="${symbol}" x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="${node.height / 2}"/>`
+        : symbol === "io"
+          ? `<polygon class="algorithm-node-shape" data-symbol="${symbol}" points="${node.x + skew},${node.y} ${node.x + node.width},${node.y} ${node.x + node.width - skew},${node.y + node.height} ${node.x},${node.y + node.height}"/>`
+          : `<rect class="algorithm-node-shape" data-symbol="${symbol}" x="${node.x}" y="${node.y}" width="${node.width}" height="${node.height}" rx="6"/>`;
     const labelStart = centerY - (labelLines.length - 1) * 9 - (captionLines.length ? 7 : 0);
     const labelText = labelLines.map((line, lineIndex) => `<tspan x="${centerX}" dy="${lineIndex ? 18 : 0}">${escapeXml(line)}</tspan>`).join("");
     const captionStart = labelStart + labelLines.length * 18 + 3;
     const captionText = captionLines.map((line, lineIndex) => `<tspan x="${centerX}" dy="${lineIndex ? 15 : 0}">${escapeXml(line)}</tspan>`).join("");
 
-    return `<g class="algorithm-node algorithm-node--${node.type}${hidden ? " is-masked" : ""}" data-node="${node.id}" data-step="${escapeXml(node.step || "")}" tabindex="0" role="button" aria-label="${escapeXml(label)}">
+    return `<g class="algorithm-node algorithm-node--${node.type}${hidden ? " is-masked" : ""}" data-node="${node.id}" data-symbol="${symbol}" data-step="${escapeXml(node.step || "")}" tabindex="0" role="button" aria-label="${escapeXml(label)}">
       ${shape}
       <circle class="algorithm-node-number-disc" cx="${node.x + 15}" cy="${node.y + 15}" r="12"/>
       <text class="algorithm-node-number" x="${node.x + 15}" y="${node.y + 15}">${index + 1}</text>
@@ -436,6 +447,10 @@
     card.dataset.level = level;
     card.innerHTML = componentHtml(sessionId, algorithm, level);
     bindComponent(card, sessionId, algorithm, level);
+    card.dispatchEvent(new CustomEvent("technoquest:algorithm-rendered", {
+      bubbles: true,
+      detail: { sessionId, level }
+    }));
   }
 
   // Relier les commandes du composant.
@@ -468,12 +483,40 @@
   async function playAlgorithm(card) {
     if (card.classList.contains("is-playing")) return;
     const nodes = [...card.querySelectorAll(".algorithm-node")];
+    const paths = [...card.querySelectorAll(".algorithm-layout-connectors path.algorithm-connector")];
+    const reduceMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
     card.classList.add("is-playing");
 
-    for (const node of nodes) {
+    for (const path of paths) {
+      const source = path.dataset.source;
+      const target = path.dataset.target;
       nodes.forEach(item => item.classList.remove("is-active"));
-      node.classList.add("is-active");
-      await new Promise(resolve => window.setTimeout(resolve, 520));
+      card.querySelector(`.algorithm-node[data-node="${CSS.escape(source)}"]`)?.classList.add("is-active");
+      card.querySelector(`.algorithm-node[data-node="${CSS.escape(target)}"]`)?.classList.add("is-active");
+      path.classList.add("is-flowing");
+      if (!reduceMotion && path.getTotalLength) {
+        const length = Math.ceil(path.getTotalLength());
+        path.style.setProperty("--algorithm-flow-length", String(length));
+        path.style.strokeDasharray = String(length);
+        path.style.strokeDashoffset = String(length);
+        path.getBoundingClientRect();
+        path.style.transition = "stroke-dashoffset 520ms linear";
+        path.style.strokeDashoffset = "0";
+      }
+      await new Promise(resolve => window.setTimeout(resolve, reduceMotion ? 90 : 560));
+      path.classList.remove("is-flowing");
+      path.style.removeProperty("--algorithm-flow-length");
+      path.style.removeProperty("stroke-dasharray");
+      path.style.removeProperty("stroke-dashoffset");
+      path.style.removeProperty("transition");
+    }
+
+    if (!paths.length) {
+      for (const node of nodes) {
+        nodes.forEach(item => item.classList.remove("is-active"));
+        node.classList.add("is-active");
+        await new Promise(resolve => window.setTimeout(resolve, reduceMotion ? 90 : 520));
+      }
     }
 
     nodes.forEach(item => item.classList.remove("is-active"));
