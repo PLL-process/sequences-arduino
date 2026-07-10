@@ -4,6 +4,7 @@ const { expect, test } = require("@playwright/test");
 const viewports = [
   { width: 1280, height: 800 },
   { width: 1024, height: 768 },
+  { width: 800, height: 1280 },
   { width: 768, height: 1024 },
   { width: 412, height: 915 }
 ];
@@ -40,6 +41,12 @@ const expectedAudit = {
   reversedDecisionLabels: 0,
   ordinarySideEntries: 0,
   ordinarySideExits: 0,
+  unnecessaryBends: 0,
+  shortSegments: 0,
+  nodeMisalignments: 0,
+  asymmetricalBranches: 0,
+  missingJunctionDots: 0,
+  titleOverlaps: 0,
   zeroLengthSegments: 0,
   blockCollisions: 0,
   nodeOverlaps: 0,
@@ -51,6 +58,17 @@ const expectedAudit = {
   sideEntries: 0,
   sideExits: 0
 };
+
+const expectedMinimumJunctions = new Map([
+  [1, 0],
+  [2, 1],
+  [3, 1],
+  [4, 1],
+  [5, 1],
+  [6, 1],
+  [7, 1],
+  [8, 1]
+]);
 
 test.describe("algorithm routing audit", () => {
   for (const viewport of viewports) {
@@ -65,9 +83,10 @@ test.describe("algorithm routing audit", () => {
 
         await expect(svg).toBeVisible();
         await expect(svg).toHaveAttribute("data-routing-audit", "ok");
-        await expect(svg.locator(".algorithm-svg-title,.algorithm-svg-subtitle")).toHaveCount(0);
+        await expect(svg.locator("title,.algorithm-svg-title,.algorithm-svg-subtitle")).toHaveCount(0);
         await expect(svg.locator(".algorithm-node")).toHaveCount(expectedNodes.get(sessionId));
         await expect(svg.locator(".algorithm-layout-connectors path.algorithm-connector")).toHaveCount(connectionCount);
+        await expect(svg.locator(".algorithm-layout-connectors path.algorithm-connector[marker-end]")).toHaveCount(connectionCount);
 
         const audit = await svg.evaluate(svgElement => {
           const number = value => Number.parseFloat(value || "0") || 0;
@@ -176,6 +195,14 @@ test.describe("algorithm routing audit", () => {
             const previous = points[points.length - 2];
             const edgeName = `${sourceId}->${targetId}`;
             const marker = path.getAttribute("marker-end") || "";
+            const bends = points.slice(1, -1).reduce((total, point, index) => {
+              const previous = points[index];
+              const next = points[index + 2];
+              if (!previous || !next) return total;
+              const firstDirection = previous.x === point.x ? "vertical" : previous.y === point.y ? "horizontal" : "diagonal";
+              const secondDirection = point.x === next.x ? "vertical" : point.y === next.y ? "horizontal" : "diagonal";
+              return total + (firstDirection !== secondDirection ? 1 : 0);
+            }, 0);
 
             if (!marker.includes("algorithmArrow") && !marker.includes("algorithmLoopArrow")) {
               pathFailures.push(`${edgeName}: missing marker`);
@@ -217,6 +244,9 @@ test.describe("algorithm routing audit", () => {
             if (previous.x !== last.x || previous.y > last.y) pathFailures.push(`${edgeName}: last segment`);
             if (Math.min(Math.abs(last.x - target.left), Math.abs(last.x - target.right)) <= 2) {
               pathFailures.push(`${edgeName}: side target`);
+            }
+            if (!path.classList.contains("algorithm-loop-connector") && bends > 4) {
+              pathFailures.push(`${edgeName}: too many bends`);
             }
 
             for (const [nodeId, box] of nodeBoxes.entries()) {
@@ -293,14 +323,19 @@ test.describe("algorithm routing audit", () => {
             summary: JSON.parse(svgElement.dataset.routingAuditSummary || "{}"),
             blockOverlaps,
             pathFailures,
-            labelOverlaps
+            labelOverlaps,
+            junctionCount: svgElement.querySelectorAll(".algorithm-junction-dot").length
           };
         });
 
         expect(audit.summary, `session ${sessionId} routing summary`).toMatchObject({
           ...expectedAudit,
-          connectionCount
+          connectionCount,
+          renderedConnections: connectionCount,
+          arrowheadCount: connectionCount
         });
+        expect(audit.summary.maxBends, `session ${sessionId} maximum bends`).toBeLessThanOrEqual(4);
+        expect(audit.junctionCount, `session ${sessionId} junction dots`).toBeGreaterThanOrEqual(expectedMinimumJunctions.get(sessionId));
         expect(audit.blockOverlaps, `session ${sessionId} block overlaps`).toEqual([]);
         expect(audit.pathFailures, `session ${sessionId} path failures`).toEqual([]);
         expect(audit.labelOverlaps, `session ${sessionId} label overlaps`).toEqual([]);
@@ -313,6 +348,30 @@ test.describe("algorithm routing audit", () => {
         });
         await page.screenshot({
           path: `test-results/routing-audit-session-${sessionId}-${viewport.width}x${viewport.height}.png`,
+          fullPage: true
+        });
+      }
+
+      if (viewport.width === 1280 && viewport.height === 800) {
+        const figures = [...expectedConnections.keys()].map(sessionId => {
+          const filePath = `test-results/routing-audit-session-${sessionId}-1280x800.png`;
+          const data = fs.readFileSync(filePath, "base64");
+          return `<figure><img src="data:image/png;base64,${data}" alt="Séance ${sessionId}"><figcaption>Séance ${sessionId}</figcaption></figure>`;
+        }).join("");
+        await page.setViewportSize({ width: 1600, height: 2200 });
+        await page.setContent(`
+          <style>
+            body{margin:0;padding:24px;background:#08111f;color:#f8fafc;font:700 18px Arial,sans-serif}
+            h1{margin:0 0 18px;font-size:28px}
+            main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+            figure{margin:0;border:1px solid #28465b;border-radius:12px;background:#06111b;overflow:hidden}
+            img{display:block;width:100%;height:auto}
+            figcaption{padding:8px 10px;color:#a5f3fc}
+          </style>
+          <h1>Algorigrammes - captures 1280 x 800</h1><main>${figures}</main>
+        `);
+        await page.screenshot({
+          path: "test-results/routing-audit-contact-sheet-1280x800.png",
           fullPage: true
         });
       }

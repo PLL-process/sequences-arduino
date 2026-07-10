@@ -18,7 +18,7 @@
 
 (() => {
   const SVG_NS = "http://www.w3.org/2000/svg";
-  const VERSION = "9";
+  const VERSION = "10";
   const PORT_GAP = 10;
 
   // Décrire les liaisons de chaque séance afin de pouvoir les recalculer après adaptation.
@@ -48,8 +48,8 @@
     5: [
       edge("start", "read"), edge("read", "water"), edge("water", "forceStop", "Oui"),
       edge("water", "low", "Non"), edge("low", "startPump", "Oui"), edge("low", "high", "Non"),
-      edge("high", "stopPump", "Oui"), edge("high", "keep", "Non : état conservé"),
-      edge("forceStop", "command", "", "merge-left"), edge("startPump", "command", "", "merge-left"),
+      edge("high", "stopPump", "Oui"), edge("high", "keep", "Non"),
+      edge("forceStop", "command"), edge("startPump", "command"),
       edge("stopPump", "command"), edge("keep", "command"),
       edge("command", "wait"), edge("wait", "loop"), edge("loop", "read", "Retour", "loop-right")
     ],
@@ -76,21 +76,86 @@
     ]
   };
 
-  // La séance 1 utilise une disposition verticale conventionnelle centrée.
-  // Flux descendant évident pour collégiens ; retour boucle latéral droit (loop-right) clair et sans traversée.
-  const SESSION_ONE_LAYOUT = {
-    start: { x: 380, y: 35 },
-    setup: { x: 380, y: 155 },
-    read: { x: 380, y: 275 },
-    display: { x: 380, y: 395 },
-    safe: { x: 380, y: 515 },
-    wait: { x: 380, y: 635 },
-    loop: { x: 380, y: 755 }
+  // Layouts explicites : les x sont des centres, pour aligner vraiment les formes de largeur variable.
+  const SESSION_LAYOUTS = {
+    1: {
+      start: { centerX: 300, y: 35 }, setup: { centerX: 300, y: 170 },
+      read: { centerX: 300, y: 305 }, display: { centerX: 300, y: 435 },
+      safe: { centerX: 300, y: 565 }, wait: { centerX: 300, y: 695 },
+      loop: { centerX: 300, y: 825 }
+    },
+    2: {
+      start: { centerX: 520, y: 35 }, setup: { centerX: 520, y: 165 },
+      read: { centerX: 520, y: 295 }, compare: { centerX: 520, y: 430 },
+      dry: { centerX: 260, y: 595 }, wet: { centerX: 780, y: 595 },
+      safe: { centerX: 520, y: 765 }, loop: { centerX: 520, y: 895 }
+    },
+    3: {
+      start: { centerX: 520, y: 35 }, read: { centerX: 520, y: 180 },
+      compare: { centerX: 520, y: 325 }, pump: { centerX: 260, y: 500 },
+      stop: { centerX: 780, y: 500 }, cut: { centerX: 260, y: 640 },
+      wait: { centerX: 520, y: 805 }, loop: { centerX: 520, y: 935 }
+    },
+    4: {
+      start: { centerX: 520, y: 35 }, read: { centerX: 520, y: 180 },
+      water: { centerX: 520, y: 330 }, alert: { centerX: 250, y: 515 },
+      soil: { centerX: 800, y: 515 }, pump: { centerX: 660, y: 710 },
+      stop: { centerX: 940, y: 710 }, wait: { centerX: 520, y: 900 },
+      loop: { centerX: 520, y: 1030 }
+    },
+    5: {
+      start: { centerX: 560, y: 35 }, read: { centerX: 560, y: 175 },
+      water: { centerX: 560, y: 330 }, forceStop: { centerX: 260, y: 510 },
+      low: { centerX: 860, y: 510 }, startPump: { centerX: 700, y: 700 },
+      high: { centerX: 1020, y: 700 }, stopPump: { centerX: 860, y: 895 },
+      keep: { centerX: 1180, y: 895 }, command: { centerX: 560, y: 1095 },
+      wait: { centerX: 560, y: 1225 }, loop: { centerX: 560, y: 1355 }
+    },
+    6: {
+      start: { centerX: 520, y: 35 }, read: { centerX: 520, y: 170 },
+      display: { centerX: 520, y: 305 }, decision: { centerX: 520, y: 455 },
+      pump: { centerX: 260, y: 640 }, stop: { centerX: 780, y: 640 },
+      wait: { centerX: 520, y: 825 }, loop: { centerX: 520, y: 955 }
+    },
+    7: {
+      start: { centerX: 520, y: 35 }, inspect: { centerX: 520, y: 165 },
+      calibrate: { centerX: 520, y: 295 }, read: { centerX: 520, y: 425 },
+      plausible: { centerX: 520, y: 575 }, repair: { centerX: 250, y: 760 },
+      water: { centerX: 790, y: 760 }, pump: { centerX: 650, y: 955 },
+      stop: { centerX: 930, y: 955 }, loop: { centerX: 520, y: 1145 }
+    },
+    8: {
+      start: { centerX: 560, y: 35 }, read: { centerX: 560, y: 165 },
+      coherent: { centerX: 560, y: 315 }, sensorError: { centerX: 260, y: 505 },
+      water: { centerX: 860, y: 505 }, waterError: { centerX: 700, y: 700 },
+      multi: { centerX: 1020, y: 700 }, pump: { centerX: 860, y: 895 },
+      stop: { centerX: 1180, y: 895 }, display: { centerX: 560, y: 1095 },
+      wait: { centerX: 560, y: 1225 }, loop: { centerX: 560, y: 1355 }
+    }
   };
 
-  const SESSION_FIVE_LAYOUT = {
-    stopPump: { x: 250, y: 900 }
+  const SESSION_ALIGNMENT_RULES = {
+    1: [["start", "setup", "read", "display", "safe", "wait", "loop"]],
+    2: [["start", "setup", "read", "compare", "safe", "loop"], ["dry", "wet"]],
+    3: [["start", "read", "compare", "wait", "loop"], ["pump", "stop"], ["pump", "cut"]],
+    4: [["start", "read", "water", "wait", "loop"], ["alert", "soil"], ["pump", "stop"]],
+    5: [["start", "read", "water", "command", "wait", "loop"], ["startPump", "high"], ["stopPump", "keep"]],
+    6: [["start", "read", "display", "decision", "wait", "loop"], ["pump", "stop"]],
+    7: [["start", "inspect", "calibrate", "read", "plausible", "loop"], ["repair", "water"], ["pump", "stop"]],
+    8: [["start", "read", "coherent", "display", "wait", "loop"], ["sensorError", "water"], ["waterError", "multi"], ["pump", "stop"]]
   };
+
+  const SESSION_SYMMETRY_RULES = {
+    2: [{ decision: "compare", left: "dry", right: "wet" }],
+    3: [{ decision: "compare", left: "pump", right: "stop" }],
+    4: [{ decision: "water", left: "alert", right: "soil" }, { decision: "soil", left: "pump", right: "stop" }],
+    5: [{ decision: "water", left: "forceStop", right: "low" }, { decision: "low", left: "startPump", right: "high" }, { decision: "high", left: "stopPump", right: "keep" }],
+    6: [{ decision: "decision", left: "pump", right: "stop" }],
+    7: [{ decision: "plausible", left: "repair", right: "water" }, { decision: "water", left: "pump", right: "stop" }],
+    8: [{ decision: "coherent", left: "sensorError", right: "water" }, { decision: "water", left: "waterError", right: "multi" }, { decision: "multi", left: "pump", right: "stop" }]
+  };
+
+  const MERGE_TARGET_IDS = new Set(["safe", "wait", "loop", "command", "display"]);
 
   function edge(source, target, label = "", kind = "auto") {
     return { source, target, label, kind };
@@ -151,7 +216,8 @@
   function moveNode(node, target) {
     const current = shapeBox(node);
     if (!current || !target) return;
-    const dx = target.x - current.x;
+    const targetX = Number.isFinite(target.centerX) ? target.centerX - current.width / 2 : target.x;
+    const dx = targetX - current.x;
     const dy = target.y - current.y;
     node.dataset.layoutDx = String(number(node.dataset.layoutDx) + dx);
     node.dataset.layoutDy = String(number(node.dataset.layoutDy) + dy);
@@ -255,6 +321,30 @@
     return points.slice(1).reduce((total, point, index) => total + pointDistance(points[index], point), 0);
   }
 
+  function segmentDirection(first, second) {
+    if (near(first, second)) return "";
+    return first.x === second.x ? "vertical" : first.y === second.y ? "horizontal" : "diagonal";
+  }
+
+  function countBends(points) {
+    const directions = [];
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const direction = segmentDirection(points[index], points[index + 1]);
+      if (direction && direction !== directions[directions.length - 1]) directions.push(direction);
+    }
+    return Math.max(0, directions.length - 1);
+  }
+
+  function countShortSegments(points, minimum = 18) {
+    let count = 0;
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const length = pointDistance(points[index], points[index + 1]);
+      const isPortApproach = index === 0 || index === points.length - 2;
+      if (!isPortApproach && length > 0 && length < minimum) count += 1;
+    }
+    return count;
+  }
+
   function exteriorLane(kind, bounds, side = "right") {
     if (kind === "loop-left" || side === "left") return Math.max(24, bounds.minLeft - 52);
     return bounds.maxRight + 52;
@@ -335,6 +425,8 @@
     return {
       blockCollisions: routingCollisions(points, sourceId, targetId, nodeMap).length,
       crossings: countCandidateCrossings(points, previousPaths),
+      bends: countBends(points),
+      shortSegments: countShortSegments(points),
       cost: penalty + routeLength(points)
     };
   }
@@ -354,6 +446,8 @@
       .sort((first, second) =>
         first.score.blockCollisions - second.score.blockCollisions ||
         first.score.crossings - second.score.crossings ||
+        first.score.shortSegments - second.score.shortSegments ||
+        first.score.bends - second.score.bends ||
         first.score.cost - second.score.cost
       );
 
@@ -449,14 +543,29 @@
       ], penalty);
     };
 
+    if (targetAnchor.y > sourceAnchor.y && Math.abs(sourceAnchor.x - targetAnchor.x) <= .5) {
+      addCandidate([sourceAnchor, targetAnchor], 0);
+      return routeFromCandidates(candidates, source, target, kind, nodeMap, "middle", validSequential, null, previousPaths);
+    }
+
     if (kind === "merge-left" && targetAnchor.y > sourceAnchor.y) {
       addExteriorCandidate(leftLane, 0);
       return routeFromCandidates(candidates, source, target, kind, nodeMap, "middle", validSequential, null, previousPaths);
     }
 
     if (targetAnchor.y > sourceAnchor.y) {
+      if (MERGE_TARGET_IDS.has(target.id)) {
+        const mergeY = targetAnchor.y - 38;
+        addCandidate([
+          sourceAnchor,
+          { x: sourceAnchor.x, y: mergeY },
+          { x: targetAnchor.x, y: mergeY },
+          targetAnchor
+        ], 0);
+        return routeFromCandidates(candidates, source, target, kind, nodeMap, "middle", validSequential, null, previousPaths);
+      }
+
       const middleY = (sourceAnchor.y + targetAnchor.y) / 2;
-      if (sourceAnchor.x === targetAnchor.x) addCandidate([sourceAnchor, targetAnchor], 0);
       addCandidate([
         sourceAnchor,
         { x: sourceAnchor.x, y: middleY },
@@ -529,14 +638,15 @@
     const targetIsOnBranchSide = (targetLane - sourceAnchor.x) * sign > 34;
     const candidates = [];
     const addCandidate = (points, penalty = 0) => candidates.push({ points, penalty });
+    const branchDistance = (targetLane - sourceAnchor.x) * sign;
+    const directDropIsReadable = branchDistance >= 18 && targetAnchor.y > sourceAnchor.y;
 
-    if (targetIsOnBranchSide) {
+    if (directDropIsReadable) {
       addCandidate([
         sourceAnchor,
         { x: targetLane, y: sourceAnchor.y },
-        { x: targetLane, y: targetLeadY },
         targetAnchor
-      ], 0);
+      ], targetIsOnBranchSide ? 0 : 12);
     }
 
     addCandidate([
@@ -823,6 +933,59 @@
     return intersections;
   }
 
+  function collectJunctionPoints(paths) {
+    const byPoint = new Map();
+    const keyFor = point => `${point.x},${point.y}`;
+    paths.forEach(path => {
+      path.points.slice(1, -1).forEach(point => {
+        const key = keyFor(point);
+        if (!byPoint.has(key)) byPoint.set(key, { point, edges: new Set() });
+        byPoint.get(key).edges.add(path.edge);
+      });
+    });
+    return [...byPoint.values()].filter(item => item.edges.size >= 2);
+  }
+
+  function drawJunctionDots(layer, junctions) {
+    junctions.forEach((junction, index) => {
+      layer.appendChild(svgElement("circle", {
+        class: "algorithm-junction-dot",
+        "data-junction-index": index,
+        cx: junction.point.x,
+        cy: junction.point.y,
+        r: 6,
+        fill: "#67e8f9",
+        stroke: "#ecfeff",
+        "stroke-width": "2",
+        filter: "url(#algorithmSoftGlow)"
+      }));
+    });
+  }
+
+  function layoutRuleAudit(sessionId, nodeMap) {
+    const result = { nodeMisalignments: 0, asymmetricalBranches: 0 };
+    (SESSION_ALIGNMENT_RULES[sessionId] || []).forEach(group => {
+      const boxes = group.map(id => nodeMap.get(id)).filter(Boolean);
+      if (boxes.length < 2) return;
+      const spreadX = Math.max(...boxes.map(box => box.centerX)) - Math.min(...boxes.map(box => box.centerX));
+      const spreadY = Math.max(...boxes.map(box => box.centerY)) - Math.min(...boxes.map(box => box.centerY));
+      const spreadTop = Math.max(...boxes.map(box => box.top)) - Math.min(...boxes.map(box => box.top));
+      if (Math.min(spreadX, spreadY, spreadTop) > 2) result.nodeMisalignments += 1;
+    });
+
+    (SESSION_SYMMETRY_RULES[sessionId] || []).forEach(rule => {
+      const decision = nodeMap.get(rule.decision);
+      const left = nodeMap.get(rule.left);
+      const right = nodeMap.get(rule.right);
+      if (!decision || !left || !right) return;
+      const yAligned = Math.abs(left.centerY - right.centerY) <= 2 || Math.abs(left.top - right.top) <= 2;
+      const symmetric = Math.abs(Math.abs(decision.centerX - left.centerX) - Math.abs(right.centerX - decision.centerX)) <= 12;
+      if (!yAligned || !symmetric) result.asymmetricalBranches += 1;
+    });
+
+    return result;
+  }
+
   // Reconstruire les connecteurs afin qu’ils n’entrent plus dans les formes.
   // Les attributs inline stroke assurent visibilité et fonctionnement du SVG téléchargé seul.
   function rebuildEdges(svg, sessionId, nodeMap) {
@@ -846,6 +1009,12 @@
       reversedDecisionLabels: 0,
       ordinarySideEntries: 0,
       ordinarySideExits: 0,
+      unnecessaryBends: 0,
+      shortSegments: 0,
+      nodeMisalignments: 0,
+      asymmetricalBranches: 0,
+      missingJunctionDots: 0,
+      titleOverlaps: 0,
       blockCollisions: 0,
       nodeOverlaps: 0,
       labelCollisions: 0,
@@ -855,6 +1024,10 @@
       ambiguousCrossings: 0,
       edgeCrossings: 0,
       connectionCount: 0,
+      arrowheadCount: 0,
+      renderedConnections: 0,
+      junctionCount: 0,
+      maxBends: 0,
       sideEntries: 0,
       sideExits: 0,
       blockOverlaps: 0
@@ -874,6 +1047,7 @@
       const geometry = route(source, target, definition, bounds, nodeMap, routedPaths);
       extentRight = Math.max(extentRight, geometry.extentRight || bounds.maxRight);
       auditSummary.connectionCount += 1;
+      auditSummary.renderedConnections += 1;
 
       const portWarnings = connectionPortAudit(geometry.points, source, target, definition);
       Object.keys(portWarnings).forEach(key => {
@@ -891,13 +1065,25 @@
       if (portWarnings.foldedSegments) warnings.push(`${definition.source} → ${definition.target} contient un segment replié`);
       if (portWarnings.danglingConnectors) warnings.push(`${definition.source} → ${definition.target} contient une liaison pendante`);
 
+      const isLoop = definition.kind.startsWith("loop");
+      const bends = countBends(geometry.points);
+      const shortSegments = countShortSegments(geometry.points);
+      const verticallyAligned = Math.abs(source.centerX - target.centerX) <= .5 && target.top > source.bottom;
+      const bendLimit = isLoop ? 4 : source.isDecision ? 4 : 2;
+      auditSummary.maxBends = Math.max(auditSummary.maxBends, bends);
+      auditSummary.shortSegments += shortSegments;
+      if ((verticallyAligned && bends > 0) || bends > bendLimit) {
+        auditSummary.unnecessaryBends += 1;
+        warnings.push(`${definition.source} → ${definition.target} contient ${bends} coude(s) inutile(s)`);
+      }
+      if (shortSegments) warnings.push(`${definition.source} → ${definition.target} contient un segment intermédiaire trop court`);
+
       const collisions = routingCollisions(geometry.points, definition.source, definition.target, nodeMap);
       if (collisions.length) {
         auditSummary.blockCollisions += collisions.length;
         warnings.push(`${definition.source} → ${definition.target} traverse ${collisions.join(", ")}`);
       }
 
-      const isLoop = definition.kind.startsWith("loop");
       const markerEnd = isLoop ? "url(#algorithmLoopArrow)" : "url(#algorithmArrow)";
       const path = svgElement("path", {
         class: `algorithm-connector${isLoop ? " algorithm-loop-connector" : ""}`,
@@ -917,7 +1103,8 @@
         "stroke-linejoin": "round",
         ...(isLoop ? { "stroke-dasharray": "11 8" } : {})
       });
-      if (!markerEnd) auditSummary.missingArrowheads += 1;
+      if (path.hasAttribute("marker-end")) auditSummary.arrowheadCount += 1;
+      else auditSummary.missingArrowheads += 1;
       layer.appendChild(path);
       routedPaths.push({ edge: `${definition.source}->${definition.target}`, points: geometry.points });
 
@@ -932,6 +1119,26 @@
         layer.appendChild(text);
       }
     });
+
+    const junctions = collectJunctionPoints(routedPaths);
+    drawJunctionDots(layer, junctions);
+    auditSummary.junctionCount = junctions.length;
+    auditSummary.missingJunctionDots = layer.querySelectorAll(".algorithm-junction-dot").length === junctions.length ? 0 : junctions.length;
+    if (auditSummary.missingJunctionDots) warnings.push("jonctions sans point visible");
+
+    const layoutWarnings = layoutRuleAudit(sessionId, nodeMap);
+    auditSummary.nodeMisalignments = layoutWarnings.nodeMisalignments;
+    auditSummary.asymmetricalBranches = layoutWarnings.asymmetricalBranches;
+    if (auditSummary.nodeMisalignments) warnings.push(`${auditSummary.nodeMisalignments} alignement(s) de blocs non conforme(s)`);
+    if (auditSummary.asymmetricalBranches) warnings.push(`${auditSummary.asymmetricalBranches} branche(s) de décision asymétrique(s)`);
+
+    auditSummary.titleOverlaps = svg.querySelectorAll(".algorithm-svg-title,.algorithm-svg-subtitle,title").length;
+    if (auditSummary.titleOverlaps) warnings.push("titre encore présent dans le dessin SVG");
+
+    if (auditSummary.arrowheadCount !== (SESSION_EDGES[sessionId] || []).length) {
+      auditSummary.missingArrowheads += Math.abs((SESSION_EDGES[sessionId] || []).length - auditSummary.arrowheadCount);
+      warnings.push("nombre de pointes de flèche non conforme");
+    }
 
     const overlaps = blockOverlaps(nodeMap);
     auditSummary.nodeOverlaps = overlaps.length;
@@ -962,18 +1169,16 @@
     const sessionId = Number(card?.dataset.session || document.body.dataset.session || 0);
     if (!SESSION_EDGES[sessionId]) return;
 
-    // Le titre est déjà présent dans l’en-tête de la carte : éviter sa répétition dans le dessin.
-    svg.querySelectorAll(".algorithm-svg-title,.algorithm-svg-subtitle").forEach(element => element.remove());
+    // Le titre est déjà présent dans l’en-tête de la carte : éviter sa répétition et le tooltip natif du SVG.
+    const titleText = svg.querySelector("title")?.textContent || `Algorigramme de la séance ${sessionId}`;
+    svg.querySelectorAll(".algorithm-svg-title,.algorithm-svg-subtitle,title,desc").forEach(element => element.remove());
+    svg.removeAttribute("aria-labelledby");
+    svg.setAttribute("aria-label", titleText);
 
     const nodes = [...svg.querySelectorAll(".algorithm-node")];
-    if (sessionId === 1) {
-      nodes.forEach(node => moveNode(node, SESSION_ONE_LAYOUT[node.dataset.node]));
-      card.classList.add("algorithm-layout-compact");
-    }
-    if (sessionId === 5) {
-      nodes.forEach(node => moveNode(node, SESSION_FIVE_LAYOUT[node.dataset.node]));
-    }
-    separateOverlappingNodes(nodes);
+    const layout = SESSION_LAYOUTS[sessionId] || {};
+    nodes.forEach(node => moveNode(node, layout[node.dataset.node]));
+    if (sessionId === 1) card.classList.add("algorithm-layout-compact");
 
     const nodeMap = new Map();
     nodes.forEach(node => {

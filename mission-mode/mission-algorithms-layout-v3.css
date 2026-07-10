@@ -66,6 +66,13 @@
   fill: #fff3a3;
 }
 
+.algorithm-premium-svg .algorithm-junction-dot {
+  fill: #67e8f9;
+  stroke: #ecfeff;
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 5px rgba(103, 232, 249, .75));
+}
+
 /* La séance 1 utilise une disposition verticale centrée (plus lisible que le compact horizontal).
    Le ratio plus haut permet d'afficher la pile + le retour de boucle sans contrainte excessive. */
 .algorithm-premium-card.algorithm-layout-compact .algorithm-premium-svg {
