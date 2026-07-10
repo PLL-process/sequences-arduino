@@ -1,0 +1,518 @@
+const fs = require("node:fs");
+const { expect, test } = require("@playwright/test");
+
+const viewports = [
+  { width: 1280, height: 800 },
+  { width: 1024, height: 768 },
+  { width: 800, height: 1280 },
+  { width: 768, height: 1024 },
+  { width: 412, height: 915 }
+];
+
+const expectedConnections = new Map([
+  [1, 7],
+  [2, 9],
+  [3, 9],
+  [4, 11],
+  [5, 15],
+  [6, 9],
+  [7, 12],
+  [8, 15]
+]);
+
+const expectedNodes = new Map([
+  [1, 7],
+  [2, 8],
+  [3, 8],
+  [4, 9],
+  [5, 12],
+  [6, 8],
+  [7, 10],
+  [8, 12]
+]);
+
+const expectedAudit = {
+  ok: true,
+  missingConnections: 0,
+  missingArrowheads: 0,
+  invalidDecisionInputs: 0,
+  invalidDecisionOutputs: 0,
+  decisionBottomOutputs: 0,
+  reversedDecisionLabels: 0,
+  ordinarySideEntries: 0,
+  ordinarySideExits: 0,
+  unnecessaryBends: 0,
+  shortSegments: 0,
+  nodeMisalignments: 0,
+  asymmetricalBranches: 0,
+  missingJunctionDots: 0,
+  titleOverlaps: 0,
+  textOverflows: 0,
+  numberTextOverlaps: 0,
+  shapeTextCollisions: 0,
+  zeroLengthSegments: 0,
+  blockCollisions: 0,
+  nodeOverlaps: 0,
+  labelCollisions: 0,
+  edgeCrossings: 0,
+  ambiguousCrossings: 0,
+  foldedSegments: 0,
+  danglingConnectors: 0,
+  sideEntries: 0,
+  sideExits: 0
+};
+
+const expectedMinimumJunctions = new Map([
+  [1, 0],
+  [2, 1],
+  [3, 1],
+  [4, 1],
+  [5, 1],
+  [6, 1],
+  [7, 1],
+  [8, 1]
+]);
+
+const expectedSymbolForClass = className => {
+  if (className.includes("algorithm-node--start") || className.includes("algorithm-node--end")) return { symbol: "terminal", tag: "rect" };
+  if (className.includes("algorithm-node--decision")) return { symbol: "decision", tag: "polygon" };
+  if (className.includes("algorithm-node--sensor") || className.includes("algorithm-node--communication")) return { symbol: "io", tag: "polygon" };
+  return { symbol: "process", tag: "rect" };
+};
+
+test.describe("algorithm routing audit", () => {
+  for (const viewport of viewports) {
+    test(`uses lateral decision exits and top target entries at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+
+      for (const [sessionId, connectionCount] of expectedConnections.entries()) {
+        await page.goto(`/seance-${sessionId}.html`);
+
+        const card = page.locator(`.algorithm-premium-card[data-session='${sessionId}']`);
+        const svg = card.locator("svg.algorithm-premium-svg");
+
+        await expect(svg).toBeVisible();
+        await expect(svg).toHaveAttribute("data-routing-audit", "ok");
+        await expect.poll(async () => svg.evaluate(svgElement => "textOverflows" in JSON.parse(svgElement.dataset.routingAuditSummary || "{}")), {
+          message: `session ${sessionId} final polish audit is present`
+        }).toBe(true);
+        await expect(svg.locator("title,.algorithm-svg-title,.algorithm-svg-subtitle")).toHaveCount(0);
+        await expect(svg.locator(".algorithm-node")).toHaveCount(expectedNodes.get(sessionId));
+        await expect(svg.locator(".algorithm-layout-connectors path.algorithm-connector")).toHaveCount(connectionCount);
+        await expect(svg.locator(".algorithm-layout-connectors path.algorithm-connector[marker-end]")).toHaveCount(connectionCount);
+        await expect(card.locator('[data-algorithm-action="download-png"]')).toBeVisible();
+        await expect(card.locator('[data-algorithm-action="fullscreen"]')).toBeVisible();
+        await expect(card.locator(".algorithm-symbol-reminder")).toHaveCount(1);
+
+        const audit = await svg.evaluate(svgElement => {
+          const number = value => Number.parseFloat(value || "0") || 0;
+          const close = (first, second, tolerance = 0.5) =>
+            Math.abs(first.x - second.x) <= tolerance && Math.abs(first.y - second.y) <= tolerance;
+
+          const parsePoints = d => {
+            const numbers = [...d.matchAll(/-?\d+(?:\.\d+)?/g)].map(match => Number(match[0]));
+            const points = [];
+            for (let index = 0; index < numbers.length; index += 2) {
+              points.push({ x: numbers[index], y: numbers[index + 1] });
+            }
+            return points;
+          };
+
+          const shapeBox = node => {
+            const shape = node.querySelector(".algorithm-node-shape");
+            const transform = node.transform.baseVal.consolidate()?.matrix;
+            const dx = transform?.e || 0;
+            const dy = transform?.f || 0;
+            const isDecision = node.classList.contains("algorithm-node--decision");
+
+            if (shape.tagName.toLowerCase() === "rect") {
+              const x = number(shape.getAttribute("x")) + dx;
+              const y = number(shape.getAttribute("y")) + dy;
+              const width = number(shape.getAttribute("width"));
+              const height = number(shape.getAttribute("height"));
+              return {
+                left: x,
+                right: x + width,
+                top: y,
+                bottom: y + height,
+                centerX: x + width / 2,
+                centerY: y + height / 2,
+                isDecision
+              };
+            }
+
+            const points = (shape.getAttribute("points") || "")
+              .trim()
+              .split(/\s+/)
+              .map(pair => {
+                const [x, y] = pair.split(",").map(number);
+                return { x: x + dx, y: y + dy };
+              });
+            const left = Math.min(...points.map(point => point.x));
+            const right = Math.max(...points.map(point => point.x));
+            const top = Math.min(...points.map(point => point.y));
+            const bottom = Math.max(...points.map(point => point.y));
+            return {
+              left,
+              right,
+              top,
+              bottom,
+              centerX: (left + right) / 2,
+              centerY: (top + bottom) / 2,
+              isDecision
+            };
+          };
+
+          const boxesOverlap = (first, second) =>
+            Math.max(first.left, second.left) < Math.min(first.right, second.right) &&
+            Math.max(first.top, second.top) < Math.min(first.bottom, second.bottom);
+
+          const segmentCrossesBox = (first, second, box) => {
+            if (first.x === second.x) {
+              const low = Math.min(first.y, second.y);
+              const high = Math.max(first.y, second.y);
+              return first.x > box.left && first.x < box.right &&
+                Math.max(low, box.top) < Math.min(high, box.bottom);
+            }
+            if (first.y === second.y) {
+              const low = Math.min(first.x, second.x);
+              const high = Math.max(first.x, second.x);
+              return first.y > box.top && first.y < box.bottom &&
+                Math.max(low, box.left) < Math.min(high, box.right);
+            }
+            return false;
+          };
+
+          const nodeBoxes = new Map([...svgElement.querySelectorAll(".algorithm-node")]
+            .map(node => [node.dataset.node, shapeBox(node)]));
+
+          const blockOverlaps = [];
+          const boxEntries = [...nodeBoxes.entries()];
+          for (let firstIndex = 0; firstIndex < boxEntries.length; firstIndex += 1) {
+            for (let secondIndex = firstIndex + 1; secondIndex < boxEntries.length; secondIndex += 1) {
+              const [firstId, firstBox] = boxEntries[firstIndex];
+              const [secondId, secondBox] = boxEntries[secondIndex];
+              if (boxesOverlap(firstBox, secondBox)) blockOverlaps.push(`${firstId}/${secondId}`);
+            }
+          }
+
+          const pathFailures = [];
+          const decisionOutputs = new Map();
+          const decisionInputs = new Map();
+
+          [...svgElement.querySelectorAll(".algorithm-layout-connectors path.algorithm-connector")].forEach(path => {
+            const sourceId = path.dataset.source;
+            const targetId = path.dataset.target;
+            const source = nodeBoxes.get(sourceId);
+            const target = nodeBoxes.get(targetId);
+            const points = parsePoints(path.getAttribute("d") || "");
+            const first = points[0];
+            const second = points[1];
+            const last = points[points.length - 1];
+            const previous = points[points.length - 2];
+            const edgeName = `${sourceId}->${targetId}`;
+            const marker = path.getAttribute("marker-end") || "";
+            const bends = points.slice(1, -1).reduce((total, point, index) => {
+              const previous = points[index];
+              const next = points[index + 2];
+              if (!previous || !next) return total;
+              const firstDirection = previous.x === point.x ? "vertical" : previous.y === point.y ? "horizontal" : "diagonal";
+              const secondDirection = point.x === next.x ? "vertical" : point.y === next.y ? "horizontal" : "diagonal";
+              return total + (firstDirection !== secondDirection ? 1 : 0);
+            }, 0);
+
+            if (!marker.includes("algorithmArrow") && !marker.includes("algorithmLoopArrow")) {
+              pathFailures.push(`${edgeName}: missing marker`);
+            }
+
+            if (!first || !second || !last || !previous) {
+              pathFailures.push(`${edgeName}: incomplete path`);
+              return;
+            }
+
+            if (source.isDecision) {
+              const branch = path.dataset.decisionBranch;
+              if (!["yes", "no"].includes(branch)) pathFailures.push(`${edgeName}: missing decision branch`);
+              decisionOutputs.set(sourceId, [...(decisionOutputs.get(sourceId) || []), { branch, points }]);
+
+              const expectedStart = branch === "yes"
+                ? { x: source.left, y: source.centerY }
+                : { x: source.right, y: source.centerY };
+              const direction = branch === "yes" ? -1 : 1;
+
+              if (!close(first, expectedStart)) pathFailures.push(`${edgeName}: decision lateral port`);
+              if (first.y >= source.bottom - 0.5 || Math.abs(first.x - source.centerX) <= 0.5) {
+                pathFailures.push(`${edgeName}: decision bottom output`);
+              }
+              if (second.y !== first.y) pathFailures.push(`${edgeName}: decision first segment not horizontal`);
+              if ((second.x - first.x) * direction <= 0) pathFailures.push(`${edgeName}: reversed decision output`);
+            } else {
+              if (Math.abs(first.x - source.centerX) > 0.5 || first.y < source.bottom) {
+                pathFailures.push(`${edgeName}: source bottom port`);
+              }
+              if (second.x !== first.x || second.y < first.y) pathFailures.push(`${edgeName}: first segment`);
+            }
+
+            if (target.isDecision) decisionInputs.set(targetId, (decisionInputs.get(targetId) || 0) + 1);
+
+            if (Math.abs(last.x - target.centerX) > 0.5 || last.y > target.top) {
+              pathFailures.push(`${edgeName}: target top port`);
+            }
+            if (previous.x !== last.x || previous.y > last.y) pathFailures.push(`${edgeName}: last segment`);
+            if (Math.min(Math.abs(last.x - target.left), Math.abs(last.x - target.right)) <= 2) {
+              pathFailures.push(`${edgeName}: side target`);
+            }
+            if (!path.classList.contains("algorithm-loop-connector") && bends > 4) {
+              pathFailures.push(`${edgeName}: too many bends`);
+            }
+
+            for (const [nodeId, box] of nodeBoxes.entries()) {
+              if (nodeId === sourceId || nodeId === targetId) continue;
+              for (let index = 0; index < points.length - 1; index += 1) {
+                if (segmentCrossesBox(points[index], points[index + 1], box)) {
+                  pathFailures.push(`${edgeName}: crosses ${nodeId}`);
+                  break;
+                }
+              }
+            }
+          });
+
+          for (const [nodeId, box] of nodeBoxes.entries()) {
+            if (!box.isDecision) continue;
+            const outputs = decisionOutputs.get(nodeId) || [];
+            const branches = outputs.map(output => output.branch);
+            if ((decisionInputs.get(nodeId) || 0) !== 1) pathFailures.push(`${nodeId}: decision input count`);
+            if (outputs.length !== 2 || !branches.includes("yes") || !branches.includes("no")) {
+              pathFailures.push(`${nodeId}: decision output count`);
+            }
+
+            const yes = outputs.find(output => output.branch === "yes");
+            const no = outputs.find(output => output.branch === "no");
+            if (yes && no) {
+              if (close(yes.points[0], no.points[0])) pathFailures.push(`${nodeId}: common decision stem`);
+              if (yes.points[1]?.x >= yes.points[0]?.x) pathFailures.push(`${nodeId}: yes exits right`);
+              if (no.points[1]?.x <= no.points[0]?.x) pathFailures.push(`${nodeId}: no exits left`);
+
+              const hasBottomStem = output =>
+                output.points[0]?.x === box.centerX ||
+                (output.points[0]?.x === output.points[1]?.x && output.points[1]?.y >= box.bottom);
+              const hasUnderDecisionBar = output => output.points.some((point, index) => {
+                if (index === 0) return false;
+                const previous = output.points[index - 1];
+                return previous.y === point.y &&
+                  previous.y >= box.bottom &&
+                  previous.y <= box.bottom + 45 &&
+                  Math.min(previous.x, point.x) <= box.left &&
+                  Math.max(previous.x, point.x) >= box.right;
+              });
+
+              if ((hasUnderDecisionBar(yes) || hasUnderDecisionBar(no)) && (hasBottomStem(yes) || hasBottomStem(no))) {
+                pathFailures.push(`${nodeId}: under-diamond decision bar`);
+              }
+            }
+          }
+
+          const labelOverlaps = [];
+          const renderedNodes = [...svgElement.querySelectorAll(".algorithm-node .algorithm-node-shape")].map(shape => {
+            const box = shape.getBoundingClientRect();
+            return {
+              node: shape.closest(".algorithm-node").dataset.node,
+              left: box.left,
+              right: box.right,
+              top: box.top,
+              bottom: box.bottom
+            };
+          });
+          [...svgElement.querySelectorAll(".algorithm-branch-label")].forEach(label => {
+            const box = label.getBoundingClientRect();
+            const labelBox = {
+              left: box.left,
+              right: box.right,
+              top: box.top,
+              bottom: box.bottom
+            };
+            renderedNodes.forEach(nodeBox => {
+              if (boxesOverlap(labelBox, nodeBox)) labelOverlaps.push(`${label.textContent.trim()}->${nodeBox.node}`);
+            });
+          });
+
+          const symbolFailures = [];
+          [...svgElement.querySelectorAll(".algorithm-node")].forEach(node => {
+            const expected = (() => {
+              const className = node.getAttribute("class") || "";
+              if (className.includes("algorithm-node--start") || className.includes("algorithm-node--end")) return { symbol: "terminal", tag: "rect" };
+              if (className.includes("algorithm-node--decision")) return { symbol: "decision", tag: "polygon" };
+              if (className.includes("algorithm-node--sensor") || className.includes("algorithm-node--communication")) return { symbol: "io", tag: "polygon" };
+              return { symbol: "process", tag: "rect" };
+            })();
+            const shape = node.querySelector(".algorithm-node-shape");
+            const actualTag = shape?.tagName.toLowerCase();
+            const actualSymbol = node.dataset.symbol || shape?.dataset.symbol || "";
+            if (actualTag !== expected.tag || actualSymbol !== expected.symbol) {
+              symbolFailures.push(`${node.dataset.node}: ${actualTag}/${actualSymbol} expected ${expected.tag}/${expected.symbol}`);
+            }
+            if (expected.symbol === "process" && number(shape?.getAttribute("rx")) > 8) {
+              symbolFailures.push(`${node.dataset.node}: process rounded too much`);
+            }
+          });
+
+          return {
+            summary: JSON.parse(svgElement.dataset.routingAuditSummary || "{}"),
+            blockOverlaps,
+            pathFailures,
+            labelOverlaps,
+            junctionCount: svgElement.querySelectorAll(".algorithm-junction-dot").length,
+            symbolFailures
+          };
+        });
+
+        expect(audit.summary, `session ${sessionId} routing summary`).toMatchObject({
+          ...expectedAudit,
+          connectionCount,
+          renderedConnections: connectionCount,
+          arrowheadCount: connectionCount
+        });
+        expect(audit.summary.maxBends, `session ${sessionId} maximum bends`).toBeLessThanOrEqual(4);
+        expect(audit.junctionCount, `session ${sessionId} junction dots`).toBeGreaterThanOrEqual(expectedMinimumJunctions.get(sessionId));
+        expect(audit.blockOverlaps, `session ${sessionId} block overlaps`).toEqual([]);
+        expect(audit.pathFailures, `session ${sessionId} path failures`).toEqual([]);
+        expect(audit.labelOverlaps, `session ${sessionId} label overlaps`).toEqual([]);
+        expect(audit.symbolFailures, `session ${sessionId} symbol failures`).toEqual([]);
+
+        await card.scrollIntoViewIfNeeded();
+        await card.locator(".algorithm-premium-stage").evaluate(stage => {
+          const svg = stage.querySelector("svg.algorithm-premium-svg");
+          const box = svg.getBoundingClientRect();
+          stage.scrollLeft = Math.max(0, (box.width - stage.clientWidth) / 2);
+        });
+        await page.screenshot({
+          path: `test-results/routing-audit-session-${sessionId}-${viewport.width}x${viewport.height}.png`,
+          fullPage: true
+        });
+      }
+
+      if (viewport.width === 1280 && viewport.height === 800) {
+        const figures = [...expectedConnections.keys()].map(sessionId => {
+          const filePath = `test-results/routing-audit-session-${sessionId}-1280x800.png`;
+          const data = fs.readFileSync(filePath, "base64");
+          return `<figure><img src="data:image/png;base64,${data}" alt="Séance ${sessionId}"><figcaption>Séance ${sessionId}</figcaption></figure>`;
+        }).join("");
+        await page.setViewportSize({ width: 1600, height: 2200 });
+        await page.setContent(`
+          <style>
+            body{margin:0;padding:24px;background:#08111f;color:#f8fafc;font:700 18px Arial,sans-serif}
+            h1{margin:0 0 18px;font-size:28px}
+            main{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+            figure{margin:0;border:1px solid #28465b;border-radius:12px;background:#06111b;overflow:hidden}
+            img{display:block;width:100%;height:auto}
+            figcaption{padding:8px 10px;color:#a5f3fc}
+          </style>
+          <h1>Algorigrammes - captures 1280 x 800</h1><main>${figures}</main>
+        `);
+        await page.screenshot({
+          path: "test-results/routing-audit-contact-sheet-1280x800.png",
+          fullPage: true
+        });
+      }
+    });
+  }
+
+  test("keeps modes, animation, SVG download and print actions working", async ({ page }) => {
+    test.setTimeout(120000);
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await page.addInitScript(() => {
+      window.__printCalls = 0;
+      window.print = () => {
+        window.__printCalls += 1;
+        window.dispatchEvent(new Event("afterprint"));
+      };
+      window.__fullscreenTarget = null;
+      Object.defineProperty(document, "fullscreenElement", {
+        configurable: true,
+        get: () => window.__fullscreenTarget
+      });
+      Element.prototype.requestFullscreen = function requestFullscreen() {
+        window.__fullscreenTarget = this;
+        document.dispatchEvent(new Event("fullscreenchange"));
+        return Promise.resolve();
+      };
+      document.exitFullscreen = () => {
+        window.__fullscreenTarget = null;
+        document.dispatchEvent(new Event("fullscreenchange"));
+        return Promise.resolve();
+      };
+    });
+
+    for (const sessionId of expectedConnections.keys()) {
+      await page.goto(`/seance-${sessionId}.html`);
+      const card = page.locator(`.algorithm-premium-card[data-session='${sessionId}']`);
+      await expect(card.locator("svg.algorithm-premium-svg")).toHaveAttribute("data-routing-audit", "ok");
+      await expect(card.locator('[data-algorithm-action="download-png"]')).toBeVisible();
+      await expect(card.locator('[data-algorithm-action="fullscreen"]')).toBeVisible();
+
+      const [pngDownload] = await Promise.all([
+        page.waitForEvent("download"),
+        card.locator('[data-algorithm-action="download-png"]').click()
+      ]);
+      expect(pngDownload.suggestedFilename()).toBe(`algorigramme-seance-${sessionId}.png`);
+      const exportedPngPath = `test-results/algorigramme-seance-${sessionId}.png`;
+      await pngDownload.saveAs(exportedPngPath);
+      const downloadedPngPath = exportedPngPath;
+      const png = fs.readFileSync(downloadedPngPath);
+      expect(png.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
+      expect(png.length).toBeGreaterThan(10000);
+
+      for (const level of ["guided", "supported", "autonomous"]) {
+        await card.locator(`[data-level="${level}"]`).click();
+        await expect(card).toHaveAttribute("data-level", level);
+        await expect(card.locator(`[data-level="${level}"]`)).toHaveAttribute("aria-pressed", "true");
+        await expect(card.locator("svg.algorithm-premium-svg")).toHaveAttribute("data-routing-audit", "ok");
+        await expect.poll(async () => card.locator("svg.algorithm-premium-svg").evaluate(svg => "textOverflows" in JSON.parse(svg.dataset.routingAuditSummary || "{}"))).toBe(true);
+        await expect(card.locator(".algorithm-layout-connectors path.algorithm-connector")).toHaveCount(expectedConnections.get(sessionId));
+      }
+
+      await card.locator('[data-algorithm-action="play"]').click();
+      await expect(card).toHaveClass(/is-playing/);
+      await expect.poll(
+        () => card.locator(".algorithm-layout-connectors path.algorithm-connector.is-flowing").count(),
+        { message: `session ${sessionId} flow path animates`, timeout: 2000 }
+      ).toBeGreaterThan(0);
+      await expect.poll(
+        () => card.evaluate(element => element.classList.contains("is-playing")),
+        { message: `session ${sessionId} animation completes`, timeout: 10000 }
+      ).toBe(false);
+
+      const [download] = await Promise.all([
+        page.waitForEvent("download"),
+        card.locator('[data-algorithm-action="download"]').click()
+      ]);
+      expect(download.suggestedFilename()).toContain(`seance-${sessionId}`);
+      const downloadedPath = await download.path();
+      const downloadedSvg = fs.readFileSync(downloadedPath, "utf8");
+      expect(downloadedSvg).toContain("marker-end");
+      expect(downloadedSvg).toContain("algorithmArrow");
+
+      await card.locator('[data-algorithm-action="fullscreen"]').click();
+      await expect.poll(
+        () => page.evaluate(() => Boolean(document.fullscreenElement || document.querySelector(".algorithm-fullscreen-fallback"))),
+        { message: `session ${sessionId} fullscreen entered`, timeout: 1000 }
+      ).toBe(true);
+      await page.evaluate(() => document.fullscreenElement && document.exitFullscreen());
+
+      await page.evaluate(() => {
+        Element.prototype.requestFullscreen = undefined;
+        window.__fullscreenTarget = null;
+      });
+      await card.locator(".algorithm-premium-stage").dblclick();
+      await expect(card).toHaveClass(/algorithm-fullscreen-fallback/);
+      await page.keyboard.press("Escape");
+      await expect(card).not.toHaveClass(/algorithm-fullscreen-fallback/);
+
+      await card.locator('[data-algorithm-action="print"]').click();
+      await expect.poll(
+        () => page.evaluate(() => window.__printCalls),
+        { message: `session ${sessionId} print call`, timeout: 1000 }
+      ).toBeGreaterThan(0);
+    }
+  });
+});

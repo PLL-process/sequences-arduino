@@ -1,0 +1,385 @@
+/* Styles propres à la prévisualisation fusionnée de la séance 1. */
+:root {
+  --fusion-editor-bg: #071018;
+  --fusion-editor-border: #36566b;
+  --fusion-line-height: 1.55rem;
+  --fusion-editor-padding: 1rem;
+  --fusion-arrow: #ffd43b;
+}
+
+/* Accentuer les deux chaînes fonctionnelles sans ajouter de surcharge. */
+.fusion-chain-grid {
+  margin-bottom: 1rem;
+}
+
+.fusion-chain-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.fusion-chain-card::before {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 0.35rem;
+  content: "";
+}
+
+.fusion-chain-card--info::before {
+  background: #60a5fa;
+}
+
+.fusion-chain-card--energy::before {
+  background: #fb923c;
+}
+
+.fusion-chain-card p {
+  margin: 0.55rem 0 0;
+}
+
+.fusion-chain-card strong {
+  color: #fff;
+}
+
+.fusion-algorithm-card {
+  margin-top: 1rem;
+}
+
+/* Donner à l’éditeur l’apparence d’un véritable IDE. */
+.fusion-ide-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.fusion-ide-card .tq-code-toolbar {
+  margin: 0;
+  padding: 1rem;
+  border-bottom: 1px solid var(--tq-border);
+}
+
+.fusion-ide-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(19rem, 0.55fr);
+  gap: 0;
+}
+
+.fusion-editor-panel {
+  min-width: 0;
+  border-right: 1px solid var(--tq-border);
+  background: var(--fusion-editor-bg);
+}
+
+.fusion-editor-titlebar {
+  display: flex;
+  min-height: 3rem;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0 1rem;
+  border-bottom: 1px solid #273e4f;
+  background: #0d1a24;
+  color: #cfe3ee;
+  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-size: 0.82rem;
+}
+
+.fusion-editor-titlebar strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fusion-language {
+  margin-left: auto;
+  color: #7dd3fc;
+  white-space: nowrap;
+}
+
+.fusion-dot {
+  width: 0.72rem;
+  height: 0.72rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+}
+
+.fusion-dot--red {
+  background: #fb7185;
+}
+
+.fusion-dot--yellow {
+  background: #facc15;
+}
+
+.fusion-dot--green {
+  background: #4ade80;
+}
+
+.fusion-editor-shell {
+  position: relative;
+  height: 39rem;
+  min-height: 34rem;
+  overflow: hidden;
+  border-bottom: 1px solid #273e4f;
+  background: var(--fusion-editor-bg);
+  --fusion-arrow-line: 0;
+}
+
+.fusion-line-numbers {
+  position: absolute;
+  z-index: 3;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 4rem;
+  overflow: hidden;
+  padding-top: var(--fusion-editor-padding);
+  border-right: 3px solid #38bdf8;
+  background: #111827;
+  color: #7dd3fc;
+  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-size: 0.9rem;
+  font-weight: 750;
+  line-height: var(--fusion-line-height);
+  text-align: right;
+  user-select: none;
+}
+
+.fusion-line-numbers span {
+  display: block;
+  height: var(--fusion-line-height);
+  padding-right: 0.72rem;
+  border-left: 3px solid transparent;
+}
+
+.fusion-line-numbers span.is-target {
+  border-left-color: #fde047;
+  background: linear-gradient(90deg, rgba(253, 224, 71, .16), rgba(253, 224, 71, .03));
+  color: #fde047;
+  font-weight: 950;
+  text-shadow: 0 0 8px rgba(253, 224, 71, .55);
+}
+
+.fusion-code-arrow {
+  position: absolute;
+  z-index: 8;
+  top: calc(var(--fusion-editor-padding) + var(--fusion-arrow-line) * var(--fusion-line-height));
+  left: 4.18rem;
+  display: grid;
+  width: 1.35rem;
+  height: var(--fusion-line-height);
+  place-items: center;
+  color: var(--fusion-arrow);
+  font-size: 1.35rem;
+  filter: drop-shadow(0 0 5px rgba(255, 212, 59, 0.9));
+  pointer-events: none;
+  transition: top 180ms ease;
+  animation: fusion-arrow-pulse 1s ease-in-out infinite;
+}
+
+.fusion-code-arrow.is-complete {
+  display: none;
+}
+
+@keyframes fusion-arrow-pulse {
+  50% {
+    transform: translateX(0.3rem);
+  }
+}
+
+.fusion-code-highlight,
+.fusion-code-editor {
+  position: absolute;
+  inset: 0 0 0 5.8rem;
+  width: calc(100% - 5.8rem);
+  height: 100%;
+  margin: 0;
+  padding: var(--fusion-editor-padding);
+  border: 0;
+  background: transparent;
+  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  font-size: 0.92rem;
+  font-variant-ligatures: none;
+  line-height: var(--fusion-line-height);
+  tab-size: 2;
+  white-space: pre;
+}
+
+.fusion-code-highlight {
+  z-index: 2;
+  overflow: hidden;
+  color: #dbeafe;
+  pointer-events: none;
+}
+
+.fusion-code-editor {
+  z-index: 5;
+  resize: none;
+  overflow: auto;
+  outline: none;
+  color: transparent;
+  caret-color: #f8fafc;
+  -webkit-text-fill-color: transparent;
+}
+
+.fusion-code-editor::selection {
+  background: rgba(56, 189, 248, 0.34);
+}
+
+.fusion-editor-panel .tq-feedback {
+  margin: 0;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid #273e4f;
+  background: #0d1a24;
+}
+
+/* Couleurs de syntaxe proches d’un IDE moderne. */
+.fusion-token-preprocessor {
+  color: #f472b6;
+  font-weight: 850;
+}
+
+.fusion-token-header {
+  color: #a3e635;
+}
+
+.fusion-token-comment {
+  color: #4ade80;
+  font-style: italic;
+}
+
+.fusion-token-keyword {
+  color: #c084fc;
+  font-weight: 800;
+}
+
+.fusion-token-type {
+  color: #22d3ee;
+  font-weight: 800;
+}
+
+.fusion-token-function {
+  color: #facc15;
+}
+
+.fusion-token-serial {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.fusion-token-string {
+  color: #fb923c;
+}
+
+.fusion-token-number {
+  color: #93c5fd;
+}
+
+.fusion-token-constant {
+  color: #f9a8d4;
+  font-weight: 800;
+}
+
+.fusion-token-operator {
+  color: #e2e8f0;
+}
+
+.fusion-token-placeholder {
+  border-radius: 0.22rem;
+  background: rgba(250, 204, 21, 0.16);
+  color: #fde047;
+  font-weight: 900;
+  text-decoration: underline wavy #facc15;
+  text-underline-offset: 0.18rem;
+}
+
+.fusion-code-line.is-target {
+  display: inline-block;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(250, 204, 21, 0.13), transparent 85%);
+}
+
+.fusion-serial-panel {
+  border: 0;
+  border-radius: 0;
+  background: #0a1721;
+}
+
+.fusion-serial-panel #serialMonitor {
+  min-height: 27rem;
+  max-height: 31rem;
+}
+
+.fusion-safety-note {
+  margin-top: 0.85rem;
+  padding: 0.7rem;
+  border-left: 4px solid #4ade80;
+  border-radius: 0.65rem;
+  background: rgba(74, 222, 128, 0.1);
+  color: #d1fae5;
+}
+
+/* Clarifier l’état des contrôles automatiques. */
+.tq-check-list li.is-pending .tq-check-state {
+  color: #94a3b8;
+}
+
+.tq-check-list li.is-valid {
+  border-color: rgba(74, 222, 128, 0.5);
+}
+
+.tq-check-list li.is-invalid {
+  border-color: rgba(251, 113, 133, 0.5);
+}
+
+/* Afficher clairement qu’il s’agit d’une prévisualisation non fusionnée. */
+.fusion-preview-banner {
+  padding: 0.65rem 1rem;
+  border: 1px solid #facc15;
+  border-radius: 0.8rem;
+  background: rgba(250, 204, 21, 0.1);
+  color: #fef9c3;
+}
+
+@media (max-width: 1120px) {
+  .fusion-ide-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .fusion-editor-panel {
+    border-right: 0;
+    border-bottom: 1px solid var(--tq-border);
+  }
+}
+
+@media (max-width: 720px) {
+  .fusion-editor-shell {
+    height: 34rem;
+  }
+
+  .fusion-code-highlight,
+  .fusion-code-editor {
+    inset: 0 0 0 5.15rem;
+    width: calc(100% - 5.15rem);
+    font-size: 0.78rem;
+  }
+
+  .fusion-line-numbers {
+    width: 3.5rem;
+  }
+
+  .fusion-code-arrow {
+    left: 3.68rem;
+  }
+
+  .fusion-editor-titlebar {
+    font-size: 0.72rem;
+  }
+
+  .fusion-language {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fusion-code-arrow {
+    animation: none;
+  }
+}

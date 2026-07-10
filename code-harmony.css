@@ -1,0 +1,454 @@
+/*
+ * TechnoQuest — harmonie visuelle commune à tous les programmes.
+ * Palette sémantique, gouttières, légendes et éditeurs multi-langages.
+ */
+:root {
+  --ch-bg: #06111b;
+  --ch-panel: #0a1722;
+  --ch-gutter-bg: #111827;
+  --ch-gutter-number: #7dd3fc;
+  --ch-gutter-border: #38bdf8;
+  --ch-active: #fde047;
+  --ch-directive: #f472b6;
+  --ch-library: #a3e635;
+  --ch-comment: #4ade80;
+  --ch-type: #22d3ee;
+  --ch-keyword: #c084fc;
+  --ch-function: #facc15;
+  --ch-serial: #38bdf8;
+  --ch-string: #fb923c;
+  --ch-number: #93c5fd;
+  --ch-constant: #f9a8d4;
+  --ch-pin: #fb7185;
+  --ch-variable: #5eead4;
+  --ch-tag: #67e8f9;
+  --ch-attribute: #f0abfc;
+  --ch-property: #fbbf24;
+  --ch-selector: #a7f3d0;
+  --ch-command: #facc15;
+  --ch-operator: #e2e8f0;
+  --ch-border: #31536a;
+  --ch-line-height: 1.55rem;
+}
+
+/* Enveloppe des programmes en lecture seule. */
+.code-harmony-shell {
+  margin: .75rem 0;
+  overflow: hidden;
+  border: 2px solid var(--ch-border);
+  border-radius: 14px;
+  background: var(--ch-bg);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, .24);
+}
+
+.code-harmony-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-height: 2.75rem;
+  padding: .55rem .75rem;
+  border-bottom: 1px solid #284457;
+  background: #0d1a24;
+}
+
+.code-harmony-title {
+  min-width: 0;
+  overflow: hidden;
+  color: #e6f4fb;
+  font-size: .78rem;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.code-harmony-tools {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+}
+
+.code-harmony-language {
+  padding: .22rem .48rem;
+  border: 1px solid var(--ch-gutter-border);
+  border-radius: 999px;
+  background: rgba(56, 189, 248, .1);
+  color: #bae6fd;
+  font-size: .68rem;
+  font-weight: 900;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.code-harmony-copy {
+  min-height: 1.9rem;
+  padding: .28rem .52rem;
+  border: 1px solid #3d5f73;
+  border-radius: .55rem;
+  background: #122536;
+  color: #e6f4fb;
+  font-size: .7rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.code-harmony-copy:hover,
+.code-harmony-copy:focus-visible {
+  border-color: var(--ch-active);
+  outline: none;
+}
+
+/* Légende commune et compacte. */
+.code-harmony-legend {
+  border-bottom: 1px solid #284457;
+  background: #091620;
+}
+
+.code-harmony-legend summary {
+  padding: .5rem .75rem;
+  color: #cfe5ef;
+  font-size: .72rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.code-harmony-legend-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .38rem;
+  padding: 0 .75rem .65rem;
+}
+
+.code-harmony-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: .32rem;
+  padding: .2rem .45rem;
+  border: 1px solid #314d61;
+  border-radius: 999px;
+  background: #101e2a;
+  color: #dbeafe;
+  font-size: .66rem;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.code-harmony-chip::before {
+  width: .62rem;
+  height: .62rem;
+  flex: 0 0 auto;
+  border-radius: .18rem;
+  background: var(--chip-color);
+  box-shadow: 0 0 7px color-mix(in srgb, var(--chip-color) 68%, transparent);
+  content: "";
+}
+
+.code-harmony-chip--gutter { --chip-color: var(--ch-gutter-number); }
+.code-harmony-chip--directive { --chip-color: var(--ch-directive); }
+.code-harmony-chip--library { --chip-color: var(--ch-library); }
+.code-harmony-chip--comment { --chip-color: var(--ch-comment); }
+.code-harmony-chip--type { --chip-color: var(--ch-type); }
+.code-harmony-chip--keyword { --chip-color: var(--ch-keyword); }
+.code-harmony-chip--function { --chip-color: var(--ch-function); }
+.code-harmony-chip--serial { --chip-color: var(--ch-serial); }
+.code-harmony-chip--string { --chip-color: var(--ch-string); }
+.code-harmony-chip--number { --chip-color: var(--ch-number); }
+.code-harmony-chip--pin { --chip-color: var(--ch-pin); }
+.code-harmony-chip--variable { --chip-color: var(--ch-variable); }
+.code-harmony-chip--tag { --chip-color: var(--ch-tag); }
+.code-harmony-chip--property { --chip-color: var(--ch-property); }
+.code-harmony-chip--command { --chip-color: var(--ch-command); }
+
+/* Corps défilable avec gouttière fixe à gauche. */
+.code-harmony-body {
+  max-width: 100%;
+  overflow: auto;
+  background: var(--ch-bg);
+}
+
+.code-harmony-grid {
+  display: grid;
+  grid-template-columns: 4rem minmax(max-content, 1fr);
+  width: max-content;
+  min-width: 100%;
+}
+
+.code-harmony-gutter {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  padding: .85rem 0;
+  border-right: 3px solid var(--ch-gutter-border);
+  background: var(--ch-gutter-bg);
+  color: var(--ch-gutter-number);
+  box-shadow: inset -12px 0 18px rgba(0, 0, 0, .22);
+  font: 750 .84rem/var(--ch-line-height) "Cascadia Code", "Fira Code", Consolas, monospace;
+  text-align: right;
+  user-select: none;
+}
+
+.code-harmony-gutter span {
+  display: block;
+  height: var(--ch-line-height);
+  padding-right: .72rem;
+  border-left: 3px solid transparent;
+}
+
+.code-harmony-gutter span:nth-child(5n) {
+  background: rgba(56, 189, 248, .035);
+}
+
+.code-harmony-source {
+  min-width: max-content;
+  margin: 0 !important;
+  padding: .85rem 1rem !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: var(--ch-bg) !important;
+  color: #dbeafe !important;
+  font: .86rem/var(--ch-line-height) "Cascadia Code", "Fira Code", Consolas, monospace !important;
+  white-space: pre !important;
+  tab-size: 2;
+}
+
+.ch-line {
+  display: block;
+  min-height: var(--ch-line-height);
+}
+
+/* Palette sémantique multi-langages. */
+.ch-directive,
+.fusion-token-preprocessor { color: var(--ch-directive) !important; font-weight: 900; }
+.ch-library,
+.fusion-token-header { color: var(--ch-library) !important; font-weight: 850; }
+.ch-comment,
+.py-comment,
+.fusion-token-comment { color: var(--ch-comment) !important; font-style: italic; }
+.ch-type,
+.fusion-token-type { color: var(--ch-type) !important; font-weight: 900; }
+.ch-keyword,
+.py-keyword,
+.py-decision,
+.fusion-token-keyword { color: var(--ch-keyword) !important; font-weight: 900; }
+.ch-function,
+.py-reader,
+.py-action,
+.fusion-token-function { color: var(--ch-function) !important; font-weight: 850; }
+.ch-serial,
+.py-output,
+.fusion-token-serial { color: var(--ch-serial) !important; font-weight: 900; }
+.ch-string,
+.py-string,
+.fusion-token-string { color: var(--ch-string) !important; }
+.ch-number,
+.py-number,
+.fusion-token-number { color: var(--ch-number) !important; }
+.ch-constant,
+.fusion-token-constant { color: var(--ch-constant) !important; font-weight: 850; }
+.ch-pin,
+.fusion-token-pin { color: var(--ch-pin) !important; font-weight: 900; }
+.ch-variable,
+.fusion-token-variable { color: var(--ch-variable) !important; font-weight: 850; }
+.ch-tag { color: var(--ch-tag) !important; font-weight: 900; }
+.ch-attribute { color: var(--ch-attribute) !important; }
+.ch-property { color: var(--ch-property) !important; }
+.ch-selector { color: var(--ch-selector) !important; }
+.ch-command { color: var(--ch-command) !important; font-weight: 850; }
+.ch-operator,
+.py-operator,
+.fusion-token-operator { color: var(--ch-operator) !important; }
+.ch-placeholder,
+.fusion-token-placeholder {
+  border: 1px solid rgba(253, 224, 71, .55);
+  border-radius: .2rem;
+  background: rgba(253, 224, 71, .16) !important;
+  color: var(--ch-active) !important;
+  font-weight: 950;
+  text-decoration: underline wavy var(--ch-active);
+  text-underline-offset: .18rem;
+}
+
+/* Éditeur classique commun aux huit séances. */
+.code-harmony-editor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .7rem;
+  margin: .65rem 0 0;
+  padding: .48rem .65rem;
+  border: 1px solid var(--ch-border);
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  background: #0d1a24;
+}
+
+.code-harmony-editor-head strong {
+  color: #e6f4fb;
+  font-size: .76rem;
+}
+
+.code-harmony-editor-head span {
+  color: #bae6fd;
+  font-size: .68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.editor-wrap.code-harmony-live-editor {
+  border-radius: 0 0 13px 13px;
+  border-color: var(--ch-border);
+  background: var(--ch-bg);
+}
+
+.editor-wrap.code-harmony-live-editor pre,
+.editor-wrap.code-harmony-live-editor textarea {
+  inset: 0 0 0 5.75rem;
+  width: calc(100% - 5.75rem);
+  padding: 1rem;
+  background: transparent;
+  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+  line-height: var(--ch-line-height);
+}
+
+.code-harmony-live-gutter {
+  position: absolute;
+  z-index: 4;
+  inset: 0 auto 0 0;
+  width: 4rem;
+  overflow: hidden;
+  padding-top: 1rem;
+  border-right: 3px solid var(--ch-gutter-border);
+  background: var(--ch-gutter-bg);
+  color: var(--ch-gutter-number);
+  box-shadow: inset -12px 0 18px rgba(0, 0, 0, .22);
+  font: 750 .84rem/var(--ch-line-height) "Cascadia Code", "Fira Code", Consolas, monospace;
+  text-align: right;
+  user-select: none;
+}
+
+.code-harmony-live-gutter span {
+  display: block;
+  height: var(--ch-line-height);
+  padding-right: .72rem;
+  border-left: 3px solid transparent;
+}
+
+.code-harmony-live-gutter span.is-active {
+  border-left-color: var(--ch-active);
+  background: linear-gradient(90deg, rgba(253, 224, 71, .16), rgba(253, 224, 71, .03));
+  color: var(--ch-active);
+  font-weight: 950;
+  text-shadow: 0 0 8px rgba(253, 224, 71, .55);
+}
+
+.code-harmony-live-arrow {
+  position: absolute;
+  z-index: 7;
+  left: 4.18rem;
+  display: grid;
+  width: 1.35rem;
+  height: var(--ch-line-height);
+  place-items: center;
+  color: var(--ch-active);
+  font-size: 1.35rem;
+  filter: drop-shadow(0 0 6px rgba(253, 224, 71, .95));
+  pointer-events: none;
+  transition: top .16s ease;
+}
+
+/* Le Mode Mission possède déjà sa propre gouttière et sa propre flèche. */
+.mission-editor-mount .code-harmony-editor-head,
+.mission-editor-mount .code-harmony-live-gutter,
+.mission-editor-mount .code-harmony-live-arrow {
+  display: none !important;
+}
+
+.mission-editor-mount .editor-wrap.code-harmony-live-editor pre,
+.mission-editor-mount .editor-wrap.code-harmony-live-editor textarea {
+  inset: 0;
+  width: 100%;
+}
+
+.mission-line-numbers,
+.fusion-line-numbers {
+  border-right-color: var(--ch-gutter-border) !important;
+  background: var(--ch-gutter-bg) !important;
+  color: var(--ch-gutter-number) !important;
+}
+
+.mission-line-numbers .active,
+.mission-line-numbers .is-active,
+.fusion-line-numbers .is-target {
+  color: var(--ch-active) !important;
+}
+
+/* Éditeur générique créé autour d’un textarea simple. */
+.code-harmony-textarea-shell {
+  position: relative;
+  min-height: 28rem;
+  overflow: hidden;
+  border: 2px solid var(--ch-border);
+  border-radius: 0 0 13px 13px;
+  background: var(--ch-bg);
+}
+
+.code-harmony-textarea-shell .code-harmony-live-highlight,
+.code-harmony-textarea-shell textarea,
+.code-harmony-textarea-shell textarea#codeEditor {
+  position: absolute !important;
+  inset: 0 0 0 5.75rem !important;
+  width: calc(100% - 5.75rem) !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 1rem !important;
+  border: 0 !important;
+  background: transparent !important;
+  font: .9rem/var(--ch-line-height) "Cascadia Code", "Fira Code", Consolas, monospace !important;
+  white-space: pre !important;
+  tab-size: 2;
+}
+
+.code-harmony-textarea-shell .code-harmony-live-highlight {
+  z-index: 2;
+  overflow: hidden;
+  color: #dbeafe;
+  pointer-events: none;
+}
+
+.code-harmony-textarea-shell textarea,
+.code-harmony-textarea-shell textarea#codeEditor {
+  z-index: 5;
+  resize: none !important;
+  overflow: auto;
+  outline: none;
+  color: transparent !important;
+  caret-color: #fff !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+.code-harmony-inline {
+  color: var(--ch-type);
+  font-family: "Cascadia Code", "Fira Code", Consolas, monospace;
+}
+
+@media (max-width: 720px) {
+  .code-harmony-grid { grid-template-columns: 3.4rem minmax(max-content, 1fr); }
+  .code-harmony-gutter { font-size: .74rem; }
+  .editor-wrap.code-harmony-live-editor pre,
+  .editor-wrap.code-harmony-live-editor textarea,
+  .code-harmony-textarea-shell .code-harmony-live-highlight,
+  .code-harmony-textarea-shell textarea,
+  .code-harmony-textarea-shell textarea#codeEditor {
+    inset: 0 0 0 5rem !important;
+    width: calc(100% - 5rem) !important;
+    font-size: .78rem !important;
+  }
+  .code-harmony-live-gutter { width: 3.5rem; font-size: .74rem; }
+  .code-harmony-live-arrow { left: 3.68rem; }
+  .code-harmony-legend-grid { max-height: 7.5rem; overflow: auto; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code-harmony-live-arrow { transition: none; }
+}

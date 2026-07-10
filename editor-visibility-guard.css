@@ -1,0 +1,112 @@
+/*
+ * TechnoQuest — sécurité d’affichage des éditeurs sur Chrome Android et tablettes tactiles.
+ *
+ * Les éditeurs conservent la coloration syntaxique lorsqu’ils ne sont pas en cours de saisie.
+ * Sur un écran tactile, le texte natif du textarea devient visible pendant l’édition afin
+ * d’éviter qu’une couche de composition du navigateur ne masque les commentaires et le code.
+ */
+
+/* Garantir que les couches colorées ne deviennent jamais transparentes par héritage. */
+.fusion-code-highlight,
+.editor-wrap pre,
+.code-harmony-live-highlight {
+  opacity: 1;
+  visibility: visible;
+  -webkit-text-fill-color: currentColor;
+}
+
+/* Neutraliser l’apparence interne parfois opaque des textarea sur Chrome Android. */
+.fusion-code-editor,
+.editor-wrap textarea,
+.code-harmony-textarea-shell textarea {
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: transparent !important;
+  background-image: none !important;
+}
+
+/*
+ * Mode de saisie tactile : la couche colorée est momentanément masquée et le véritable
+ * texte du textarea est rendu en clair. La gouttière, les numéros et la flèche restent visibles.
+ */
+.fusion-editor-shell.editor-native-mode .fusion-code-highlight,
+.editor-wrap.editor-native-mode pre,
+.code-harmony-textarea-shell.editor-native-mode .code-harmony-live-highlight {
+  opacity: 0 !important;
+}
+
+.fusion-editor-shell.editor-native-mode .fusion-code-editor,
+.editor-wrap.editor-native-mode textarea,
+.code-harmony-textarea-shell.editor-native-mode textarea,
+.fusion-editor-shell.editor-native-fallback .fusion-code-editor,
+.editor-wrap.editor-native-fallback textarea,
+.code-harmony-textarea-shell.editor-native-fallback textarea {
+  color: #e6f4fb !important;
+  -webkit-text-fill-color: #e6f4fb !important;
+  text-shadow: none !important;
+}
+
+/* Si la couche colorée n’a pas été construite, afficher durablement le texte natif. */
+.fusion-editor-shell.editor-native-fallback .fusion-code-highlight,
+.editor-wrap.editor-native-fallback pre,
+.code-harmony-textarea-shell.editor-native-fallback .code-harmony-live-highlight {
+  opacity: 0 !important;
+}
+
+/* Rendre le commentaire lisible même dans le mode natif monochrome. */
+.editor-native-mode textarea,
+.editor-native-fallback textarea {
+  font-weight: 500;
+}
+
+/* Le focus reste visible sans masquer la ligne active. */
+.fusion-editor-shell.editor-native-mode,
+.editor-wrap.editor-native-mode,
+.code-harmony-textarea-shell.editor-native-mode {
+  box-shadow: inset 0 0 0 2px rgba(56, 189, 248, .32);
+}
+
+@media (pointer: coarse) {
+  /*
+   * Au repos, placer la couche colorée au-dessus du textarea. Cela contourne le calque
+   * graphique opaque que certains navigateurs Android créent même avec un fond transparent.
+   */
+  .fusion-editor-shell:not(.editor-native-mode):not(.editor-native-fallback) .fusion-code-highlight,
+  .editor-wrap:not(.editor-native-mode):not(.editor-native-fallback) pre,
+  .code-harmony-textarea-shell:not(.editor-native-mode):not(.editor-native-fallback) .code-harmony-live-highlight {
+    z-index: 7 !important;
+    pointer-events: none !important;
+  }
+
+  .fusion-editor-shell:not(.editor-native-mode):not(.editor-native-fallback) .fusion-code-editor,
+  .editor-wrap:not(.editor-native-mode):not(.editor-native-fallback) textarea,
+  .code-harmony-textarea-shell:not(.editor-native-mode):not(.editor-native-fallback) textarea {
+    z-index: 5 !important;
+  }
+
+  /* La gouttière et la flèche restent toujours au premier plan. */
+  .fusion-line-numbers,
+  .fusion-code-arrow,
+  .code-harmony-live-gutter,
+  .code-harmony-live-arrow,
+  .mission-line-numbers,
+  .mission-arrow {
+    z-index: 9 !important;
+  }
+}
+
+@media (pointer: fine) {
+  /* Sur ordinateur à souris, conserver en permanence la coloration complète. */
+  .fusion-editor-shell.editor-native-mode .fusion-code-highlight,
+  .editor-wrap.editor-native-mode pre,
+  .code-harmony-textarea-shell.editor-native-mode .code-harmony-live-highlight {
+    opacity: 1 !important;
+  }
+
+  .fusion-editor-shell.editor-native-mode .fusion-code-editor,
+  .editor-wrap.editor-native-mode textarea,
+  .code-harmony-textarea-shell.editor-native-mode textarea {
+    color: transparent !important;
+    -webkit-text-fill-color: transparent !important;
+  }
+}

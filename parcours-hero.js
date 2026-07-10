@@ -63,7 +63,7 @@
       </div>
     </div>
     <figure class="hub-hero-visual">
-      <img src="images/accueil-technoquest.png?v=1" width="1536" height="1024" alt="Planche TechnoQuest du jardin connecté présentant les huit séances avec les composants Arduino, capteurs, relais, pompe et logique de sécurité.">
+      <img src="images/accueil-technoquest.png?v=3" width="1536" height="1024" alt="Affiche corrigée du parcours TechnoQuest Jardin connecté : huit séances, chaîne d’énergie séparée et cycle d’hystérésis avec état de la pompe en ordonnée.">
     </figure>`;
 
   const timeline = document.createElement("section");
