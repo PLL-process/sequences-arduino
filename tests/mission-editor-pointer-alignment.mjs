@@ -1,4 +1,4 @@
-/* Test navigateur autonome : précision verticale du clic dans l’éditeur Mission. */
+/* Test navigateur autonome : précision du clic et verrouillage pédagogique de la ligne guidée. */
 
 /* Importe le serveur HTTP natif de Node.js. */
 import http from "node:http";
@@ -11,11 +11,11 @@ import { fileURLToPath } from "node:url";
 /* Importe Chromium depuis Playwright. */
 import { chromium } from "playwright";
 
-/* Retrouve le dossier contenant ce fichier de test. */
+/* Retrouve le dossier contenant ce fichier. */
 const testDirectory = path.dirname(fileURLToPath(import.meta.url));
-/* Retrouve la racine du dépôt située un niveau au-dessus. */
+/* Retrouve la racine du dépôt. */
 const repositoryRoot = path.resolve(testDirectory, "..");
-/* Définit les principaux types MIME nécessaires à la séance. */
+/* Associe les extensions principales à leur type MIME. */
 const mimeTypes = new Map([
   [".html", "text/html; charset=utf-8"],
   [".css", "text/css; charset=utf-8"],
@@ -29,178 +29,223 @@ const mimeTypes = new Map([
   [".webp", "image/webp"]
 ]);
 
-/* Empêche toute sortie du dossier du dépôt lors d’une requête HTTP. */
+/* Convertit une requête HTTP en chemin local sécurisé. */
 function safeLocalPath(requestUrl) {
-  /* Analyse l’adresse reçue par le serveur. */
+  /* Analyse l’adresse demandée. */
   const parsedUrl = new URL(requestUrl || "/", "http://127.0.0.1");
-  /* Décode le chemin demandé. */
+  /* Décode le chemin de l’adresse. */
   const decodedPath = decodeURIComponent(parsedUrl.pathname);
-  /* Transforme la racine en page de séance pour simplifier le test. */
+  /* Ouvre la séance 1 lorsque la racine est demandée. */
   const requestedPath = decodedPath === "/" ? "/seance-1.html" : decodedPath;
-  /* Construit le chemin absolu correspondant. */
+  /* Construit le chemin absolu. */
   const candidatePath = path.resolve(repositoryRoot, `.${requestedPath}`);
-  /* Refuse les chemins situés hors du dépôt. */
+  /* Interdit toute sortie du dépôt. */
   if (!candidatePath.startsWith(repositoryRoot)) throw new Error("Chemin interdit");
   /* Retourne le chemin validé. */
   return candidatePath;
 }
 
-/* Crée un petit serveur statique sans dépendance supplémentaire. */
+/* Crée un serveur statique sans dépendance externe. */
 const server = http.createServer(async (request, response) => {
-  /* Protège le serveur contre les erreurs de lecture. */
+  /* Protège la lecture de chaque fichier. */
   try {
-    /* Calcule le fichier local demandé. */
+    /* Calcule le fichier demandé. */
     let localPath = safeLocalPath(request.url);
-    /* Lit les informations du fichier ou du dossier. */
+    /* Lit les informations du chemin. */
     const localStat = await stat(localPath);
     /* Ajoute index.html lorsqu’un dossier est demandé. */
     if (localStat.isDirectory()) localPath = path.join(localPath, "index.html");
-    /* Lit le contenu binaire du fichier. */
+    /* Lit le contenu du fichier. */
     const body = await readFile(localPath);
     /* Détermine le type MIME à envoyer. */
     const contentType = mimeTypes.get(path.extname(localPath).toLowerCase()) || "application/octet-stream";
-    /* Envoie un statut de réussite et désactive le cache. */
+    /* Envoie la réponse sans cache. */
     response.writeHead(200, { "Content-Type": contentType, "Cache-Control": "no-store" });
-    /* Envoie le fichier au navigateur. */
+    /* Termine la réponse avec le contenu. */
     response.end(body);
   } catch (error) {
-    /* Envoie une réponse 404 en cas de fichier absent ou interdit. */
+    /* Envoie un statut 404 en cas d’échec. */
     response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
-    /* Décrit brièvement l’erreur dans la réponse. */
+    /* Décrit l’échec. */
     response.end(`Fichier introuvable : ${error.message}`);
   }
 });
 
-/* Attend que le serveur écoute sur un port libre. */
+/* Attend qu’un port libre soit attribué au serveur. */
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
-/* Récupère l’adresse choisie par le système. */
+/* Lit l’adresse attribuée. */
 const address = server.address();
-/* Vérifie que l’adresse est exploitable. */
+/* Vérifie le format de l’adresse. */
 if (!address || typeof address === "string") throw new Error("Adresse locale indisponible");
-/* Construit l’adresse complète de la séance. */
+/* Construit l’adresse de la séance. */
 const sessionUrl = `http://127.0.0.1:${address.port}/seance-1.html`;
-/* Lance un navigateur Chromium sans interface. */
+/* Lance Chromium sans interface graphique. */
 const browser = await chromium.launch({ headless: true });
 
-/* Définit les écrans à contrôler. */
+/* Définit les trois tailles d’écran contrôlées. */
 const viewports = [
   /* Représente un ordinateur portable courant. */
   { name: "ordinateur-1366x768", width: 1366, height: 768 },
-  /* Représente une tablette en orientation portrait. */
+  /* Représente une tablette verticale. */
   { name: "tablette-768x1024", width: 768, height: 1024 },
-  /* Représente un téléphone de largeur moyenne. */
+  /* Représente un téléphone courant. */
   { name: "telephone-412x915", width: 412, height: 915 }
 ];
 
-/* Stocke les éventuelles erreurs afin de tester tous les écrans. */
+/* Stocke tous les échecs rencontrés. */
 const failures = [];
 
-/* Teste successivement chaque taille d’écran. */
+/* Retourne la ligne correspondant au point d’insertion. */
+async function selectedLine(editor) {
+  /* Compte les lignes placées avant selectionStart. */
+  return editor.evaluate(element => element.value.slice(0, element.selectionStart).split("\n").length);
+}
+
+/* Clique au centre vertical d’une ligne donnée. */
+async function clickLine(editor, lineNumber) {
+  /* Calcule le défilement et les coordonnées de la ligne. */
+  const metrics = await editor.evaluate((element, requestedLine) => {
+    /* Lit les styles réellement appliqués. */
+    const style = window.getComputedStyle(element);
+    /* Convertit la hauteur de ligne. */
+    const lineHeight = Number.parseFloat(style.lineHeight);
+    /* Convertit la marge intérieure supérieure. */
+    const paddingTop = Number.parseFloat(style.paddingTop);
+    /* Convertit la marge intérieure gauche. */
+    const paddingLeft = Number.parseFloat(style.paddingLeft);
+    /* Calcule le centre absolu de la ligne. */
+    const absoluteLineCenter = paddingTop + (requestedLine - 0.5) * lineHeight;
+    /* Centre la ligne dans la fenêtre de l’éditeur. */
+    element.scrollTop = Math.max(0, absoluteLineCenter - element.clientHeight * 0.45);
+    /* Retourne les mesures nécessaires. */
+    return { lineHeight, paddingTop, paddingLeft, scrollTop: element.scrollTop };
+  }, lineNumber);
+  /* Calcule la coordonnée verticale visible. */
+  const clickY = metrics.paddingTop + (lineNumber - 0.5) * metrics.lineHeight - metrics.scrollTop;
+  /* Calcule une coordonnée horizontale située dans le texte. */
+  const clickX = metrics.paddingLeft + 70;
+  /* Effectue le véritable clic de souris. */
+  await editor.click({ position: { x: clickX, y: clickY } });
+  /* Attend la fin des gestionnaires de clic. */
+  await editor.page().waitForTimeout(60);
+}
+
+/* Teste chaque taille d’écran séparément. */
 for (const viewport of viewports) {
   /* Crée un contexte isolé avec la taille demandée. */
   const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
-  /* Supprime les anciennes sauvegardes avant chaque chargement. */
+  /* Supprime toute ancienne sauvegarde avant le chargement. */
   await context.addInitScript(() => localStorage.clear());
   /* Ouvre une nouvelle page. */
   const page = await context.newPage();
 
-  /* Protège chaque scénario pour poursuivre les autres en cas d’échec. */
+  /* Poursuit les autres écrans même si celui-ci échoue. */
   try {
-    /* Charge la séance sans utiliser le cache. */
+    /* Charge la séance. */
     await page.goto(sessionUrl, { waitUntil: "networkidle" });
-    /* Attend la création du bouton du mode Mission. */
+    /* Attend la création du bouton Mission. */
     await page.waitForSelector("#missionActivate");
     /* Active le mode Mission. */
     await page.click("#missionActivate");
-    /* Attend que l’éditeur soit visible dans son nouvel emplacement. */
+    /* Attend l’éditeur déplacé dans le panneau Mission. */
     await page.waitForSelector("#missionEditorMount #codeEditor", { state: "visible" });
-    /* Sélectionne explicitement le niveau Guidé. */
-    await page.selectOption("#missionHelpLevel", "guided");
-    /* Attend la remise en place du squelette guidé. */
-    await page.waitForTimeout(120);
-    /* Retrouve la zone de saisie réelle. */
+    /* Récupère le textarea réel. */
     const editor = page.locator("#missionEditorMount #codeEditor");
-    /* Place le défilement au début avant le premier contrôle. */
-    await editor.evaluate(element => { element.scrollTop = 0; element.scrollLeft = 0; });
 
-    /* Teste plusieurs lignes, dont la ligne 11 signalée par l’utilisateur. */
-    for (const requestedLine of [3, 8, 11, 20]) {
-      /* Calcule la position de la ligne dans le textarea. */
-      const metrics = await editor.evaluate((element, lineNumber) => {
-        /* Lit les propriétés réellement appliquées par le navigateur. */
-        const style = window.getComputedStyle(element);
-        /* Convertit la hauteur de ligne en nombre. */
-        const lineHeight = Number.parseFloat(style.lineHeight);
-        /* Convertit la marge intérieure supérieure en nombre. */
-        const paddingTop = Number.parseFloat(style.paddingTop);
-        /* Convertit la marge intérieure gauche en nombre. */
-        const paddingLeft = Number.parseFloat(style.paddingLeft);
-        /* Calcule la position verticale absolue du centre de la ligne. */
-        const absoluteLineCenter = paddingTop + (lineNumber - 0.5) * lineHeight;
-        /* Centre la ligne dans la fenêtre lorsque cela est nécessaire. */
-        const desiredScrollTop = Math.max(0, absoluteLineCenter - element.clientHeight * 0.45);
-        /* Applique le défilement calculé. */
-        element.scrollTop = desiredScrollTop;
-        /* Retourne les mesures nécessaires au clic Playwright. */
-        return { lineHeight, paddingTop, paddingLeft, scrollTop: element.scrollTop };
-      }, requestedLine);
+    /* Passe en mode Standard pour contrôler le placement libre du clic. */
+    await page.selectOption("#missionHelpLevel", "standard");
+    /* Attend le nouveau squelette. */
+    await page.waitForTimeout(150);
+    /* Compte les lignes disponibles. */
+    const standardLineCount = await editor.evaluate(element => element.value.split("\n").length);
+    /* Définit plusieurs lignes valides, dont la ligne 11 signalée. */
+    const freeLines = [3, 8, 11, Math.min(15, standardLineCount)].filter((line, index, array) => line <= standardLineCount && array.indexOf(line) === index);
 
-      /* Calcule la coordonnée verticale visible du centre de la ligne. */
-      const clickY = metrics.paddingTop + (requestedLine - 0.5) * metrics.lineHeight - metrics.scrollTop;
-      /* Choisit une colonne proche du début du code sans viser le bord. */
-      const clickX = metrics.paddingLeft + 70;
-      /* Effectue un véritable clic de souris dans le textarea. */
-      await editor.click({ position: { x: clickX, y: clickY } });
-      /* Laisse le navigateur terminer le placement du point d’insertion. */
-      await page.waitForTimeout(40);
-      /* Détermine la ligne réellement sélectionnée par le navigateur. */
-      const selectedLine = await editor.evaluate(element => element.value.slice(0, element.selectionStart).split("\n").length);
-      /* Signale immédiatement un décalage vertical. */
-      if (selectedLine !== requestedLine) {
-        throw new Error(`${viewport.name} : clic ligne ${requestedLine}, curseur placé ligne ${selectedLine}`);
+    /* Vérifie que le clic libre vise exactement chaque ligne. */
+    for (const requestedLine of freeLines) {
+      /* Clique sur la ligne demandée. */
+      await clickLine(editor, requestedLine);
+      /* Lit la ligne réellement sélectionnée. */
+      const actualLine = await selectedLine(editor);
+      /* Signale tout décalage vertical. */
+      if (actualLine !== requestedLine) {
+        throw new Error(`${viewport.name} : mode Standard, clic ligne ${requestedLine}, curseur ligne ${actualLine}`);
       }
-
-      /* Crée un marqueur unique ne déclenchant pas l’autocomplétion du niveau Guidé. */
-      const marker = `/*TEST_LIGNE_${requestedLine}*/`;
-      /* Saisit le marqueur comme le ferait l’utilisateur. */
-      await page.keyboard.type(marker);
-      /* Lit les lignes après la saisie. */
-      const linesAfterTyping = await editor.inputValue().then(value => value.split("\n"));
-      /* Vérifie que le marqueur se trouve bien sur la ligne demandée. */
-      if (!linesAfterTyping[requestedLine - 1]?.includes(marker)) {
-        throw new Error(`${viewport.name} : le texte destiné à la ligne ${requestedLine} a été écrit ailleurs`);
-      }
-      /* Annule la saisie pour conserver le squelette avant le test suivant. */
-      await page.keyboard.press(process.platform === "darwin" ? "Meta+Z" : "Control+Z");
-      /* Attend que l’annulation soit prise en compte. */
-      await page.waitForTimeout(40);
     }
 
-    /* Affiche une confirmation lisible dans le terminal. */
-    console.log(`OK — ${viewport.name} : lignes 3, 8, 11 et 20 correctement ciblées`);
+    /* Passe en mode Guidé pour contrôler le verrouillage pédagogique. */
+    await page.selectOption("#missionHelpLevel", "guided");
+    /* Attend le nouveau squelette et son premier placement. */
+    await page.waitForTimeout(180);
+    /* Demande au validateur la ligne actuellement attendue. */
+    const targetLine = await page.evaluate(() => {
+      /* Récupère l’éditeur. */
+      const codeEditor = document.getElementById("codeEditor");
+      /* Récupère le validateur Mission. */
+      const missionValidator = window.TechnoQuestMissionValidator;
+      /* Valide le programme actuel. */
+      const result = missionValidator.validate(codeEditor.value, 1);
+      /* Récupère la première étape manquante. */
+      const stepId = result.firstMissing?.id || null;
+      /* Calcule la ligne attendue et convertit l’index en numéro humain. */
+      return missionValidator.findLineForStep(codeEditor.value, stepId, result, 1, "edition") + 1;
+    });
+    /* Compte les lignes du squelette guidé. */
+    const guidedLineCount = await editor.evaluate(element => element.value.split("\n").length);
+    /* Choisit volontairement une autre ligne visible. */
+    const attemptedLine = targetLine < guidedLineCount - 2 ? targetLine + 3 : Math.max(1, targetLine - 3);
+    /* Clique sur cette autre ligne. */
+    await clickLine(editor, attemptedLine);
+    /* Lit la ligne finalement conservée par le verrouillage. */
+    const lockedLine = await selectedLine(editor);
+    /* Vérifie que le curseur est revenu sur la ligne attendue. */
+    if (lockedLine !== targetLine) {
+      throw new Error(`${viewport.name} : mode Guidé, cible ${targetLine}, clic ${attemptedLine}, curseur ${lockedLine}`);
+    }
+
+    /* Saisit un marqueur simple sur la ligne verrouillée. */
+    const marker = "/*TEST_VERROU*/";
+    /* Écrit le marqueur avec le clavier. */
+    await page.keyboard.type(marker);
+    /* Lit les lignes après la saisie. */
+    const linesAfterTyping = await editor.inputValue().then(value => value.split("\n"));
+    /* Vérifie que la saisie est restée sur la ligne attendue. */
+    if (!linesAfterTyping[targetLine - 1]?.includes(marker)) {
+      throw new Error(`${viewport.name} : la saisie guidée a quitté la ligne ${targetLine}`);
+    }
+
+    /* Vérifie que la flèche verticale reste associée à cette ligne incomplète. */
+    const arrowLabel = await page.locator("#missionArrow").getAttribute("aria-label");
+    /* Signale un repère incohérent. */
+    if (arrowLabel && !arrowLabel.includes(String(targetLine))) {
+      throw new Error(`${viewport.name} : flèche annoncée « ${arrowLabel} », cible attendue ${targetLine}`);
+    }
+
+    /* Affiche un résumé de réussite pour l’écran testé. */
+    console.log(`OK — ${viewport.name} : clic libre exact et verrouillage guidé sur la ligne ${targetLine}`);
   } catch (error) {
-    /* Ajoute le nom de l’écran et le message à la liste des échecs. */
+    /* Ajoute l’erreur au rapport final. */
     failures.push(`${viewport.name} — ${error.message}`);
-    /* Enregistre une capture d’écran destinée au diagnostic Codex. */
+    /* Enregistre une capture pour faciliter le diagnostic. */
     await page.screenshot({ path: `cursor-failure-${viewport.name}.png`, fullPage: true });
   } finally {
-    /* Ferme le contexte pour libérer les ressources. */
+    /* Ferme le contexte de cet écran. */
     await context.close();
   }
 }
 
-/* Ferme le navigateur après tous les scénarios. */
+/* Ferme Chromium. */
 await browser.close();
-/* Ferme le serveur HTTP local. */
+/* Ferme le serveur local. */
 await new Promise(resolve => server.close(resolve));
 
-/* Termine avec une erreur lorsqu’au moins un écran présente un décalage. */
+/* Retourne un code d’échec lorsque des anomalies ont été rencontrées. */
 if (failures.length) {
-  /* Affiche toutes les erreurs dans un seul rapport. */
+  /* Affiche le rapport complet. */
   console.error(`ÉCHEC DU TEST CURSEUR\n${failures.join("\n")}`);
-  /* Retourne un code d’échec utilisable par Codex ou une intégration continue. */
+  /* Signale l’échec au terminal, à Codex ou à l’intégration continue. */
   process.exitCode = 1;
 } else {
-  /* Confirme que tous les écrans ont réussi. */
-  console.log("SUCCÈS — précision du clic et de la saisie validée sur les trois tailles d’écran");
+  /* Confirme la réussite de tous les scénarios. */
+  console.log("SUCCÈS — clic exact en mode libre et verrouillage de la ligne en mode Guidé");
 }
