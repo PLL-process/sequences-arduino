@@ -1,4 +1,4 @@
-/* TechnoQuest — précision du clic et du curseur dans l’éditeur Mission. */
+/* TechnoQuest — précision du clic, du curseur et de la coloration dans l’éditeur Mission. */
 
 /* Des valeurs entières identiques garantissent une correspondance ligne par ligne. */
 .mission-editor-mount .editor-wrap {
@@ -7,39 +7,62 @@
   --mission-code-padding: 16px;
 }
 
-/* La zone réellement cliquée devient aussi la zone réellement affichée. */
+/* La couche colorée et la couche de saisie partagent strictement les mêmes métriques. */
+.mission-editor-mount .editor-wrap pre,
 .mission-editor-mount .editor-wrap textarea {
   box-sizing: border-box !important;
-  z-index: 6 !important;
   padding: var(--mission-code-padding) !important;
   border: 0 !important;
-  background: #020b09 !important;
-  color: #effff5 !important;
-  -webkit-text-fill-color: #effff5 !important;
-  caret-color: #ffffff !important;
   font-family: Consolas, "Courier New", monospace !important;
   font-size: var(--mission-code-font-size) !important;
   line-height: var(--mission-code-line-height) !important;
-  font-weight: 400 !important;
-  font-style: normal !important;
   letter-spacing: 0 !important;
   word-spacing: 0 !important;
   text-indent: 0 !important;
   text-transform: none !important;
-  font-variant: normal !important;
   font-variant-ligatures: none !important;
   font-feature-settings: "liga" 0, "calt" 0 !important;
   tab-size: 4 !important;
+  white-space: pre !important;
+  overflow: auto !important;
+}
+
+/* La couche colorée redevient visible sous le textarea transparent. */
+.mission-editor-mount .editor-wrap pre {
+  z-index: 4 !important;
+  display: block !important;
+  background: #020b09 !important;
+  color: #effff5 !important;
+  pointer-events: none !important;
+  scrollbar-width: none !important;
+}
+
+/* Les barres de défilement de la couche colorée restent cachées. */
+.mission-editor-mount .editor-wrap pre::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* La couche réellement cliquée reste au-dessus mais son texte devient transparent. */
+.mission-editor-mount .editor-wrap textarea {
+  z-index: 6 !important;
+  background: transparent !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  caret-color: #ffffff !important;
+  font-weight: 400 !important;
+  font-style: normal !important;
+  font-variant: normal !important;
   resize: none !important;
   outline: none !important;
 }
 
-/* En mode Mission, la couche colorée est masquée pour supprimer tout décalage de clic. */
-.mission-editor-mount .editor-wrap pre {
-  display: none !important;
+/* Les spans colorés gardent la même hauteur de ligne que le textarea. */
+.mission-editor-mount .editor-wrap pre,
+.mission-editor-mount .editor-wrap pre span {
+  line-height: inherit !important;
 }
 
-/* Les numéros utilisent exactement la même hauteur que les lignes du textarea. */
+/* Les numéros utilisent exactement la même hauteur que les lignes de code. */
 .mission-line-numbers {
   padding-top: var(--mission-code-padding, 16px) !important;
   font-family: Consolas, "Courier New", monospace !important;
@@ -53,21 +76,21 @@
   line-height: var(--mission-code-line-height, 28px) !important;
 }
 
-/* L’ancien curseur calculé est désactivé : le curseur natif est désormais exact. */
+/* L’ancien curseur calculé reste désactivé au profit du curseur natif exact. */
 .mission-precise-caret {
   display: none !important;
 }
 
-/* L’ancienne classe ne doit plus rendre le curseur natif transparent. */
+/* L’ancienne classe ne doit jamais masquer le curseur natif. */
 .mission-editor-mount .editor-wrap.mission-custom-caret-ready textarea {
   caret-color: #ffffff !important;
 }
 
-/* La sélection reste visible malgré le fond sombre. */
+/* La sélection reste visible sur la couche de saisie transparente. */
 .mission-editor-mount .editor-wrap textarea::selection {
   background: rgba(34, 211, 238, .38);
-  color: #ffffff;
-  -webkit-text-fill-color: #ffffff;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 /* Le contraste du focus aide à repérer l’éditeur actif. */
@@ -76,7 +99,7 @@
   box-shadow: 0 0 0 3px rgba(250, 204, 21, .2) !important;
 }
 
-/* Le message explique sans ambiguïté pourquoi le curseur revient sur la ligne active. */
+/* Le message explique pourquoi le curseur revient sur la ligne active. */
 .mission-line-lock-note {
   position: absolute;
   z-index: 42;
@@ -120,9 +143,8 @@
 
 /* L’éditeur garde un rendu propre à l’impression. */
 @media print {
-  .mission-editor-mount .editor-wrap textarea {
+  .mission-editor-mount .editor-wrap pre {
     color: #000 !important;
-    -webkit-text-fill-color: #000 !important;
     background: #fff !important;
   }
 
