@@ -15,20 +15,26 @@
   font-family: Consolas, "Courier New", monospace !important;
   font-size: var(--mission-code-font-size) !important;
   line-height: var(--mission-code-line-height) !important;
-  font-weight: 400 !important;
   letter-spacing: 0 !important;
   word-spacing: 0 !important;
   text-indent: 0 !important;
   text-transform: none !important;
-  font-variant: normal !important;
   font-variant-ligatures: none !important;
   font-feature-settings: "liga" 0, "calt" 0 !important;
   tab-size: 4 !important;
 }
 
-/* Les commentaires peuvent rester italiques dans la coloration sans changer la hauteur des lignes. */
+/* La couche de saisie conserve une graisse et un style neutres pour calculer le curseur. */
+.mission-editor-mount .editor-wrap textarea {
+  font-weight: 400 !important;
+  font-style: normal !important;
+  font-variant: normal !important;
+}
+
+/* Les couleurs, italiques et graisses de la coloration restent autorisées sans changer la hauteur. */
+.mission-editor-mount .editor-wrap pre,
 .mission-editor-mount .editor-wrap pre span {
-  line-height: inherit;
+  line-height: inherit !important;
 }
 
 /* Les numéros suivent rigoureusement les mêmes lignes que le code. */
