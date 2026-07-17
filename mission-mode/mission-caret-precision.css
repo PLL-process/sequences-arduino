@@ -1,0 +1,89 @@
+/* TechnoQuest — synchronisation stricte du curseur visuel et du code coloré. */
+
+/* Des valeurs entières évitent les écarts d’arrondi entre textarea et pre. */
+.mission-editor-mount .editor-wrap {
+  --mission-code-font-size: 18px;
+  --mission-code-line-height: 28px;
+  --mission-code-padding: 16px;
+}
+
+/* Les deux couches de l’éditeur utilisent exactement les mêmes métriques. */
+.mission-editor-mount .editor-wrap pre,
+.mission-editor-mount .editor-wrap textarea {
+  box-sizing: border-box !important;
+  padding: var(--mission-code-padding) !important;
+  font-family: Consolas, "Courier New", monospace !important;
+  font-size: var(--mission-code-font-size) !important;
+  line-height: var(--mission-code-line-height) !important;
+  font-weight: 400 !important;
+  letter-spacing: 0 !important;
+  word-spacing: 0 !important;
+  text-indent: 0 !important;
+  text-transform: none !important;
+  font-variant: normal !important;
+  font-variant-ligatures: none !important;
+  font-feature-settings: "liga" 0, "calt" 0 !important;
+  tab-size: 4 !important;
+}
+
+/* Les commentaires peuvent rester italiques dans la coloration sans changer la hauteur des lignes. */
+.mission-editor-mount .editor-wrap pre span {
+  line-height: inherit;
+}
+
+/* Les numéros suivent rigoureusement les mêmes lignes que le code. */
+.mission-line-numbers {
+  padding-top: var(--mission-code-padding, 16px) !important;
+  font-family: Consolas, "Courier New", monospace !important;
+  font-size: var(--mission-code-font-size, 18px) !important;
+  line-height: var(--mission-code-line-height, 28px) !important;
+}
+
+/* Chaque numéro possède la même hauteur fixe qu’une ligne de programme. */
+.mission-line-numbers span {
+  height: var(--mission-code-line-height, 28px) !important;
+  line-height: var(--mission-code-line-height, 28px) !important;
+}
+
+/* Le curseur natif transparent est remplacé uniquement lorsque le curseur précis est prêt. */
+.mission-editor-mount .editor-wrap.mission-custom-caret-ready textarea {
+  caret-color: transparent !important;
+}
+
+/* Le nouveau curseur est dessiné dans le même repère que le texte coloré. */
+.mission-precise-caret {
+  position: absolute;
+  z-index: 8;
+  display: none;
+  width: 3px;
+  border-radius: 2px;
+  background: #ffffff;
+  box-shadow: 0 0 5px rgba(255, 255, 255, .9), 0 0 10px rgba(34, 211, 238, .58);
+  pointer-events: none;
+  animation: missionCaretBlink 1.05s steps(1, end) infinite;
+}
+
+/* Le curseur n’apparaît que dans un éditeur actif et sans sélection étendue. */
+.mission-editor-mount .editor-wrap.mission-custom-caret-ready:focus-within .mission-precise-caret.is-visible {
+  display: block;
+}
+
+/* Le clignotement reproduit le comportement habituel d’un éditeur de code. */
+@keyframes missionCaretBlink {
+  0%, 48% { opacity: 1; }
+  49%, 100% { opacity: 0; }
+}
+
+/* Le curseur reste fixe pour les personnes ayant désactivé les animations. */
+@media (prefers-reduced-motion: reduce) {
+  .mission-precise-caret {
+    animation: none;
+  }
+}
+
+/* Le repère de saisie ne doit pas apparaître à l’impression. */
+@media print {
+  .mission-precise-caret {
+    display: none !important;
+  }
+}
