@@ -1,0 +1,110 @@
+/* TechnoQuest — repérage précis de la ligne à compléter dans l’éditeur Mission. */
+
+/* La flèche reste visible au-dessus de la coloration et de la ligne ciblée. */
+.mission-code-shell .mission-arrow {
+  z-index: 25;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  border-top-width: .58rem;
+  border-bottom-width: .58rem;
+  border-left-width: 1.08rem;
+  filter:
+    drop-shadow(0 0 4px rgba(250, 204, 21, 1))
+    drop-shadow(0 0 11px rgba(250, 204, 21, .82));
+  transform: translateY(-50%);
+  transition: top .18s ease, opacity .18s ease;
+}
+
+/* La flèche est masquée seulement lorsque toutes les lignes attendues sont terminées. */
+.mission-code-shell .mission-arrow.mission-arrow-complete {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* Un bandeau translucide traverse exactement la ligne à coder. */
+.mission-target-line {
+  position: absolute;
+  z-index: 18;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 1.5rem;
+  padding-right: .55rem;
+  border-top: 1px solid rgba(250, 204, 21, .58);
+  border-bottom: 1px solid rgba(250, 204, 21, .58);
+  background: linear-gradient(90deg, rgba(250, 204, 21, .19), rgba(250, 204, 21, .07));
+  box-shadow: inset 4px 0 0 #facc15;
+  pointer-events: none;
+  transition: top .18s ease, opacity .18s ease;
+}
+
+/* Le bandeau disparaît lorsque le programme est entièrement validé. */
+.mission-target-line[hidden] {
+  display: none;
+}
+
+/* Une étiquette courte confirme le numéro exact de la ligne ciblée. */
+.mission-target-line-label {
+  padding: .16rem .42rem;
+  border: 1px solid rgba(250, 204, 21, .72);
+  border-radius: 999px;
+  background: rgba(33, 26, 7, .9);
+  color: #fff7c2;
+  font: 900 .7rem/1.15 Inter, system-ui, sans-serif;
+  letter-spacing: .02em;
+  white-space: nowrap;
+}
+
+/* Le numéro de ligne correspondant est également mis en évidence. */
+.mission-line-numbers span.mission-target-number {
+  position: relative;
+  color: #071018;
+  font-weight: 950;
+}
+
+/* Un disque jaune derrière le numéro facilite le repérage immédiat. */
+.mission-line-numbers span.mission-target-number::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  top: 50%;
+  right: -.18rem;
+  width: 1.72rem;
+  height: 1.72rem;
+  border-radius: 50%;
+  background: #facc15;
+  box-shadow: 0 0 12px rgba(250, 204, 21, .78);
+  transform: translateY(-50%);
+}
+
+/* Le mode simulation conserve la flèche d’exécution mais retire le bandeau d’édition. */
+.mission-code-shell.mission-execution-target .mission-target-line {
+  display: none;
+}
+
+/* Sur les petits écrans, l’étiquette est raccourcie pour ne pas recouvrir le code. */
+@media (max-width: 680px) {
+  .mission-target-line-label {
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* Les mouvements sont supprimés selon les préférences d’accessibilité. */
+@media (prefers-reduced-motion: reduce) {
+  .mission-code-shell .mission-arrow,
+  .mission-target-line {
+    transition: none !important;
+  }
+}
+
+/* Le repère interactif n’est pas imprimé. */
+@media print {
+  .mission-target-line,
+  .mission-code-shell .mission-arrow {
+    display: none !important;
+  }
+}
