@@ -1,0 +1,161 @@
+/* TechnoQuest — révélation progressive du programme en mode Guidé. */
+
+/* La gouttière réserve une zone distincte à la flèche et une autre aux numéros. */
+.mission-code-shell {
+  --mission-gutter-width: 5rem;
+  grid-template-columns: var(--mission-gutter-width) minmax(0, 1fr) !important;
+}
+
+/* Les numéros restent alignés à droite et toujours lisibles. */
+.mission-line-numbers {
+  padding-right: .55rem !important;
+}
+
+/* La flèche occupe la partie gauche de la gouttière sans recouvrir le numéro. */
+.mission-code-shell .mission-arrow {
+  left: .45rem !important;
+}
+
+/* Le disque de la ligne active reste derrière le numéro et non sous la flèche. */
+.mission-line-numbers span.mission-target-number::before {
+  right: -.12rem;
+}
+
+/* En mode Guidé, la hauteur de l’éditeur correspond uniquement aux lignes révélées. */
+.mission-progressive-guided .mission-code-panel .mission-code-shell {
+  height: var(--mission-progressive-height, 170px) !important;
+  min-height: var(--mission-progressive-height, 170px) !important;
+  max-height: var(--mission-progressive-height, 170px) !important;
+  overflow: hidden !important;
+  transition: height .38s ease, min-height .38s ease, max-height .38s ease;
+}
+
+/* Le composant d’édition suit exactement la hauteur progressive. */
+.mission-progressive-guided .mission-code-panel .mission-editor-mount,
+.mission-progressive-guided .mission-code-panel .mission-editor-mount .editor-wrap,
+.mission-progressive-guided .mission-code-panel .mission-editor-mount pre,
+.mission-progressive-guided .mission-code-panel .mission-editor-mount textarea {
+  height: var(--mission-progressive-height, 170px) !important;
+  min-height: var(--mission-progressive-height, 170px) !important;
+  max-height: var(--mission-progressive-height, 170px) !important;
+}
+
+/* Le défilement vertical reste possible seulement lorsque le programme révélé dépasse la fenêtre. */
+.mission-progressive-guided .mission-code-panel .mission-editor-mount pre,
+.mission-progressive-guided .mission-code-panel .mission-editor-mount textarea {
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+}
+
+/* Les numéros qui correspondent aux lignes encore cachées sont retirés de l’affichage. */
+.mission-line-numbers span.mission-line-future {
+  display: none !important;
+}
+
+/* Une courte animation accompagne l’apparition d’une nouvelle étape. */
+.mission-code-shell.mission-progressive-step-change .mission-target-line {
+  animation: missionProgressiveLineReveal .65s ease-out;
+}
+
+/* Le numéro nouvellement révélé reçoit également un léger signal lumineux. */
+.mission-code-shell.mission-progressive-step-change .mission-target-number {
+  animation: missionProgressiveNumberReveal .65s ease-out;
+}
+
+/* La ligne apparaît progressivement sans mouvement brusque. */
+@keyframes missionProgressiveLineReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(-.45rem);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(.08rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Le numéro actif est brièvement renforcé lors du changement d’étape. */
+@keyframes missionProgressiveNumberReveal {
+  0% {
+    transform: scale(.78);
+  }
+  60% {
+    transform: scale(1.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Une indication discrète explique le principe de révélation progressive. */
+.mission-progressive-note {
+  margin: 0;
+  padding: .48rem .65rem;
+  border-left: 4px solid #67e8f9;
+  border-radius: 8px;
+  background: rgba(7, 19, 31, .94);
+  color: #cfe1ea;
+  font-size: .76rem;
+  line-height: 1.35;
+}
+
+/* Le message n’apparaît que dans le niveau Guidé. */
+.mission-compact-layout:not(.mission-progressive-guided) .mission-progressive-note {
+  display: none;
+}
+
+/* Sur téléphone, une gouttière légèrement plus étroite conserve la place du code. */
+@media (max-width: 680px) {
+  .mission-code-shell {
+    --mission-gutter-width: 4.35rem;
+  }
+
+  /* La flèche reste entièrement dans sa zone dédiée. */
+  .mission-code-shell .mission-arrow {
+    left: .28rem !important;
+  }
+}
+
+/* Les animations sont supprimées lorsque l’utilisateur le demande. */
+@media (prefers-reduced-motion: reduce) {
+  .mission-progressive-guided .mission-code-panel .mission-code-shell,
+  .mission-progressive-guided .mission-code-panel .mission-editor-mount,
+  .mission-progressive-guided .mission-code-panel .mission-editor-mount .editor-wrap,
+  .mission-progressive-guided .mission-code-panel .mission-editor-mount pre,
+  .mission-progressive-guided .mission-code-panel .mission-editor-mount textarea {
+    transition: none !important;
+  }
+
+  /* Les signaux visuels de changement d’étape deviennent statiques. */
+  .mission-code-shell.mission-progressive-step-change .mission-target-line,
+  .mission-code-shell.mission-progressive-step-change .mission-target-number {
+    animation: none !important;
+  }
+}
+
+/* L’impression affiche le programme complet sans restriction progressive. */
+@media print {
+  .mission-progressive-guided .mission-code-panel .mission-code-shell,
+  .mission-progressive-guided .mission-code-panel .mission-editor-mount,
+  .mission-progressive-guided .mission-code-panel .mission-editor-mount .editor-wrap,
+  .mission-progressive-guided .mission-code-panel .mission-editor-mount pre,
+  .mission-progressive-guided .mission-code-panel .mission-editor-mount textarea {
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+  }
+
+  /* Tous les numéros redeviennent visibles sur la version imprimée. */
+  .mission-line-numbers span.mission-line-future {
+    display: block !important;
+  }
+
+  /* L’indication interactive n’est pas imprimée. */
+  .mission-progressive-note {
+    display: none !important;
+  }
+}
