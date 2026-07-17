@@ -1,0 +1,69 @@
+/* TechnoQuest — suggestions C++ sélectionnables à la souris près de la ligne active. */
+
+/* La liste n’est plus figée en haut à droite : JavaScript la place près du curseur. */
+.mission-completion-menu.mission-completion-anchored {
+  top: var(--mission-completion-top, 3.4rem) !important;
+  left: var(--mission-completion-left, 5.4rem) !important;
+  right: auto !important;
+  width: min(520px, calc(100% - var(--mission-completion-left, 5.4rem) - .75rem)) !important;
+  max-height: min(310px, 44dvh);
+}
+
+/* Un court titre indique explicitement que la souris peut être utilisée. */
+.mission-completion-heading {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .7rem;
+  margin: -.35rem -.35rem .3rem;
+  padding: .48rem .62rem;
+  border-bottom: 1px solid #31536a;
+  background: #0b1c2b;
+  color: #f7fbff;
+  font-size: .76rem;
+  font-weight: 900;
+}
+
+/* Le rappel clavier reste secondaire. */
+.mission-completion-heading span {
+  color: #a8bdca;
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+/* Les propositions deviennent de véritables cartes cliquables. */
+.mission-completion-item {
+  border: 1px solid transparent !important;
+}
+
+/* Le survol de la souris rend le choix très visible. */
+.mission-completion-item:hover,
+.mission-completion-item.active {
+  border-color: #facc15 !important;
+  background: #20364b !important;
+  box-shadow: inset 3px 0 0 #facc15;
+}
+
+/* Sur un écran étroit, la liste utilise presque toute la largeur du code. */
+@media (max-width: 680px) {
+  .mission-completion-menu.mission-completion-anchored {
+    left: var(--mission-completion-left-mobile, 4.7rem) !important;
+    width: calc(100% - var(--mission-completion-left-mobile, 4.7rem) - .35rem) !important;
+    max-height: 42dvh;
+  }
+
+  /* Le rappel clavier disparaît pour conserver la place des choix. */
+  .mission-completion-heading span {
+    display: none;
+  }
+}
+
+/* Les suggestions ne sont pas imprimées. */
+@media print {
+  .mission-completion-menu {
+    display: none !important;
+  }
+}
