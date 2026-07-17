@@ -76,12 +76,45 @@
   box-shadow: 0 0 0 3px rgba(250, 204, 21, .2) !important;
 }
 
+/* Le message explique sans ambiguïté pourquoi le curseur revient sur la ligne active. */
+.mission-line-lock-note {
+  position: absolute;
+  z-index: 42;
+  left: 50%;
+  bottom: .75rem;
+  max-width: min(620px, calc(100% - 2rem));
+  padding: .65rem .85rem;
+  border: 1px solid #facc15;
+  border-radius: 10px;
+  background: rgba(33, 26, 7, .96);
+  color: #fff7c2;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, .42);
+  font-size: .82rem;
+  font-weight: 850;
+  line-height: 1.35;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+/* Le message disparaît complètement lorsqu’il est masqué. */
+.mission-line-lock-note[hidden] {
+  display: none !important;
+}
+
 /* Les métriques restent stables sur téléphone et tablette. */
 @media (max-width: 680px) {
   .mission-editor-mount .editor-wrap {
     --mission-code-font-size: 16px;
     --mission-code-line-height: 25px;
     --mission-code-padding: 14px;
+  }
+
+  /* Le message occupe presque toute la largeur sans recouvrir la gouttière. */
+  .mission-line-lock-note {
+    max-width: calc(100% - 1rem);
+    bottom: .45rem;
+    font-size: .76rem;
   }
 }
 
@@ -91,5 +124,10 @@
     color: #000 !important;
     -webkit-text-fill-color: #000 !important;
     background: #fff !important;
+  }
+
+  /* Le message interactif n’est pas imprimé. */
+  .mission-line-lock-note {
+    display: none !important;
   }
 }
