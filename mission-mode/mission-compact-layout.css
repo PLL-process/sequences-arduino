@@ -1,0 +1,310 @@
+/* TechnoQuest — mise en page compacte inspirée des interfaces de jeu de programmation. */
+
+/* La page utilise toute la largeur utile au lieu de rester limitée à 1600 pixels. */
+.mission-split {
+  width: min(1920px, 100%);
+  max-width: 100%;
+  gap: .75rem;
+  padding: .75rem;
+}
+
+/* Sur ordinateur, le jumeau conserve environ un tiers et l’éditeur environ deux tiers. */
+@media (min-width: 1181px) {
+  .mission-split {
+    grid-template-columns: minmax(320px, 34%) minmax(640px, 66%);
+  }
+}
+
+/* Sur un petit ordinateur, les deux panneaux restent côte à côte tant que cela reste lisible. */
+@media (min-width: 901px) and (max-width: 1180px) {
+  .mission-split {
+    grid-template-columns: minmax(300px, 38%) minmax(520px, 62%);
+  }
+
+  /* Annule l’empilement prématuré défini dans les feuilles précédentes. */
+  .mission-right,
+  .mission-left {
+    order: initial;
+  }
+}
+
+/* Le rappel de contexte reste disponible dans la fenêtre Cours mais ne surcharge plus la page. */
+.mission-left > .mission-context {
+  display: none;
+}
+
+/* Les deux colonnes commencent au même niveau visuel. */
+.mission-left,
+.mission-right {
+  align-content: start;
+  gap: .75rem;
+}
+
+/* La barre supérieure devient plus compacte afin de réserver la hauteur au travail. */
+.mission-topbar {
+  padding: .55rem .8rem;
+}
+
+/* Le sous-titre reste lisible sans occuper plusieurs grandes lignes. */
+.mission-title span {
+  max-width: 76ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Le panneau du jumeau utilise une présentation courte et dense. */
+.mission-left > .mission-panel:first-of-type .mission-panel-head {
+  padding: .55rem .7rem;
+}
+
+/* Le texte secondaire du jumeau est réduit car le titre suffit dans l’usage courant. */
+.mission-left > .mission-panel:first-of-type .mission-panel-head p {
+  margin-top: .15rem;
+  font-size: .76rem;
+  line-height: 1.25;
+}
+
+/* Le schéma utilise le maximum de largeur disponible dans sa colonne. */
+.mission-left > .mission-panel:first-of-type .mission-panel-body {
+  padding: .4rem;
+}
+
+/* La scène du jumeau ne reçoit pas de largeur minimale qui déformerait la grille. */
+.mission-twin-mount,
+.mission-twin-mount .twin-stage {
+  min-width: 0;
+  width: 100%;
+}
+
+/* L’éditeur devient le panneau principal de la page. */
+.mission-code-panel {
+  min-height: calc(100dvh - 5.2rem);
+}
+
+/* L’en-tête de l’éditeur reste compact malgré ses commandes. */
+.mission-code-panel > .mission-panel-head {
+  align-items: center;
+  padding: .55rem .7rem;
+}
+
+/* Le corps suit l’ordre CodeCombat : réglage, éditeur, exécution, palette, contrôles. */
+.mission-code-panel > .mission-panel-body {
+  display: flex;
+  flex-direction: column;
+  gap: .55rem;
+  padding: .65rem;
+}
+
+/* Le niveau d’aide tient sur une seule ligne compacte. */
+.mission-code-panel .mission-toolbar {
+  order: 1;
+  justify-content: flex-start;
+}
+
+/* L’éditeur reçoit la plus grande part de la hauteur visible. */
+.mission-code-panel .mission-code-shell {
+  order: 2;
+  min-height: clamp(470px, 63dvh, 830px);
+}
+
+/* La zone de saisie suit exactement la hauteur du panneau de code. */
+.mission-code-panel .mission-editor-mount .editor-wrap {
+  min-height: clamp(470px, 63dvh, 830px);
+}
+
+/* Les actions sont placées immédiatement sous l’éditeur. */
+.mission-code-panel .mission-actions {
+  order: 3;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .4rem;
+}
+
+/* Le bouton d’exécution devient le bouton principal, large et évident. */
+.mission-code-panel #missionRun {
+  grid-column: 1 / -1;
+  min-height: 3.2rem;
+  font-size: 1.02rem;
+  font-weight: 950;
+  letter-spacing: .025em;
+}
+
+/* Les actions secondaires sont plus compactes et restent accessibles. */
+.mission-code-panel .mission-actions .btn:not(#missionRun) {
+  min-height: 2.35rem;
+  padding: .45rem .55rem;
+  font-size: .78rem;
+}
+
+/* La palette occupe une vraie zone basse sans réduire excessivement l’éditeur. */
+.mission-code-panel .mission-command-rail {
+  order: 4;
+  grid-template-columns: 2.3rem minmax(0, 1fr) 2.3rem;
+  margin-top: 0;
+  padding: .45rem;
+  border-color: #5b4630;
+  background:
+    linear-gradient(rgba(16, 10, 7, .9), rgba(16, 10, 7, .9)),
+    repeating-linear-gradient(90deg, #3a2718 0 26px, #422d1c 26px 52px);
+}
+
+/* Le titre de la palette explique immédiatement le rôle de la zone. */
+.mission-command-palette-title {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .7rem;
+  margin: 0 0 .1rem;
+  color: #fff7c2;
+  font-size: .78rem;
+  font-weight: 950;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+/* Le rappel du comportement reste discret. */
+.mission-command-palette-title span {
+  color: #d8c7ae;
+  font-size: .68rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* La liste contient désormais des groupes plutôt qu’une suite indifférenciée. */
+.mission-command-list {
+  align-items: stretch;
+  gap: .55rem;
+  padding-bottom: .15rem;
+}
+
+/* Chaque groupe représente une famille de commandes Arduino. */
+.mission-command-group {
+  flex: 0 0 min(310px, 72vw);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: .3rem;
+  padding: .4rem;
+  border: 1px solid rgba(216, 199, 174, .28);
+  border-radius: 10px;
+  background: rgba(5, 9, 20, .58);
+}
+
+/* Le nom du groupe est visuellement séparé des commandes. */
+.mission-command-group-title {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin: 0;
+  color: #d8c7ae;
+  font-size: .7rem;
+  font-weight: 950;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+/* Les commandes d’un groupe utilisent deux colonnes compactes. */
+.mission-command-group-items {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .3rem;
+}
+
+/* Les boutons de snippets remplissent proprement leur cellule. */
+.mission-command-group .mission-command-chip {
+  width: 100%;
+  min-height: 2.25rem;
+  padding: .38rem .5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+  font-size: .75rem;
+}
+
+/* Les contrôles de simulation restent disponibles mais ne dominent plus l’interface. */
+.mission-code-panel .mission-sim-controls {
+  order: 5;
+  gap: .35rem;
+}
+
+/* Le message de validation suit les contrôles. */
+.mission-code-panel .mission-message {
+  order: 6;
+  margin-top: 0;
+}
+
+/* Les panneaux internes masqués restent à la fin du flux. */
+.mission-code-panel .mission-side-panel,
+.mission-code-panel .mission-method-card {
+  order: 7;
+}
+
+/* Le plein écran conserve le même ordre sans hauteur excessive de la palette. */
+.mission-code-panel:fullscreen .mission-code-shell,
+.mission-code-panel.mission-editor-maximized .mission-code-shell {
+  min-height: 0;
+}
+
+/* La palette reste compacte dans le plein écran. */
+.mission-code-panel:fullscreen .mission-command-group,
+.mission-code-panel.mission-editor-maximized .mission-command-group {
+  flex-basis: 330px;
+}
+
+/* Sur téléphone et tablette étroite, l’éditeur passe avant le jumeau numérique. */
+@media (max-width: 900px) {
+  .mission-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mission-right {
+    order: 1;
+  }
+
+  .mission-left {
+    order: 2;
+  }
+
+  /* La hauteur reste confortable sans imposer toute la hauteur de l’écran. */
+  .mission-code-panel {
+    min-height: auto;
+  }
+
+  .mission-code-panel .mission-code-shell,
+  .mission-code-panel .mission-editor-mount .editor-wrap {
+    min-height: clamp(430px, 66dvh, 720px);
+  }
+
+  /* Les actions secondaires passent sur deux colonnes. */
+  .mission-code-panel .mission-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Sur très petit écran, les groupes de la palette restent lisibles. */
+@media (max-width: 520px) {
+  .mission-command-group {
+    flex-basis: calc(100vw - 7rem);
+  }
+
+  .mission-command-group-items {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mission-command-palette-title {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+/* La palette et les réglages interactifs ne sont pas imprimés. */
+@media print {
+  .mission-command-rail,
+  .mission-editor-head-actions,
+  .mission-toolbar {
+    display: none !important;
+  }
+}
