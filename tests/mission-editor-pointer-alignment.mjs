@@ -160,8 +160,8 @@ for (const viewport of viewports) {
         throw new Error(`${viewport.name} : clic ligne ${requestedLine}, curseur placé ligne ${selectedLine}`);
       }
 
-      /* Crée un marqueur unique pour vérifier le lieu réel de la saisie. */
-      const marker = `CURSEUR_TEST_${requestedLine}`;
+      /* Crée un marqueur unique ne déclenchant pas l’autocomplétion du niveau Guidé. */
+      const marker = `/*TEST_LIGNE_${requestedLine}*/`;
       /* Saisit le marqueur comme le ferait l’utilisateur. */
       await page.keyboard.type(marker);
       /* Lit les lignes après la saisie. */
