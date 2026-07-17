@@ -1,0 +1,427 @@
+/* TechnoQuest — assistance visuelle de l’éditeur C++ Arduino en mode Mission. */
+
+/* Donne à la zone de code un contexte de positionnement pour les aides flottantes. */
+.mission-code-panel .mission-panel-body {
+  position: relative;
+}
+
+/* Regroupe les commandes supplémentaires dans l’en-tête de l’éditeur. */
+.mission-editor-head-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .45rem;
+  flex-wrap: wrap;
+}
+
+/* Boutons compacts destinés au plein écran et aux fenêtres de cours. */
+.mission-editor-head-actions .btn {
+  min-height: 2.35rem;
+  padding: .5rem .72rem;
+  white-space: nowrap;
+}
+
+/* Le ruban de commandes reprend le principe du rappel défilant de CodeCombat. */
+.mission-command-rail {
+  display: grid;
+  grid-template-columns: 2.5rem minmax(0, 1fr) 2.5rem;
+  gap: .45rem;
+  align-items: stretch;
+  margin-top: .75rem;
+  padding: .55rem;
+  border: 1px solid #31536a;
+  border-radius: 12px;
+  background: #06111b;
+}
+
+/* Les flèches font défiler les commandes sans imposer une barre trop haute. */
+.mission-command-scroll {
+  display: grid;
+  place-items: center;
+  border: 1px solid #31536a;
+  border-radius: 9px;
+  background: #0b1c2b;
+  color: #facc15;
+  font-size: 1.15rem;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+/* Un état de focus visible facilite l’usage au clavier. */
+.mission-command-scroll:focus-visible,
+.mission-command-chip:focus-visible,
+.mission-method-close:focus-visible,
+.mission-learning-close:focus-visible {
+  outline: 3px solid #67e8f9;
+  outline-offset: 2px;
+}
+
+/* La liste se parcourt horizontalement comme une palette de méthodes. */
+.mission-command-list {
+  display: flex;
+  gap: .45rem;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #31536a #06111b;
+}
+
+/* Chaque commande peut être survolée, ciblée ou insérée dans le programme. */
+.mission-command-chip {
+  flex: 0 0 auto;
+  min-height: 2.45rem;
+  padding: .48rem .7rem;
+  border: 1px solid #31536a;
+  border-radius: 9px;
+  background: #091a29;
+  color: #fde68a;
+  font: 800 .88rem/1.2 Consolas, "Courier New", monospace;
+  cursor: pointer;
+}
+
+/* Le survol signale que la fiche méthode correspondante est disponible. */
+.mission-command-chip:hover,
+.mission-command-chip[aria-current="true"] {
+  border-color: #facc15;
+  background: #211a07;
+  color: #fff7c2;
+  box-shadow: 0 0 0 2px rgba(250, 204, 21, .16);
+}
+
+/* La fiche méthode flotte au-dessus de l’interface pour ne pas allonger la page. */
+.mission-method-card {
+  position: absolute;
+  z-index: 35;
+  top: 4.4rem;
+  right: 1rem;
+  width: min(430px, calc(100% - 2rem));
+  max-height: min(72vh, 620px);
+  overflow: auto;
+  padding: 1rem;
+  border: 1px solid #8b7a45;
+  border-radius: 15px;
+  background: #d9ccb0;
+  color: #29313a;
+  box-shadow: 0 22px 60px rgba(0, 0, 0, .48);
+}
+
+/* La fiche est retirée de l’affichage tant qu’aucune méthode n’est pointée. */
+.mission-method-card[hidden] {
+  display: none;
+}
+
+/* L’en-tête de la fiche laisse la syntaxe et le bouton de fermeture visibles. */
+.mission-method-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: .8rem;
+}
+
+/* Le nom de la commande reste très lisible. */
+.mission-method-card h3 {
+  margin: 0;
+  color: #1178a8;
+  font: 950 1.06rem/1.3 Consolas, "Courier New", monospace;
+}
+
+/* Le bouton de fermeture utilise une surface suffisamment grande au tactile. */
+.mission-method-close {
+  flex: 0 0 auto;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 1px solid #8b7a45;
+  border-radius: 8px;
+  background: #f5eddc;
+  color: #29313a;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+/* Les exemples ressemblent à de véritables fragments de programme. */
+.mission-method-card pre {
+  margin: .65rem 0;
+  padding: .7rem;
+  overflow: auto;
+  border: 1px solid #b9a985;
+  border-radius: 9px;
+  background: #fffaf0;
+  color: #29313a;
+  font: .9rem/1.45 Consolas, "Courier New", monospace;
+  white-space: pre-wrap;
+}
+
+/* Les paramètres sont présentés dans une liste synthétique. */
+.mission-method-card dl {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: .35rem .65rem;
+  margin: .75rem 0 0;
+}
+
+/* Les noms de paramètres ressortent visuellement. */
+.mission-method-card dt {
+  font-weight: 950;
+}
+
+/* Les explications restent compactes. */
+.mission-method-card dd {
+  margin: 0;
+}
+
+/* La liste d’autocomplétion se place dans l’éditeur et ne déplace aucun panneau. */
+.mission-completion-menu {
+  position: absolute;
+  z-index: 40;
+  top: 3.4rem;
+  right: .8rem;
+  width: min(410px, calc(100% - 4.2rem));
+  max-height: 290px;
+  overflow: auto;
+  padding: .35rem;
+  border: 1px solid #facc15;
+  border-radius: 11px;
+  background: #08131e;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, .52);
+}
+
+/* L’autocomplétion disparaît lorsqu’aucune proposition n’est utile. */
+.mission-completion-menu[hidden] {
+  display: none;
+}
+
+/* Chaque proposition comporte la syntaxe et une explication courte. */
+.mission-completion-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: .6rem;
+  width: 100%;
+  padding: .58rem .65rem;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #dbe9ef;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* La proposition active est clairement repérée au clavier. */
+.mission-completion-item:hover,
+.mission-completion-item.active {
+  background: #20364b;
+}
+
+/* La syntaxe conserve une police adaptée au code. */
+.mission-completion-item code {
+  color: #fde68a;
+  font: 800 .88rem/1.3 Consolas, "Courier New", monospace;
+}
+
+/* Le libellé pédagogique reste secondaire. */
+.mission-completion-item span {
+  color: #a8bdca;
+  font-size: .78rem;
+}
+
+/* Le dialogue contient les rappels de cours sans encombrer la page principale. */
+.mission-learning-dialog {
+  width: min(900px, calc(100vw - 2rem));
+  max-height: min(86dvh, 820px);
+  padding: 0;
+  border: 1px solid #31536a;
+  border-radius: 18px;
+  background: #07131f;
+  color: #f7fbff;
+  box-shadow: 0 28px 90px rgba(0, 0, 0, .65);
+}
+
+/* L’arrière-plan assombri concentre l’attention sur le cours. */
+.mission-learning-dialog::backdrop {
+  background: rgba(1, 6, 13, .78);
+  backdrop-filter: blur(4px);
+}
+
+/* Le mode de secours reproduit un dialogue lorsque showModal n’est pas disponible. */
+.mission-learning-dialog.fallback-open {
+  position: fixed;
+  z-index: 1000;
+  inset: 7vh auto auto 50%;
+  display: block;
+  transform: translateX(-50%);
+}
+
+/* L’en-tête reste visible pendant le défilement du contenu. */
+.mission-learning-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: .85rem 1rem;
+  border-bottom: 1px solid #20364b;
+  background: rgba(7, 19, 31, .97);
+}
+
+/* Le titre du cours reste compact. */
+.mission-learning-head h2 {
+  margin: 0;
+  font-size: 1.08rem;
+}
+
+/* Le bouton de fermeture est utilisable au clavier et au tactile. */
+.mission-learning-close {
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border: 1px solid #31536a;
+  border-radius: 9px;
+  background: #0b1c2b;
+  color: #fff;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+/* Le contenu bénéficie d’une largeur de lecture confortable. */
+.mission-learning-body {
+  padding: 1rem;
+  overflow: auto;
+  line-height: 1.55;
+}
+
+/* Les panneaux existants sont réutilisés sans leur ancienne bordure latérale. */
+.mission-learning-body .mission-side-panel,
+.mission-learning-body .mission-context {
+  display: block;
+  margin: 0;
+}
+
+/* En plein écran, l’éditeur occupe réellement toute la surface disponible. */
+.mission-code-panel:fullscreen,
+.mission-code-panel.mission-editor-maximized {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  border-radius: 0;
+  background: #050914;
+}
+
+/* Le mode de secours du plein écran se place au-dessus de toute la page. */
+.mission-code-panel.mission-editor-maximized {
+  position: fixed;
+  z-index: 950;
+  inset: 0;
+}
+
+/* Le corps de l’éditeur devient une grille verticale sans dépassement. */
+.mission-code-panel:fullscreen .mission-panel-body,
+.mission-code-panel.mission-editor-maximized .mission-panel-body {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* La fenêtre de code grandit avec l’écran. */
+.mission-code-panel:fullscreen .mission-code-shell,
+.mission-code-panel.mission-editor-maximized .mission-code-shell {
+  min-height: 0;
+  height: 100%;
+}
+
+/* Le composant d’édition suit la hauteur du plein écran. */
+.mission-code-panel:fullscreen .mission-editor-mount .editor-wrap,
+.mission-code-panel.mission-editor-maximized .mission-editor-mount .editor-wrap {
+  min-height: 0;
+  height: 100%;
+  resize: none;
+}
+
+/* L’éditeur normal utilise la hauteur disponible sans devenir gigantesque. */
+.mission-code-panel .mission-code-shell {
+  min-height: clamp(390px, 55dvh, 720px);
+}
+
+/* La zone de saisie suit la nouvelle hauteur responsive. */
+.mission-code-panel .mission-editor-mount .editor-wrap {
+  min-height: clamp(390px, 55dvh, 720px);
+}
+
+/* Sur les écrans moyens, l’éditeur passe avant le jumeau numérique. */
+@media (max-width: 1100px) {
+  .mission-split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mission-right {
+    order: 1;
+  }
+
+  .mission-left {
+    order: 2;
+  }
+
+  .mission-code-panel .mission-code-shell,
+  .mission-code-panel .mission-editor-mount .editor-wrap {
+    min-height: clamp(420px, 62dvh, 760px);
+  }
+}
+
+/* Sur mobile, la fiche méthode devient une feuille basse plus facile à fermer. */
+@media (max-width: 680px) {
+  .mission-editor-head-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .mission-editor-head-actions .btn {
+    flex: 1 1 9rem;
+  }
+
+  .mission-command-rail {
+    grid-template-columns: 2.35rem minmax(0, 1fr) 2.35rem;
+  }
+
+  .mission-method-card {
+    position: fixed;
+    inset: auto .55rem .55rem .55rem;
+    width: auto;
+    max-height: 68dvh;
+    border-radius: 16px;
+  }
+
+  .mission-completion-menu {
+    top: 3rem;
+    right: .35rem;
+    width: calc(100% - 3.3rem);
+  }
+
+  .mission-code-panel .mission-code-shell,
+  .mission-code-panel .mission-editor-mount .editor-wrap {
+    min-height: clamp(430px, 68dvh, 760px);
+  }
+}
+
+/* Les animations sont supprimées lorsque l’utilisateur le demande. */
+@media (prefers-reduced-motion: reduce) {
+  .mission-command-list {
+    scroll-behavior: auto;
+  }
+}
+
+/* Les aides interactives ne sont pas imprimées. */
+@media print {
+  .mission-editor-head-actions,
+  .mission-command-rail,
+  .mission-method-card,
+  .mission-completion-menu,
+  .mission-learning-dialog {
+    display: none !important;
+  }
+}
