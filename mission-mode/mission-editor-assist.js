@@ -95,10 +95,10 @@
       id: "serial-print",
       label: "Serial.print(message);",
       aliases: ["ser", "serial", "print", "afficher"],
-      insert: "Serial.print(\"Humidite : \ ");",
+      insert: "Serial.print(\"Humidite : \");",
       cursor: "Humidite : ",
       description: "Affiche une donnée dans le Moniteur Série sans revenir automatiquement à la ligne.",
-      example: "Serial.print(\"Humidite : \ ");",
+      example: "Serial.print(\"Humidite : \");",
       parameters: [["message", "Texte, nombre ou variable à afficher."]]
     },
     {
