@@ -1,4 +1,4 @@
-/* TechnoQuest — squelette progressif simplifié de la séance 1. */
+/* TechnoQuest — squelette progressif simplifié et commenté de la séance 1. */
 "use strict";
 
 (() => {
@@ -13,21 +13,21 @@
   if (!mission?.skeletons) return;
 
   /* Remplace seulement le niveau Guidé par une progression à une instruction par ligne. */
-  mission.skeletons.guided = `
-const int PIN_HUMIDITE_SOL = A0;
-const int PIN_LUMIERE = A1;
-const int PIN_NIVEAU_EAU = A2;
-const int PIN_RELAIS_POMPE = 6;
-void setup() {
+  mission.skeletons.guided = `  // Charger ici la bibliothèque de base Arduino.
+const int PIN_HUMIDITE_SOL = A0; // Donne un nom simple à l'entrée analogique A0.
+const int PIN_LUMIERE = A1; // Donne un nom simple à l'entrée analogique A1.
+const int PIN_NIVEAU_EAU = A2; // Donne un nom simple à l'entrée analogique A2.
+const int PIN_RELAIS_POMPE = 6; // Donne un nom simple à la sortie numérique D6.
+void setup() { // Cette fonction s'exécute une seule fois au démarrage.
   // Initialiser le Moniteur Série à 9600 bauds.
 
-  // Configurer D6 en sortie.
+  // Configurer D6 en sortie pour commander le relais.
 
-  // Garder la pompe arrêtée au démarrage.
+  // Garder la pompe arrêtée au démarrage pour la sécurité.
 
-}
+} // Fin de setup().
 
-void loop() {
+void loop() { // Cette fonction recommence continuellement.
   // Lire l'humidité du sol sur A0.
 
   // Lire la lumière sur A1.
@@ -40,9 +40,9 @@ void loop() {
 
   // Afficher le niveau d'eau dans le Moniteur Série.
 
-  // Garder la pompe arrêtée.
+  // Garder la pompe arrêtée pendant cette séance d'observation.
 
-  // Attendre une seconde.
+  // Attendre une seconde avant de recommencer les mesures.
 
-}`;
+} // Fin de loop().`;
 })();
