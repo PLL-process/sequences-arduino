@@ -4,8 +4,8 @@
 (() => {
   /* Utilise la même clé que le contrôleur du mode Mission. */
   const STORAGE_KEY = "technoquest-mission-v1";
-  /* Identifie cette nouvelle structure progressive de la séance 1. */
-  const MIGRATION_VERSION = "session-1-progressive-guided-v3";
+  /* Identifie la structure progressive corrigée de la séance 1. */
+  const MIGRATION_VERSION = "session-1-progressive-guided-v4";
 
   /* Lit prudemment l’ancienne sauvegarde. */
   function loadStore() {
@@ -46,9 +46,9 @@
     values: previousState.values || {},
     /* Conserve la réflexion écrite par l’élève. */
     reflection: previousState.reflection || "",
-    /* Force le contrôleur à recréer le nouveau squelette. */
+    /* Force le contrôleur à recréer le squelette dont Serial.begin se trouve ligne 8. */
     code: "",
-    /* Indique qu’aucune tentative n’a encore été faite avec ce nouveau squelette. */
+    /* Indique qu’aucune tentative n’a encore été faite avec ce squelette corrigé. */
     attempted: false
   };
 
@@ -63,7 +63,7 @@
   /* Supprime l’ancien indicateur de tentative. */
   delete store.attempted;
 
-  /* Mémorise que la migration a été effectuée une seule fois. */
+  /* Mémorise que cette migration corrigée a été effectuée une seule fois. */
   store.structureVersions.session1 = MIGRATION_VERSION;
   /* Enregistre le nouvel état avant le chargement du contrôleur Mission. */
   localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
