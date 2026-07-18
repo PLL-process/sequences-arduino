@@ -1,4 +1,4 @@
-/* TechnoQuest — verrouille chaque étape guidée sur sa véritable ligne de saisie. */
+/* TechnoQuest — calcule sans mémoire obsolète la véritable ligne de chaque étape guidée. */
 "use strict";
 
 (() => {
@@ -9,35 +9,31 @@
 
   /* Conserve la recherche précédente pour les autres modes et les cas de secours. */
   const originalFindLineForStep = validator.findLineForStep.bind(validator);
-  /* Mémorise l’étape verrouillée. */
-  let lockedStepId = null;
-  /* Mémorise la ligne de saisie verrouillée. */
-  let lockedLineIndex = null;
 
-  /* Associe chaque étape de la séance 1 à un commentaire suffisamment précis. */
+  /* Associe chaque étape de la séance 1 à un commentaire précis. */
   const SESSION_ONE_ANCHORS = {
-    /* La bibliothèque se saisit sur la toute première ligne vide. */
+    /* La bibliothèque se saisit sur la toute première ligne. */
     include: { directLine: 0 },
     /* La communication série se saisit immédiatement sous son commentaire. */
     serialBegin: { comment: /Initialiser le Moniteur S[ée]rie à 9600 bauds/i },
-    /* La configuration du relais possède désormais son propre commentaire. */
+    /* La configuration du relais possède son propre commentaire. */
     pinMode: { comment: /Configurer D6 en sortie/i },
-    /* L’état sûr de démarrage possède également son propre commentaire. */
+    /* L'état sûr de démarrage possède son propre commentaire. */
     safeLowSetup: { comment: /Garder la pompe arr[eê]t[eé]e au d[ée]marrage/i },
     /* Chaque lecture de capteur pointe vers son commentaire exact. */
     readHumidity: { comment: /Lire l'humidit[eé] du sol sur A0/i },
-    /* La lecture de lumière ne peut plus être confondue avec les objectifs généraux. */
+    /* La lecture de lumière ne peut plus être confondue avec un autre objectif. */
     readLight: { comment: /Lire la lumi[eè]re sur A1/i },
     /* La lecture du réservoir utilise son commentaire propre. */
     readWater: { comment: /Lire le niveau d'eau sur A2/i },
-    /* Chaque affichage série est séparé afin de progresser une ligne à la fois. */
+    /* Chaque affichage série possède une cible distincte. */
     showHumidity: { comment: /Afficher l'humidit[eé] dans le Moniteur S[ée]rie/i },
-    /* L’affichage de lumière possède une cible distincte. */
+    /* L'affichage de lumière possède une cible distincte. */
     showLight: { comment: /Afficher la lumi[eè]re dans le Moniteur S[ée]rie/i },
-    /* L’affichage du niveau d’eau possède une cible distincte. */
+    /* L'affichage du niveau d'eau possède une cible distincte. */
     showWater: { comment: /Afficher le niveau d'eau dans le Moniteur S[ée]rie/i },
-    /* L’arrêt de sécurité dans loop possède une cible distincte du setup. */
-    pumpStop: { comment: /Garder la pompe arr[eê]t[eé]e\.?$/i },
+    /* L'arrêt de sécurité dans loop possède une cible distincte du setup. */
+    pumpStop: { comment: /Garder la pompe arr[eê]t[eé]e pendant cette s[ée]ance|Garder la pompe arr[eê]t[eé]e\.?$/i },
     /* La temporisation se saisit sous son commentaire exact. */
     delay: { comment: /Attendre une seconde/i }
   };
@@ -72,11 +68,11 @@
     for (let index = 0; index < lines.length; index += 1) {
       /* Ignore les lignes qui ne correspondent pas au commentaire attendu. */
       if (!matches(pattern, lines[index])) continue;
-      /* Examine les deux lignes suivantes afin de tolérer une ligne blanche supplémentaire. */
-      for (let candidate = index + 1; candidate <= Math.min(lines.length - 1, index + 2); candidate += 1) {
+      /* Examine les trois lignes suivantes pour tolérer un espacement pédagogique. */
+      for (let candidate = index + 1; candidate <= Math.min(lines.length - 1, index + 3); candidate += 1) {
         /* Lit la ligne candidate sans espaces périphériques. */
         const trimmed = String(lines[candidate] || "").trim();
-        /* Ignore un second commentaire éventuel. */
+        /* Ignore un éventuel second commentaire. */
         if (trimmed.startsWith("//")) continue;
         /* Refuse de traverser une accolade ou une nouvelle fonction. */
         if (/^(?:[{}]|void\s+(?:setup|loop)\s*\()/.test(trimmed)) break;
@@ -84,90 +80,65 @@
         return candidate;
       }
     }
-    /* Signale qu’aucune cible précise n’a été trouvée. */
+    /* Signale qu'aucune cible précise n'a été trouvée. */
     return null;
   }
 
   /* Recherche une cible propre à la séance 1. */
   function sessionOneTarget(code, stepId) {
-    /* Récupère la définition précise de l’étape. */
+    /* Récupère la définition précise de l'étape. */
     const anchor = SESSION_ONE_ANCHORS[stepId];
-    /* Signale l’absence de définition spéciale. */
+    /* Signale l'absence de définition spéciale. */
     if (!anchor) return null;
     /* Découpe le programme en lignes. */
     const lines = String(code || "").split("\n");
-    /* Retourne directement la ligne prévue lorsqu’elle est fixe. */
+    /* Retourne directement la ligne prévue lorsqu'elle est fixe. */
     if (Number.isInteger(anchor.directLine)) return clampLine(code, anchor.directLine);
     /* Recherche la ligne située juste sous le commentaire exact. */
     return lineAfterComment(lines, anchor.comment);
   }
 
-  /* Oublie la cible afin de recalculer une nouvelle structure. */
-  function resetLock() {
-    /* Réinitialise l’étape. */
-    lockedStepId = null;
-    /* Réinitialise la ligne. */
-    lockedLineIndex = null;
+  /* Retourne la ligne actuelle à partir du programme réellement validé. */
+  function currentGuidedTarget(code, sessionId = 1) {
+    /* Valide le programme courant. */
+    const result = validator.validate(code, sessionId);
+    /* Lit la première étape encore incomplète. */
+    const stepId = result.firstMissing?.id || null;
+    /* Signale une mission terminée. */
+    if (!stepId) return { result, stepId: null, lineIndex: null };
+    /* Calcule la ligne avec la méthode enrichie ci-dessous. */
+    const lineIndex = validator.findLineForStep(code, stepId, result, sessionId, "edition");
+    /* Retourne un état complet et immédiatement exploitable. */
+    return { result, stepId, lineIndex };
   }
 
-  /* Remplace la recherche par une cible stable et précise en mode Guidé. */
-  validator.findLineForStep = function findStableGuidedLine(code, stepId, result, sessionId = 1, mode = "edition") {
+  /* Remplace la recherche par une cible précise recalculée à chaque appel. */
+  validator.findLineForStep = function findExactGuidedLine(code, stepId, result, sessionId = 1, mode = "edition") {
     /* Laisse la simulation et les autres niveaux utiliser le comportement normal. */
     if (mode !== "edition" || !guidedModeEnabled() || !stepId) {
       /* Délègue au validateur précédent. */
       return originalFindLineForStep(code, stepId, result, sessionId, mode);
     }
 
-    /* Réutilise exactement la même ligne tant que l’étape n’est pas validée. */
-    if (stepId === lockedStepId && Number.isInteger(lockedLineIndex)) {
-      /* Sécurise la ligne après une modification du texte. */
-      lockedLineIndex = clampLine(code, lockedLineIndex);
-      /* Retourne la ligne verrouillée. */
-      return lockedLineIndex;
-    }
-
-    /* Recherche d’abord une cible précise pour la séance 1. */
+    /* Recherche d'abord une cible précise pour la séance 1. */
     const exactTarget = sessionId === 1 ? sessionOneTarget(code, stepId) : null;
-    /* Utilise le validateur historique seulement lorsqu’aucune cible précise n’existe. */
+    /* Utilise le validateur historique seulement lorsqu'aucune cible précise n'existe. */
     const fallbackTarget = exactTarget === null
       ? originalFindLineForStep(code, stepId, result, sessionId, mode)
       : exactTarget;
-
-    /* Mémorise la nouvelle étape. */
-    lockedStepId = stepId;
-    /* Mémorise sa ligne réelle de saisie. */
-    lockedLineIndex = clampLine(code, fallbackTarget);
-    /* Retourne la cible stable. */
-    return lockedLineIndex;
+    /* Retourne une ligne sécurisée sans réutiliser une ancienne étape mémorisée. */
+    return clampLine(code, fallbackTarget);
   };
 
-  /* Expose l’état pour les tests et les repères visuels. */
+  /* Expose un calcul centralisé pour la flèche, le défilement et les tests. */
   window.TechnoQuestMissionGuidedTarget = {
-    /* Retourne l’étape verrouillée. */
-    getStepId: () => lockedStepId,
-    /* Retourne l’index de la ligne verrouillée. */
-    getLineIndex: () => lockedLineIndex,
-    /* Permet une réinitialisation explicite. */
-    reset: resetLock
+    /* Retourne l'état courant sans cache. */
+    getCurrent: (code, sessionId = 1) => currentGuidedTarget(code, sessionId),
+    /* Conserve une méthode de compatibilité pour les anciens modules. */
+    getStepId: () => currentGuidedTarget(document.getElementById("codeEditor")?.value || "", Number(document.body.dataset.session || 1)).stepId,
+    /* Conserve une méthode de compatibilité pour les anciens modules. */
+    getLineIndex: () => currentGuidedTarget(document.getElementById("codeEditor")?.value || "", Number(document.body.dataset.session || 1)).lineIndex,
+    /* La version sans mémoire n'a plus besoin d'une réinitialisation. */
+    reset: () => undefined
   };
-
-  /* Connecte les actions qui remplacent le squelette. */
-  function connectResetEvents() {
-    /* Oublie la cible lors d’un changement de niveau. */
-    document.getElementById("missionHelpLevel")?.addEventListener("change", resetLock, true);
-    /* Oublie la cible avant une activation ou une restauration. */
-    ["missionActivate", "missionReset"].forEach(id => {
-      /* Connecte le bouton lorsqu’il existe. */
-      document.getElementById(id)?.addEventListener("click", resetLock, true);
-    });
-  }
-
-  /* Attend la construction du document. */
-  if (document.readyState === "loading") {
-    /* Connecte les événements après DOMContentLoaded. */
-    document.addEventListener("DOMContentLoaded", connectResetEvents);
-  } else {
-    /* Connecte immédiatement les événements. */
-    connectResetEvents();
-  }
 })();
