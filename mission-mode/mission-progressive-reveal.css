@@ -21,7 +21,7 @@
   right: -.12rem;
 }
 
-/* En mode Guidé, la hauteur de l’éditeur correspond uniquement aux lignes révélées. */
+/* En mode Guidé, la hauteur de l'éditeur correspond aux lignes déjà révélées et à leur contexte. */
 .mission-progressive-guided .mission-code-panel .mission-code-shell {
   height: var(--mission-progressive-height, 170px) !important;
   min-height: var(--mission-progressive-height, 170px) !important;
@@ -30,7 +30,7 @@
   transition: height .38s ease, min-height .38s ease, max-height .38s ease;
 }
 
-/* Le composant d’édition suit exactement la hauteur progressive. */
+/* Le composant d'édition suit exactement la hauteur progressive. */
 .mission-progressive-guided .mission-code-panel .mission-editor-mount,
 .mission-progressive-guided .mission-code-panel .mission-editor-mount .editor-wrap,
 .mission-progressive-guided .mission-code-panel .mission-editor-mount pre,
@@ -40,19 +40,27 @@
   max-height: var(--mission-progressive-height, 170px) !important;
 }
 
-/* Le défilement vertical reste possible seulement lorsque le programme révélé dépasse la fenêtre. */
+/* Le défilement vertical reste disponible pour relire toutes les lignes déjà effectuées. */
 .mission-progressive-guided .mission-code-panel .mission-editor-mount pre,
 .mission-progressive-guided .mission-code-panel .mission-editor-mount textarea {
   overflow-y: auto !important;
   overflow-x: auto !important;
+  overscroll-behavior: contain;
 }
 
-/* Les numéros qui correspondent aux lignes encore cachées sont retirés de l’affichage. */
+/* Les numéros futurs deviennent invisibles sans perdre leur hauteur ni désaligner la gouttière. */
 .mission-line-numbers span.mission-line-future {
-  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
-/* Une courte animation accompagne l’apparition d’une nouvelle étape. */
+/* Les trois lignes situées après la cible restent visibles comme contexte et sont légèrement atténuées. */
+.mission-line-numbers span.mission-line-preview {
+  color: #48657a;
+  opacity: .72;
+}
+
+/* Une courte animation accompagne l'apparition d'une nouvelle étape. */
 .mission-code-shell.mission-progressive-step-change .mission-target-line {
   animation: missionProgressiveLineReveal .65s ease-out;
 }
@@ -78,7 +86,7 @@
   }
 }
 
-/* Le numéro actif est brièvement renforcé lors du changement d’étape. */
+/* Le numéro actif est brièvement renforcé lors du changement d'étape. */
 @keyframes missionProgressiveNumberReveal {
   0% {
     transform: scale(.78);
@@ -103,7 +111,7 @@
   line-height: 1.35;
 }
 
-/* Le message n’apparaît que dans le niveau Guidé. */
+/* Le message n'apparaît que dans le niveau Guidé. */
 .mission-compact-layout:not(.mission-progressive-guided) .mission-progressive-note {
   display: none;
 }
@@ -120,7 +128,7 @@
   }
 }
 
-/* Les animations sont supprimées lorsque l’utilisateur le demande. */
+/* Les animations sont supprimées lorsque l'utilisateur le demande. */
 @media (prefers-reduced-motion: reduce) {
   .mission-progressive-guided .mission-code-panel .mission-code-shell,
   .mission-progressive-guided .mission-code-panel .mission-editor-mount,
@@ -130,14 +138,14 @@
     transition: none !important;
   }
 
-  /* Les signaux visuels de changement d’étape deviennent statiques. */
+  /* Les signaux visuels de changement d'étape deviennent statiques. */
   .mission-code-shell.mission-progressive-step-change .mission-target-line,
   .mission-code-shell.mission-progressive-step-change .mission-target-number {
     animation: none !important;
   }
 }
 
-/* L’impression affiche le programme complet sans restriction progressive. */
+/* L'impression affiche le programme complet sans restriction progressive. */
 @media print {
   .mission-progressive-guided .mission-code-panel .mission-code-shell,
   .mission-progressive-guided .mission-code-panel .mission-editor-mount,
@@ -151,10 +159,11 @@
 
   /* Tous les numéros redeviennent visibles sur la version imprimée. */
   .mission-line-numbers span.mission-line-future {
-    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
-  /* L’indication interactive n’est pas imprimée. */
+  /* L'indication interactive n'est pas imprimée. */
   .mission-progressive-note {
     display: none !important;
   }
