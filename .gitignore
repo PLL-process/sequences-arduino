@@ -1,0 +1,8 @@
+# Dépendances d'outillage (Playwright) — jamais committées.
+node_modules/
+
+# Preuves générées par les tests de caractérisation (captures + relevés).
+tests/__captures__/
+
+# Captures de diagnostic éventuelles déposées à la racine par les anciens tests.
+cursor-failure-*.png

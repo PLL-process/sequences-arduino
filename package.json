@@ -1,0 +1,13 @@
+{
+  "name": "technoquest-jardin-connecte",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Outillage de tests Playwright pour le mode Mission (LOT #1 : caractérisation). Le site reste statique, sans étape de build.",
+  "scripts": {
+    "test:baseline": "node tests/mission-baseline-characterization.mjs",
+    "test:pointer": "node tests/mission-editor-pointer-alignment.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.61.1"
+  }
+}
