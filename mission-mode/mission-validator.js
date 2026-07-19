@@ -1,8 +1,12 @@
 /* TechnoQuest Mission Mode - validation C++ Arduino multi-séances. */
+/* La séance 1 est validée par CONTEXTE (fonction setup()/loop(), variable, mode) grâce à */
+/* l'analyse structurelle pure (mission-arduino-analysis.js) : plus de regex globale unique. */
 "use strict";
 
 (() => {
   const dataApi = (typeof window !== "undefined" ? window.TechnoQuestMissionData : null) || (typeof require !== "undefined" ? require("./mission-data.js") : null);
+  /* Analyse lexicale/structurelle (neutralisation commentaires/chaînes + corps setup()/loop()). */
+  const analysisApi = (typeof window !== "undefined" ? window.TechnoQuestMissionArduinoAnalysis : null) || (typeof require !== "undefined" ? require("./mission-arduino-analysis.js") : null);
 
   const pin = {
     humidity: "(?:PIN_HUMIDITE_SOL|A0)",
@@ -14,27 +18,64 @@
   const digitalLow = new RegExp(`\\bdigitalWrite\\s*\\(\\s*${pin.pump}\\s*,\\s*LOW\\s*\\)\\s*;`);
   const digitalHigh = new RegExp(`\\bdigitalWrite\\s*\\(\\s*${pin.pump}\\s*,\\s*HIGH\\s*\\)\\s*;`);
 
-  function sanitize(code) {
-    return String(code || "")
-      .replace(/\/\*[\s\S]*?\*\//g, "")
-      .split("\n")
-      .map(line => line.replace(/\/\/.*$/, ""))
-      .join("\n");
+  /* ---- Expressions par instruction (appliquées à un CORPS de fonction, pas au fichier). ---- */
+  const RE = {
+    /* Bibliothèque de base (tolère des parenthèses/espaces raisonnables). */
+    include: /#\s*include\s*<\s*Arduino\.h\s*>/,
+    /* Serial.begin(9600) avec espaces, retours à la ligne et parenthèses superflues tolérés. */
+    serialBegin: /\bSerial\s*\.\s*begin\s*\(\s*\(?\s*9600\s*\)?\s*\)\s*;/,
+    /* pinMode du relais en sortie. */
+    pinModeOut: new RegExp(`\\bpinMode\\s*\\(\\s*${pin.pump}\\s*,\\s*OUTPUT\\s*\\)\\s*;`),
+    /* Toute utilisation de pinMode. */
+    pinModeAny: /\bpinMode\s*\(/,
+    /* pinMode du relais en INPUT (erreur pédagogique fréquente). */
+    pinModePumpInput: new RegExp(`\\bpinMode\\s*\\(\\s*${pin.pump}\\s*,\\s*INPUT\\s*\\)`),
+    /* pinMode visant réellement la broche du relais (peu importe le mode). */
+    pinModePump: new RegExp(`\\bpinMode\\s*\\(\\s*${pin.pump}\\s*,`),
+    /* Arrêt de la pompe (LOW sur la broche du relais). */
+    digLowPump: digitalLow,
+    /* Temporisation d'une seconde. */
+    delay1000: /\bdelay\s*\(\s*1000(?:UL|L)?\s*\)\s*;/
+  };
+
+  /* Échappe une valeur pour un usage littéral dans une expression régulière. */
+  function escapeRegExp(value) {
+    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
-  function analogVar(source, pinPattern) {
-    const pattern = new RegExp(`\\b(?:int|long|float|auto)?\\s*([A-Za-z_]\\w*)\\s*=\\s*analogRead\\s*\\(\\s*${pinPattern}\\s*\\)\\s*;`);
-    return source.match(pattern)?.[1] || "";
+  /* Teste un motif sur un texte (motif non global : pas d'état lastIndex à gérer). */
+  function has(text, pattern) {
+    return pattern.test(String(text || ""));
   }
 
+  /* Extrait le nom de la variable recevant analogRead(pin) dans un corps donné. */
+  function analogVarIn(body, pinPattern) {
+    const pattern = new RegExp(`\\b([A-Za-z_]\\w*)\\s*=\\s*analogRead\\s*\\(\\s*${pinPattern}\\s*\\)\\s*;`);
+    return String(body || "").match(pattern)?.[1] || "";
+  }
+
+  /* Indique si une lecture analogique d'une broche est présente dans un texte. */
+  function analogReadPresent(text, pinPattern) {
+    return new RegExp(`analogRead\\s*\\(\\s*${pinPattern}\\s*\\)`).test(String(text || ""));
+  }
+
+  /* Indique si une variable précise est affichée seule dans Serial.print/println. */
+  function printsVariable(body, variableName) {
+    if (!variableName) return false;
+    const variable = escapeRegExp(variableName);
+    return new RegExp(`\\bSerial\\s*\\.\\s*print(?:ln)?\\s*\\(\\s*${variable}\\s*\\)`).test(String(body || ""));
+  }
+
+  /* Indique si une instruction est présente UNIQUEMENT en commentaire ou dans une chaîne. */
+  function onlyInCommentOrString(analysis, pattern) {
+    return has(analysis.original, pattern) && !has(analysis.stripped, pattern);
+  }
+
+  /* ---- Helpers de sessions ultérieures (compares/affichages libres), conservés tels quels. ---- */
   function hasSerialOutput(source, variableName) {
     if (!variableName) return false;
     const escaped = escapeRegExp(variableName);
     return new RegExp(`\\bSerial\\s*\\.\\s*print(?:ln)?\\s*\\(\\s*${escaped}\\s*\\)\\s*;`).test(source);
-  }
-
-  function escapeRegExp(value) {
-    return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   }
 
   function compareWith(source, variableName, operator, constantName) {
@@ -60,6 +101,9 @@
     ];
   }
 
+  /* ---- Définition des étapes. Les étapes de la séance 1 utilisent une vérification ---- */
+  /* ---- CONTEXTUELLE check(analysis, context) → { ok, message } ; les autres séances ---- */
+  /* ---- conservent leur test(source, context) → booléen. ---- */
   const stepTemplates = {
     include: {
       label: "#include <Arduino.h>",
@@ -68,7 +112,14 @@
       hint3: "La directive commence par #include et se place avant les constantes.",
       marker: /biblioth[eè]que|#\s*include/i,
       line: /#\s*include\s*<\s*Arduino\.h\s*>/i,
-      test: source => /#\s*include\s*<\s*Arduino\.h\s*>/.test(source)
+      check: analysis => {
+        /* Directive réellement présente (hors commentaire/chaîne). */
+        if (has(analysis.stripped, RE.include)) return { ok: true };
+        /* Présente uniquement en commentaire. */
+        if (has(analysis.original, RE.include)) return { ok: false, message: "La bibliothèque #include <Arduino.h> est écrite en commentaire : elle n'est pas prise en compte." };
+        /* Absente. */
+        return { ok: false };
+      }
     },
     serialBegin: {
       label: "Serial.begin(9600);",
@@ -77,7 +128,18 @@
       hint3: "Le Moniteur Série devra aussi être réglé sur 9600 bauds.",
       marker: /Moniteur S[ée]rie|Serial\.begin/i,
       line: /\bSerial\s*\.\s*begin\s*\(\s*9600\s*\)\s*;/,
-      test: source => /\bSerial\s*\.\s*begin\s*\(\s*9600\s*\)\s*;/.test(source)
+      check: analysis => {
+        /* Correctement placé dans setup(). */
+        if (has(analysis.setup.body, RE.serialBegin)) return { ok: true };
+        /* Présent mais dans loop(). */
+        if (has(analysis.loop.body, RE.serialBegin)) return { ok: false, message: "Serial.begin(9600); est présent, mais doit être placé dans setup()." };
+        /* Présent hors des fonctions. */
+        if (has(analysis.outside, RE.serialBegin)) return { ok: false, message: "Serial.begin(9600); doit être placé à l'intérieur de setup()." };
+        /* Présent seulement en commentaire/chaîne. */
+        if (onlyInCommentOrString(analysis, RE.serialBegin)) return { ok: false, message: "Serial.begin(9600); est actuellement dans un commentaire ou une chaîne et n'est pas exécuté." };
+        /* Absent. */
+        return { ok: false };
+      }
     },
     pinMode: {
       label: "pinMode(PIN_RELAIS_POMPE, OUTPUT);",
@@ -86,7 +148,20 @@
       hint3: "OUTPUT indique que D6 envoie une commande logique.",
       marker: /sortie|pinMode/i,
       line: new RegExp(`\\bpinMode\\s*\\(\\s*${pin.pump}\\s*,\\s*OUTPUT\\s*\\)\\s*;`),
-      test: source => new RegExp(`\\bpinMode\\s*\\(\\s*${pin.pump}\\s*,\\s*OUTPUT\\s*\\)\\s*;`).test(source)
+      check: analysis => {
+        /* Correctement placé dans setup(). */
+        if (has(analysis.setup.body, RE.pinModeOut)) return { ok: true };
+        /* Correct mais dans loop(). */
+        if (has(analysis.loop.body, RE.pinModeOut)) return { ok: false, message: "pinMode(PIN_RELAIS_POMPE, OUTPUT); doit être placé dans setup()." };
+        /* Broche du relais configurée en INPUT au lieu d'OUTPUT. */
+        if (has(analysis.stripped, RE.pinModePumpInput)) return { ok: false, message: "La broche du relais est configurée en INPUT, mais elle doit être une sortie : utilise OUTPUT." };
+        /* pinMode utilisé sur une autre broche que le relais. */
+        if (has(analysis.stripped, RE.pinModeAny) && !has(analysis.stripped, RE.pinModePump)) return { ok: false, message: "pinMode doit configurer la broche du relais (PIN_RELAIS_POMPE) en OUTPUT." };
+        /* Présent seulement en commentaire/chaîne. */
+        if (onlyInCommentOrString(analysis, RE.pinModeOut)) return { ok: false, message: "pinMode(PIN_RELAIS_POMPE, OUTPUT); est dans un commentaire ou une chaîne et n'est pas exécuté." };
+        /* Absent. */
+        return { ok: false };
+      }
     },
     safeLowSetup: {
       label: "digitalWrite(PIN_RELAIS_POMPE, LOW);",
@@ -95,7 +170,16 @@
       hint3: "LOW garde le relais au repos dans ces missions.",
       marker: /LOW|pompe arr[eê]t[eé]e|digitalWrite/i,
       line: digitalLow,
-      test: source => digitalLow.test(source)
+      check: analysis => {
+        /* Arrêt de sécurité présent dans setup(). */
+        if (has(analysis.setup.body, RE.digLowPump)) return { ok: true };
+        /* Présent seulement dans loop() : il manque dans setup(). */
+        if (has(analysis.loop.body, RE.digLowPump)) return { ok: false, message: "L'arrêt de sécurité digitalWrite(PIN_RELAIS_POMPE, LOW); doit d'abord être placé dans setup() pour démarrer la pompe à l'arrêt." };
+        /* Présent seulement en commentaire/chaîne. */
+        if (onlyInCommentOrString(analysis, RE.digLowPump)) return { ok: false, message: "L'arrêt de sécurité de la pompe est dans un commentaire ou une chaîne et n'est pas exécuté." };
+        /* Absent. */
+        return { ok: false };
+      }
     },
     thresholdHumidity: {
       label: "const int SEUIL_HUMIDITE = ...;",
@@ -140,7 +224,7 @@
       hint3: "Stocke la valeur dans une variable int.",
       marker: /humidit[eé]|A0/i,
       line: new RegExp(`analogRead\\s*\\(\\s*${pin.humidity}\\s*\\)\\s*;`),
-      test: (_source, context) => Boolean(context.vars.humidity)
+      check: (analysis, context) => readCheck(analysis, context, "humidity")
     },
     readLight: {
       label: "analogRead(PIN_LUMIERE);",
@@ -149,7 +233,7 @@
       hint3: "Stocke la valeur dans une variable int.",
       marker: /lumi[eè]re|A1/i,
       line: new RegExp(`analogRead\\s*\\(\\s*${pin.light}\\s*\\)\\s*;`),
-      test: (_source, context) => Boolean(context.vars.light)
+      check: (analysis, context) => readCheck(analysis, context, "light")
     },
     readWater: {
       label: "analogRead(PIN_NIVEAU_EAU);",
@@ -158,7 +242,7 @@
       hint3: "Cette mesure protège la pompe.",
       marker: /niveau|r[eé]servoir|A2/i,
       line: new RegExp(`analogRead\\s*\\(\\s*${pin.water}\\s*\\)\\s*;`),
-      test: (_source, context) => Boolean(context.vars.water)
+      check: (analysis, context) => readCheck(analysis, context, "water")
     },
     compareHumidity: {
       label: "humidite < SEUIL_HUMIDITE",
@@ -212,7 +296,7 @@
       hint3: "Exemple : Serial.println(humidite);",
       marker: /Serial|affich/i,
       line: (_context) => /\bSerial\s*\.\s*print(?:ln)?\s*\(/,
-      test: (source, context) => hasSerialOutput(source, context.vars.humidity)
+      check: (analysis, context) => showCheck(analysis, context, "humidity")
     },
     showLight: {
       label: "affichage de la lumière",
@@ -221,7 +305,7 @@
       hint3: "Exemple : Serial.println(lumiere);",
       marker: /Serial|lumi[eè]re/i,
       line: (_context) => /\bSerial\s*\.\s*print(?:ln)?\s*\(/,
-      test: (source, context) => hasSerialOutput(source, context.vars.light)
+      check: (analysis, context) => showCheck(analysis, context, "light")
     },
     showWater: {
       label: "affichage du niveau d'eau",
@@ -230,7 +314,7 @@
       hint3: "Exemple : Serial.println(niveauEau);",
       marker: /Serial|niveau|r[eé]servoir/i,
       line: (_context) => /\bSerial\s*\.\s*print(?:ln)?\s*\(/,
-      test: (source, context) => hasSerialOutput(source, context.vars.water)
+      check: (analysis, context) => showCheck(analysis, context, "water")
     },
     showSoilState: {
       label: "affichage Sol sec / Sol humide",
@@ -271,12 +355,21 @@
     pumpStop: {
       label: "arrêter la pompe avec LOW",
       hint1: "Après l'arrosage ou en cas de refus, la pompe doit être arrêtée.",
-      hint2: "Ajoute digitalWrite(PIN_RELAIS_POMPE, LOW);.",
+      hint2: "Ajoute digitalWrite(PIN_RELAIS_POMPE, LOW); dans loop().",
       hint3: "Cette instruction doit aussi exister dans les cas else.",
       marker: /LOW|pompe arr[eê]t/i,
       line: digitalLow,
       last: true,
-      test: source => digitalLow.test(source)
+      check: analysis => {
+        /* Arrêt de la pompe présent dans loop() (étape pédagogique de la boucle). */
+        if (has(analysis.loop.body, RE.digLowPump)) return { ok: true };
+        /* Présent uniquement dans setup() : il manque dans loop(). */
+        if (has(analysis.setup.body, RE.digLowPump)) return { ok: false, message: "La pompe est arrêtée dans setup(), mais il manque son arrêt dans loop()." };
+        /* Présent seulement en commentaire/chaîne. */
+        if (onlyInCommentOrString(analysis, RE.digLowPump)) return { ok: false, message: "L'arrêt de la pompe dans loop() est dans un commentaire ou une chaîne et n'est pas exécuté." };
+        /* Absent. */
+        return { ok: false };
+      }
     },
     delay: {
       label: "delay(1000);",
@@ -285,9 +378,71 @@
       hint3: "1000 millisecondes correspondent à une seconde.",
       marker: /1000|seconde|delay/i,
       line: /\bdelay\s*\(\s*1000(?:UL|L)?\s*\)\s*;/,
-      test: source => /\bdelay\s*\(\s*1000(?:UL|L)?\s*\)\s*;/.test(source)
+      check: analysis => {
+        /* Temporisation d'une seconde dans loop(). */
+        if (has(analysis.loop.body, RE.delay1000)) return { ok: true };
+        /* Présente mais dans setup(). */
+        if (has(analysis.setup.body, RE.delay1000)) return { ok: false, message: "delay(1000); doit être placé dans loop(), pas dans setup()." };
+        /* Présente seulement en commentaire/chaîne. */
+        if (onlyInCommentOrString(analysis, RE.delay1000)) return { ok: false, message: "delay(1000); est dans un commentaire ou une chaîne et n'est pas exécuté." };
+        /* Absente. */
+        return { ok: false };
+      }
     }
   };
+
+  /* Désignations pédagogiques des trois capteurs : sujet (« la lumière »), complément « de … » */
+  /* et complément « à … » (contraction « au » gérée) pour des messages grammaticalement corrects. */
+  const SENSORS = {
+    humidity: { pin: pin.humidity, subject: "l'humidité du sol", of: "de l'humidité du sol", at: "à l'humidité du sol", example: "int humidite = analogRead(PIN_HUMIDITE_SOL);" },
+    light: { pin: pin.light, subject: "la lumière", of: "de la lumière", at: "à la lumière", example: "int lumiere = analogRead(PIN_LUMIERE);" },
+    water: { pin: pin.water, subject: "le niveau d'eau", of: "du niveau d'eau", at: "au niveau d'eau", example: "int niveauEau = analogRead(PIN_NIVEAU_EAU);" }
+  };
+
+  /* Vérification contextuelle d'une lecture analogique (doit être dans loop() et stockée). */
+  function readCheck(analysis, context, key) {
+    /* Désignation du capteur. */
+    const sensor = SENSORS[key];
+    /* La variable est extraite du corps de loop() : présence correcte. */
+    if (context.vars[key]) return { ok: true };
+    /* Lecture réalisée mais dans setup() au lieu de loop(). */
+    if (analogReadPresent(analysis.setup.body, sensor.pin)) return { ok: false, message: `La lecture ${sensor.of} doit être dans loop(), pas dans setup().` };
+    /* Lecture présente dans loop() mais non stockée dans une variable. */
+    if (analogReadPresent(analysis.loop.body, sensor.pin)) return { ok: false, message: `Stocke la lecture ${sensor.of} dans une variable, par exemple : ${sensor.example}` };
+    /* Lecture seulement en commentaire/chaîne. */
+    if (analogReadPresent(analysis.original, sensor.pin) && !analogReadPresent(analysis.stripped, sensor.pin)) return { ok: false, message: `La lecture ${sensor.of} est dans un commentaire ou une chaîne et n'est pas exécutée.` };
+    /* Absente. */
+    return { ok: false };
+  }
+
+  /* Vérification contextuelle d'un affichage (doit afficher LA bonne variable, dans loop()). */
+  function showCheck(analysis, context, key) {
+    /* Désignation du capteur attendu. */
+    const sensor = SENSORS[key];
+    /* Variable attendue pour cet affichage. */
+    const variable = context.vars[key];
+    /* Affichage correct de la bonne variable dans loop(). */
+    if (variable && printsVariable(analysis.loop.body, variable)) return { ok: true };
+    /* Bonne variable mais affichée dans setup(). */
+    if (variable && printsVariable(analysis.setup.body, variable)) return { ok: false, message: `L'affichage ${sensor.of} doit être dans loop().` };
+    /* Recense les variables de capteurs RÉELLEMENT affichées dans loop(). */
+    const printedSensors = Object.keys(SENSORS).filter(k => context.vars[k] && printsVariable(analysis.loop.body, context.vars[k]));
+    /* Variables affichées appartenant à un AUTRE capteur que celui attendu. */
+    const wrongSensors = printedSensors.filter(k => k !== key);
+    /* Cas CERTAIN : une seule variable de capteur est affichée et c'est la mauvaise. */
+    if (wrongSensors.length === 1 && printedSensors.length === 1) {
+      return { ok: false, message: `Tu affiches ${SENSORS[wrongSensors[0]].subject} à l'étape consacrée ${sensor.at}.` };
+    }
+    /* Cas INCERTAIN : une mauvaise variable est affichée mais on ne peut pas l'identifier */
+    /* avec certitude (plusieurs capteurs affichés) → message neutre et exact, jamais faux. */
+    if (wrongSensors.length >= 1) {
+      return { ok: false, message: "La variable affichée ne correspond pas à la mesure attendue pour cette étape." };
+    }
+    /* Aucune variable lue : il faut d'abord lire la mesure. */
+    if (!variable) return { ok: false, message: `Lis d'abord la mesure ${sensor.of} dans une variable, puis affiche cette variable.` };
+    /* Variable lue mais non affichée (souvent : seulement une étiquette texte). */
+    return { ok: false, message: `Affiche la variable ${sensor.of} (pas seulement un texte) avec Serial.print ou Serial.println.` };
+  }
 
   function getMission(sessionId) {
     return dataApi.getMission(Number(sessionId) || 1);
@@ -298,18 +453,75 @@
     return mission.steps.map(id => ({ id, ...stepTemplates[id] })).filter(step => step.label);
   }
 
+  /* Neutralise UNIQUEMENT les commentaires (chemin HÉRITÉ des séances 2 à 8, inchangé). */
+  function sanitize(code) {
+    return String(code || "")
+      .replace(/\/\*[\s\S]*?\*\//g, "")
+      .split("\n")
+      .map(line => line.replace(/\/\/.*$/, ""))
+      .join("\n");
+  }
+
+  /* Extrait les variables de capteurs depuis une source donnée. */
+  function extractVars(varSource) {
+    return {
+      humidity: analogVarIn(varSource, pin.humidity),
+      light: analogVarIn(varSource, pin.light),
+      water: analogVarIn(varSource, pin.water)
+    };
+  }
+
+  /* Chemin HÉRITÉ (booléen sur le code sanitizé) pour les 12 modèles partagés avec la séance 1. */
+  /* Ces fonctions reproduisent EXACTEMENT l'ancien mécanisme test(source) utilisé par les */
+  /* séances 2 à 8 : aucune analyse de fonction, aucune extraction depuis loop(), aucun message. */
+  const LEGACY_TEST = {
+    include: source => RE.include.test(source),
+    serialBegin: source => /\bSerial\s*\.\s*begin\s*\(\s*9600\s*\)\s*;/.test(source),
+    pinMode: source => RE.pinModeOut.test(source),
+    safeLowSetup: source => digitalLow.test(source),
+    readHumidity: (_source, context) => Boolean(context.vars.humidity),
+    readLight: (_source, context) => Boolean(context.vars.light),
+    readWater: (_source, context) => Boolean(context.vars.water),
+    showHumidity: (source, context) => hasSerialOutput(source, context.vars.humidity),
+    showLight: (source, context) => hasSerialOutput(source, context.vars.light),
+    showWater: (source, context) => hasSerialOutput(source, context.vars.water),
+    pumpStop: source => digitalLow.test(source),
+    delay: source => /\bdelay\s*\(\s*1000(?:UL|L)?\s*\)\s*;/.test(source)
+  };
+
+  /* Évalue une étape. La vérification CONTEXTUELLE n'est utilisée QUE pour la séance 1. */
+  function evaluateStep(step, analysis, context, useContextual, legacySource) {
+    /* Séance 1 uniquement : vérification contextuelle riche (fonction, variable, message). */
+    if (useContextual && typeof step.check === "function") return step.check(analysis, context);
+    /* Séances 2 à 8 (et repli) : ANCIEN chemin test(source) strictement préservé. */
+    const legacy = LEGACY_TEST[step.id] || step.test;
+    /* Applique le test hérité sur le code sanitizé (commentaires retirés). */
+    if (typeof legacy === "function") return { ok: Boolean(legacy(legacySource, context)) };
+    /* Aucune vérification définie. */
+    return { ok: false };
+  }
+
   function validate(code, sessionId = 1) {
     const mission = getMission(sessionId);
+    /* GARDE DE PÉRIMÈTRE : l'analyse contextuelle Arduino ne s'applique QU'À la séance 1. */
+    /* (Un repli sûr désactive le contexte si le module d'analyse est absent.) */
+    const useContextual = Number(sessionId) === 1 && Boolean(analysisApi) && typeof analysisApi.analyze === "function";
+    /* Code neutralisé (commentaires retirés) : base du chemin hérité et champ « source ». */
     const source = sanitize(code);
-    const context = {
-      vars: {
-        humidity: analogVar(source, pin.humidity),
-        light: analogVar(source, pin.light),
-        water: analogVar(source, pin.water)
-      }
-    };
+    /* Analyse structurelle calculée UNIQUEMENT pour la séance 1 (aucune dépendance sinon). */
+    const analysis = useContextual ? analysisApi.analyze(code) : null;
+    /* Variables : depuis loop() en séance 1 ; depuis tout le code sanitizé pour les séances 2 à 8. */
+    const varSource = useContextual ? (analysis.loop.found ? analysis.loop.body : analysis.stripped) : source;
+    /* Contexte partagé (l'analyse n'est présente qu'en séance 1). */
+    const context = { analysis, vars: extractVars(varSource) };
     const steps = getSteps(mission.id);
-    const stepResults = steps.map(step => ({ ...step, ok: step.test(source, context) }));
+    /* Évalue chaque étape avec son message pédagogique éventuel (contextuel en séance 1). */
+    const stepResults = steps.map(step => {
+      /* Résultat de la vérification (contextuelle en séance 1, héritée sinon). */
+      const outcome = evaluateStep(step, analysis, context, useContextual, source);
+      /* Compose l'étape enrichie. */
+      return { ...step, ok: Boolean(outcome.ok), message: outcome.ok ? "" : (outcome.message || "") };
+    });
     const constants = constantsStatus(source);
     const missingConstants = constants.filter(item => !item.ok);
     const missingSteps = stepResults.filter(item => !item.ok);
@@ -317,7 +529,8 @@
     const hasPlaceholders = /_{3,}|TODO|A_COMPLETER/i.test(code || "");
     const errors = [
       ...missingConstants.map(item => `Constante manquante : ${item.label}`),
-      ...missingSteps.map(item => `Instruction manquante : ${item.label}`)
+      /* Utilise le message pédagogique contextuel lorsqu'il existe, sinon un libellé générique. */
+      ...missingSteps.map(item => item.message || `Instruction manquante : ${item.label}`)
     ];
     if (hasPlaceholders) errors.unshift("Des zones à compléter sont encore présentes dans le programme.");
     const badges = Object.fromEntries(mission.badges.map(badge => [
@@ -327,6 +540,7 @@
 
     return {
       source,
+      analysis,
       context,
       constants,
       steps: stepResults,
