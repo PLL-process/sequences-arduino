@@ -31,17 +31,31 @@ void setup() { // Cette fonction s'exécute une seule fois au démarrage.
 } // Fin de setup().
 
 void loop() { // Cette fonction recommence continuellement.
-  // Lire l'humidité du sol sur A0.
+  // Une variable mémorise une valeur sous un nom.
+  // Utilise un identifiant différent pour chaque capteur.
+  // Un identifiant ne contient ni espace, ni tiret, ni accent.
+  // Il peut contenir des lettres, des chiffres et le caractère _.
+  // Il ne doit pas commencer par un chiffre.
+  // Les majuscules comptent : niveauEau et niveaueau sont différents.
+  // Lire l'humidité du sol sur A0 et mémoriser la mesure
+  // dans une variable distincte, par exemple humiditeSol.
 
-  // Lire la lumière sur A1.
+  // Lire la lumière sur A1 et mémoriser la mesure
+  // dans une variable distincte, par exemple lumiere.
 
-  // Lire le niveau d'eau sur A2.
+  // Lire le niveau d'eau sur A2 et mémoriser la mesure
+  // dans une variable distincte, par exemple niveauEau.
 
-  // Afficher l'humidité dans le Moniteur Série.
+  // Serial.print() affiche sans passer à la ligne suivante.
+  // Serial.println() affiche puis passe à la ligne suivante.
+  // Afficher l'humidité du sol dans le Moniteur série.
+  Serial.print("Humidité du sol : ");
 
-  // Afficher la lumière dans le Moniteur Série.
+  // Afficher la lumière dans le Moniteur série.
+  Serial.print("Lumière : ");
 
-  // Afficher le niveau d'eau dans le Moniteur Série.
+  // Afficher le niveau d'eau dans le Moniteur série.
+  Serial.print("Niveau d'eau : ");
 
   // Garder la pompe arrêtée pendant cette séance d'observation.
 

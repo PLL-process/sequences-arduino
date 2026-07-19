@@ -10,8 +10,9 @@
   const STORAGE_KEY = "technoquest-mission-v1";
   /* Clé des sauvegardes de récupération. */
   const BACKUP_KEY = "technoquest-mission-v1-backups";
-  /* Version de structure introduite par ce correctif (emplacement de code dédié pour include). */
-  const MIGRATION_VERSION = "session-1-guided-include-slot-v5";
+  /* Version de structure : v6 introduit les libellés Serial.print("…") préremplis et protégés */
+  /* au-dessus de chaque ligne de réponse Serial.println(variable); des trois affichages. */
+  const MIGRATION_VERSION = "session-1-guided-print-labels-v6";
   /* Nombre maximal de sauvegardes conservées par séance. */
   const MAX_BACKUPS = 3;
   /* Séance concernée par cette migration. */
@@ -190,6 +191,30 @@
   function firstLine(source, re) { const f = String(source || "").split("\n").find(l => re.test(l)); return f ? f.trim() : null; }
   function allLines(source, re) { return String(source || "").split("\n").filter(l => re.test(l)).map(l => l.trim()); }
 
+  /* Emplacement de RÉPONSE d'un affichage : la ligne vide sous le libellé Serial.print("…") */
+  /* prérempli. Le commentaire ancre le bloc, le libellé repère la ligne de réponse (juste après). */
+  function answerSlotForShow(skeletonLines, commentRe, labelRe) {
+    for (let i = 0; i < skeletonLines.length; i += 1) {
+      if (!commentRe.test(skeletonLines[i])) continue;
+      for (let j = i + 1; j <= Math.min(skeletonLines.length - 1, i + 6); j += 1) {
+        if (labelRe.test(skeletonLines[j])) return Math.min(skeletonLines.length - 1, j + 1);
+        if (/^(?:[{}]|void\s+(?:setup|loop)\s*\()/.test(String(skeletonLines[j] || "").trim())) break;
+      }
+    }
+    return -1;
+  }
+  /* Nom de la variable recevant analogRead(broche) dans un corps donné (sans transformation). */
+  function analogVar(body, pinRe) {
+    const m = String(body || "").match(new RegExp(`\\b([A-Za-z_]\\w*)\\s*=\\s*analogRead\\s*\\(\\s*${pinRe}\\s*\\)`));
+    return m ? m[1] : "";
+  }
+  /* Instruction d'affichage (Serial.print/println) qui affiche EXACTEMENT cette variable. */
+  function printOfVariable(body, variableName) {
+    if (!variableName) return null;
+    const line = String(body || "").split("\n").find(l => new RegExp(`\\bSerial\\s*\\.\\s*print(?:ln)?\\s*\\(\\s*${variableName}\\s*\\)\\s*;`).test(l));
+    return line ? line.trim() : null;
+  }
+
   /* Reconstruit le nouveau squelette avec les instructions reconnues de l'ancien code. */
   function rebuild(source) {
     if (!validator || !analysisApi || !newSkeleton) return { code: "", certain: false };
@@ -203,6 +228,11 @@
       if (!instruction) return; const slot = slotUnderComment(lines, commentRe); if (slot < 0) return;
       lines[slot] = indent + instruction; placed += 1;
     }
+    /* Place une instruction d'affichage dans la ligne de réponse sous son libellé prérempli. */
+    function placeShow(commentRe, labelRe, instruction) {
+      if (!instruction) return; const slot = answerSlotForShow(lines, commentRe, labelRe); if (slot < 0) return;
+      lines[slot] = "  " + instruction; placed += 1;
+    }
     place(/Charger ici la biblioth/i, firstLine(source, /#\s*include\s*<\s*Arduino\.h\s*>/i), "");
     place(/Initialiser le Moniteur/i, firstLine(setupBody, /\bSerial\s*\.\s*begin\s*\([^;\n]*\)\s*;/i), "  ");
     place(/Configurer D6/i, firstLine(setupBody, /\bpinMode\s*\([^;\n]*\)\s*;/i), "  ");
@@ -210,10 +240,14 @@
     place(/Lire l'humidit/i, firstLine(loopBody, /=\s*analogRead\s*\(\s*(?:PIN_HUMIDITE_SOL|A0)\s*\)\s*;/i), "  ");
     place(/Lire la lumi/i, firstLine(loopBody, /=\s*analogRead\s*\(\s*(?:PIN_LUMIERE|A1)\s*\)\s*;/i), "  ");
     place(/Lire le niveau d'eau/i, firstLine(loopBody, /=\s*analogRead\s*\(\s*(?:PIN_NIVEAU_EAU|A2)\s*\)\s*;/i), "  ");
-    const shows = allLines(loopBody, /\bSerial\s*\.\s*print(?:ln)?\s*\(\s*[A-Za-z_]\w*\s*\)\s*;/i);
-    if (shows[0]) place(/Afficher l'humidit/i, shows[0], "  ");
-    if (shows[1]) place(/Afficher la lumi/i, shows[1], "  ");
-    if (shows[2]) place(/Afficher le niveau d'eau/i, shows[2], "  ");
+    /* Chaque affichage est replacé sous SON libellé, d'après la variable réellement lue */
+    /* pour ce capteur — sans jamais transformer une mauvaise variable en bonne variable. */
+    const varHumidity = analogVar(loopBody, "(?:PIN_HUMIDITE_SOL|A0)");
+    const varLight = analogVar(loopBody, "(?:PIN_LUMIERE|A1)");
+    const varWater = analogVar(loopBody, "(?:PIN_NIVEAU_EAU|A2)");
+    placeShow(/Afficher l'humidit/i, /Serial\s*\.\s*print\s*\(\s*"/i, printOfVariable(loopBody, varHumidity));
+    placeShow(/Afficher la lumi/i, /Serial\s*\.\s*print\s*\(\s*"/i, printOfVariable(loopBody, varLight));
+    placeShow(/Afficher le niveau d'eau/i, /Serial\s*\.\s*print\s*\(\s*"/i, printOfVariable(loopBody, varWater));
     place(/Garder la pompe arr[eê]t[eé]e pendant cette s[ée]ance/i, firstLine(loopBody, new RegExp(`\\bdigitalWrite\\s*\\([^;\\n]*${PUMP}[^;\\n]*LOW[^;\\n]*\\)\\s*;`, "i")), "  ");
     place(/Attendre une seconde/i, firstLine(loopBody, /\bdelay\s*\(\s*1000[^;\n]*\)\s*;/i), "  ");
     return { code: lines.join("\n"), certain: placed > 0 };

@@ -163,8 +163,8 @@ for (const vp of viewports) {
   check(p.backups.length === 1 && p.backups[0].code === OLD_WITH_CODE, `C : ancien code complet disponible dans la sauvegarde`);
   /* La progression est recalculée depuis le code migré (readWater manquant dans l'ancien code). */
   check(p.firstMissing === "readWater", `C : progression recalculée depuis le code migré (firstMissing=${p.firstMissing})`);
-  /* Le code migré est cohérent (33 lignes du nouveau squelette). */
-  check(p.editorValue.split("\n").length === 33, `C : aucune ligne ultérieure effacée (structure complète, ${p.editorValue.split("\n").length} lignes)`);
+  /* Le code migré est cohérent (47 lignes du squelette v6 : rappels de nommage + libellés préremplis). */
+  check(p.editorValue.split("\n").length === 47, `C : aucune ligne ultérieure effacée (structure complète, ${p.editorValue.split("\n").length} lignes)`);
   allConsoleErrors.push(...consoleErrors);
   await context.close();
 }
@@ -210,12 +210,12 @@ for (const vp of viewports) {
   allConsoleErrors.push(...consoleErrors);
   await context.close();
 }
-/* E29 : une session déjà en v5 n'est pas re-migrée (aucune nouvelle sauvegarde). */
+/* E29 : une session déjà en v6 n'est pas re-migrée (aucune nouvelle sauvegarde). */
 {
-  const seed = { structureVersions: { session1: "session-1-guided-include-slot-v5" }, sessions: { 1: { modeMission: true, helpMode: "guided", code: "", reflection: "", values: {}, attempted: false } } };
+  const seed = { structureVersions: { session1: "session-1-guided-print-labels-v6" }, sessions: { 1: { modeMission: true, helpMode: "guided", code: "", reflection: "", values: {}, attempted: false } } };
   const { context, page, consoleErrors } = await open({ width: 1366, height: 768 }, seed);
   const backups = await page.evaluate(() => window.TechnoQuestMissionRecovery.list());
-  check(backups.length === 0, `E29 : session déjà en v5 non re-migrée (aucune sauvegarde ajoutée)`);
+  check(backups.length === 0, `E29 : session déjà en v6 non re-migrée (aucune sauvegarde ajoutée)`);
   allConsoleErrors.push(...consoleErrors);
   await context.close();
 }

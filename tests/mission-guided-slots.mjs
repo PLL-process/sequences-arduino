@@ -109,7 +109,7 @@ async function preparePage() {
 
 /* Ensemble attendu des emplacements éditables (lignes cibles d'étape, squelette include-slot). */
 /* include a désormais sa propre ligne de code vide (ligne 1), donc aucun slot n'est un commentaire. */
-const EXPECTED_SLOTS = [1, 8, 10, 12, 17, 19, 21, 23, 25, 27, 29, 31];
+const EXPECTED_SLOTS = [1, 8, 10, 12, 24, 27, 30, 35, 38, 41, 43, 45];
 /* Ligne vide STRUCTURELLE (séparateur entre setup() et loop()) : ne doit jamais être éditable. */
 const SEPARATOR_LINE = 14;
 

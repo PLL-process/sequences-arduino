@@ -71,6 +71,97 @@
     return has(analysis.original, pattern) && !has(analysis.stripped, pattern);
   }
 
+  /* ---- Nommage des variables (règles pédagogiques du cycle 4) ---- */
+  /* MOTS-CLÉS DU LANGAGE C++ réservés (norme C++11 à C++17, telle que prise en charge par la */
+  /* chaîne de compilation Arduino avr-g++). Un mot-clé ne peut jamais servir de nom de variable. */
+  /* La liste est déterministe, sans doublon ; la comparaison est EXACTE et SENSIBLE À LA CASSE */
+  /* (« format » n'est pas « for », « returnValue » n'est pas « return » : aucun faux positif par */
+  /* sous-chaîne). Catégories couvertes : types & déclarations, contrôle & boucles, classes & */
+  /* accès, gestion mémoire, exceptions, opérateurs nommés, mots-clés modernes. */
+  const CPP_KEYWORDS = [
+    /* Types et déclarations. */
+    "alignas", "alignof", "asm", "auto", "bool", "char", "char16_t", "char32_t", "const", "constexpr", "decltype", "double", "enum", "explicit", "extern", "false", "float", "inline", "int", "long", "mutable", "register", "short", "signed", "sizeof", "static", "static_assert", "struct", "thread_local", "true", "typedef", "typeid", "typename", "union", "unsigned", "using", "void", "volatile", "wchar_t",
+    /* Contrôle et boucles. */
+    "break", "case", "continue", "default", "do", "else", "for", "goto", "if", "return", "switch", "while",
+    /* Classes et accès. */
+    "class", "friend", "namespace", "operator", "private", "protected", "public", "template", "this", "virtual",
+    /* Gestion mémoire et conversions. */
+    "const_cast", "delete", "dynamic_cast", "new", "reinterpret_cast", "static_cast",
+    /* Exceptions. */
+    "catch", "noexcept", "throw", "try",
+    /* Opérateurs nommés (jetons alternatifs réservés). */
+    "and", "and_eq", "bitand", "bitor", "compl", "not", "not_eq", "or", "or_eq", "xor", "xor_eq",
+    /* Divers réservés. */
+    "export", "nullptr"
+  ];
+  const CPP_KEYWORD_SET = new Set(CPP_KEYWORDS);
+
+  /* IDENTIFIANTS CRITIQUES DE L'ENVIRONNEMENT ARDUINO pour cette activité (distincts des mots-clés */
+  /* C++) : fonctions imposées, constantes matérielles et broches déjà nommées dans le programme. */
+  /* Les réutiliser comme nom de variable prêterait à confusion : refus pédagogique avec message dédié. */
+  const ARDUINO_RESERVED = [
+    "setup", "loop", "Serial",
+    "HIGH", "LOW", "INPUT", "OUTPUT", "INPUT_PULLUP",
+    "A0", "A1", "A2",
+    "PIN_HUMIDITE_SOL", "PIN_LUMIERE", "PIN_NIVEAU_EAU", "PIN_RELAIS_POMPE"
+  ];
+  const ARDUINO_RESERVED_SET = new Set(ARDUINO_RESERVED);
+
+  /* Diagnostique un identifiant : renvoie null s'il est valide, sinon la catégorie du problème. */
+  function identifierProblem(name) {
+    const raw = String(name || "");
+    if (raw === "") return "empty";
+    if (/\s/.test(raw)) return "space";
+    if (raw.includes("-")) return "tiret";
+    /* Tout caractère non ASCII (é, É, à, ç…) est considéré comme un accent interdit ici. */
+    if (/[^\x00-\x7F]/.test(raw)) return "accent";
+    if (/^[0-9]/.test(raw)) return "digit";
+    /* Premier caractère lettre ou _, puis lettres/chiffres/_ uniquement. */
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(raw)) return "special";
+    /* Comparaison EXACTE et sensible à la casse (jamais par sous-chaîne). */
+    if (ARDUINO_RESERVED_SET.has(raw)) return "arduino";
+    if (CPP_KEYWORD_SET.has(raw)) return "reserved";
+    return null;
+  }
+
+  /* Vrai si l'identifiant respecte toutes les règles syntaxiques de l'activité. */
+  function isValidIdentifier(name) {
+    return identifierProblem(name) === null;
+  }
+
+  /* Extrait la CIBLE d'affectation (identifiant brut, type retiré) d'une lecture analogique. */
+  /* Renvoie null si aucune affectation « … = analogRead(broche) ; » n'existe dans le corps. */
+  function readAssignmentTarget(body, pinPattern) {
+    const match = String(body || "").match(new RegExp(`([^;\\n{}]*?)=\\s*analogRead\\s*\\(\\s*${pinPattern}\\s*\\)\\s*;`));
+    if (!match) return null;
+    /* Retire un éventuel type de déclaration pour ne garder que le nom de la variable. */
+    return match[1].replace(/^\s*(?:const\s+)?(?:unsigned\s+|signed\s+)?(?:int|long|short|byte|word|float|double|char|bool|auto)\b\s*/i, "").trim();
+  }
+
+  /* Analyse le nommage des trois lectures : validité syntaxique + unicité (aucune collision). */
+  /* Chaque capteur doit être mémorisé dans un identifiant valide ET distinct des autres. */
+  function analyzeNaming(loopBody) {
+    const order = [["humidity", pin.humidity], ["light", pin.light], ["water", pin.water]];
+    const result = {};
+    /* Associe chaque identifiant DÉJÀ utilisé au capteur qui l'a réservé en premier. */
+    const usedBy = new Map();
+    order.forEach(([key, pinPattern]) => {
+      const target = readAssignmentTarget(loopBody, pinPattern);
+      /* Aucune affectation pour ce capteur. */
+      if (target === null) { result[key] = { present: false, identifier: "", valid: false, problem: null, collidesWith: null }; return; }
+      const problem = identifierProblem(target);
+      const valid = problem === null;
+      let collidesWith = null;
+      /* La collision n'a de sens que pour un identifiant valide déjà réservé par un autre capteur. */
+      if (valid) {
+        if (usedBy.has(target)) collidesWith = usedBy.get(target);
+        else usedBy.set(target, key);
+      }
+      result[key] = { present: true, identifier: target, valid, problem, collidesWith };
+    });
+    return result;
+  }
+
   /* ---- Helpers de sessions ultérieures (compares/affichages libres), conservés tels quels. ---- */
   function hasSerialOutput(source, variableName) {
     if (!variableName) return false;
@@ -399,12 +490,51 @@
     water: { pin: pin.water, subject: "le niveau d'eau", of: "du niveau d'eau", at: "au niveau d'eau", example: "int niveauEau = analogRead(PIN_NIVEAU_EAU);" }
   };
 
-  /* Vérification contextuelle d'une lecture analogique (doit être dans loop() et stockée). */
+  /* Message pédagogique dédié à un identifiant critique de l'environnement Arduino. */
+  function arduinoReservedMessage(name) {
+    if (name === "Serial") return "Serial est déjà utilisé par Arduino pour la communication série : choisis un autre nom pour mémoriser la mesure.";
+    if (/^PIN_/.test(name)) return `${name} désigne déjà une broche dans ce programme. Choisis un autre nom pour mémoriser la mesure.`;
+    if (name === "setup" || name === "loop") return `${name} est le nom d'une fonction Arduino : choisis un autre identifiant pour ta variable.`;
+    return `${name} est réservé par Arduino : choisis un autre identifiant pour ta variable.`;
+  }
+
+  /* Message pédagogique associé à un identifiant invalide (name utilisé pour les cas réservés). */
+  function identifierMessage(problem, name) {
+    switch (problem) {
+      case "space": return "Choisis un nom de variable sans espace, sans tiret et sans accent.";
+      case "tiret": return "Choisis un nom de variable sans tiret : utilise seulement des lettres, des chiffres et le caractère _.";
+      case "accent": return "Choisis un nom de variable sans accent : utilise seulement des lettres non accentuées, des chiffres et le caractère _.";
+      case "digit": return "Un nom de variable ne peut pas commencer par un chiffre.";
+      case "reserved": return `${name} est un mot réservé du langage C++ : choisis un autre identifiant.`;
+      case "arduino": return arduinoReservedMessage(name);
+      default: return "Ce nom de variable contient un caractère non autorisé : utilise seulement des lettres, des chiffres et le caractère _.";
+    }
+  }
+
+  /* Message pédagogique lorsqu'un identifiant est déjà lié à un autre capteur (collision/écrasement). */
+  function collisionMessage(key, identifier) {
+    const sensor = SENSORS[key];
+    const suggestion = { humidity: "humiditeSol", light: "lumiere", water: "niveauEau" }[key];
+    return `La variable ${identifier} est déjà déclarée. La même variable ne doit pas mémoriser les mesures de deux capteurs différents : choisis un autre nom pour ${sensor.subject}, par exemple ${suggestion}.`;
+  }
+
+  /* Vérification contextuelle d'une lecture analogique (dans loop(), stockée, bien NOMMÉE et UNIQUE). */
   function readCheck(analysis, context, key) {
     /* Désignation du capteur. */
     const sensor = SENSORS[key];
-    /* La variable est extraite du corps de loop() : présence correcte. */
-    if (context.vars[key]) return { ok: true };
+    /* État de nommage de ce capteur (validité + collision). */
+    const naming = context.naming ? context.naming[key] : null;
+    /* Une affectation « … = analogRead(broche) ; » existe dans loop() : on vérifie son nom. */
+    if (naming && naming.present) {
+      /* Identifiant syntaxiquement invalide (espace, tiret, accent, chiffre initial, spécial, réservé). */
+      if (!naming.valid) return { ok: false, message: identifierMessage(naming.problem, naming.identifier) };
+      /* Identifiant déjà utilisé pour un autre capteur : mesure écrasée / redéclaration. */
+      if (naming.collidesWith) return { ok: false, message: collisionMessage(key, naming.identifier) };
+      /* Lecture correctement lue, stockée, nommée et distincte. */
+      return { ok: true };
+    }
+    /* Repli sans analyse de nommage (autres séances) : présence d'une variable suffit. */
+    if (!naming && context.vars[key]) return { ok: true };
     /* Lecture réalisée mais dans setup() au lieu de loop(). */
     if (analogReadPresent(analysis.setup.body, sensor.pin)) return { ok: false, message: `La lecture ${sensor.of} doit être dans loop(), pas dans setup().` };
     /* Lecture présente dans loop() mais non stockée dans une variable. */
@@ -513,7 +643,8 @@
     /* Variables : depuis loop() en séance 1 ; depuis tout le code sanitizé pour les séances 2 à 8. */
     const varSource = useContextual ? (analysis.loop.found ? analysis.loop.body : analysis.stripped) : source;
     /* Contexte partagé (l'analyse n'est présente qu'en séance 1). */
-    const context = { analysis, vars: extractVars(varSource) };
+    /* Le nommage (validité + unicité des identifiants de lecture) n'est calculé QU'EN séance 1. */
+    const context = { analysis, vars: extractVars(varSource), naming: useContextual ? analyzeNaming(varSource) : null };
     const steps = getSteps(mission.id);
     /* Évalue chaque étape avec son message pédagogique éventuel (contextuel en séance 1). */
     const stepResults = steps.map(step => {
@@ -595,7 +726,10 @@
     getReferenceCode,
     findLineForStep,
     validate,
-    stepTemplates
+    stepTemplates,
+    /* Exposé pour les tests et l'outillage : listes déterministes des identifiants réservés. */
+    reservedWords: { cpp: CPP_KEYWORDS.slice(), arduino: ARDUINO_RESERVED.slice() },
+    isValidIdentifier
   };
 
   if (typeof window !== "undefined") window.TechnoQuestMissionValidator = api;

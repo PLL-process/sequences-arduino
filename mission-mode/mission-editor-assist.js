@@ -120,6 +120,25 @@
       description: "Ajoute une temporisation exprimée en millisecondes entre deux lectures.",
       example: "delay(500);",
       parameters: [["duree", "Temps d’attente en millisecondes."]]
+    },
+    {
+      /* Fiche pédagogique (n'insère aucun code) : règles de nommage des variables. */
+      id: "nommer-variable",
+      label: "Bien nommer une variable",
+      aliases: ["nom", "nommer", "variable", "identifiant"],
+      insert: "",
+      guide: true,
+      description: "Un identifiant décrit clairement la valeur mémorisée et ne représente qu'une seule information. Trois capteurs nécessitent trois identifiants distincts. Les majuscules comptent : niveauEau, niveaueau et NIVEAUEAU sont trois identifiants différents. Les mots réservés du C++ ne peuvent pas servir de noms.",
+      valid: ["humiditeSol", "niveauEau", "niveau_eau", "mesureReservoir", "capteur2"],
+      invalid: [
+        ["niveau eau", "contient un espace"],
+        ["niveau-eau", "contient un tiret"],
+        ["niveauÉau", "contient un accent"],
+        ["2eCapteur", "commence par un chiffre"],
+        ["niveauEau!", "contient un caractère spécial"]
+      ],
+      example: "int niveauEau = analogRead(PIN_NIVEAU_EAU);",
+      parameters: []
     }
   ];
 
@@ -367,7 +386,8 @@
       if (!method) return;
       button.addEventListener("pointerenter", () => showMethod(method, methodCard));
       button.addEventListener("focus", () => showMethod(method, methodCard));
-      button.addEventListener("click", () => insertMethod(editor, method));
+      /* Une fiche pédagogique (guide) s'affiche sans insérer de code ; les autres insèrent. */
+      button.addEventListener("click", () => method.guide ? showMethod(method, methodCard) : insertMethod(editor, method));
     });
 
     editor.addEventListener("click", () => showMethodAtCaret(editor, methodCard));
@@ -376,8 +396,27 @@
     });
   }
 
-  /* Affiche une fiche méthode complète et synthétique. */
+  /* Affiche une fiche méthode complète et synthétique (ou une fiche pédagogique « guide »). */
   function showMethod(method, methodCard) {
+    /* Fiche pédagogique : listes d'identifiants valides / invalides au lieu des paramètres. */
+    if (method.guide) {
+      const validList = (method.valid || []).map(name => `<li><code>${escapeHtml(name)}</code></li>`).join("");
+      const invalidList = (method.invalid || []).map(([name, reason]) => `<li><code>${escapeHtml(name)}</code> <span>— ${escapeHtml(reason)}</span></li>`).join("");
+      methodCard.card.innerHTML = `
+        <div class="mission-method-card-head">
+          <h3>${escapeHtml(method.label)}</h3>
+          <button class="mission-method-close" type="button" aria-label="Fermer la fiche">×</button>
+        </div>
+        <p>${escapeHtml(method.description)}</p>
+        <strong>Valides :</strong>
+        <ul class="mission-naming-valid">${validList}</ul>
+        <strong>Invalides pour cette activité :</strong>
+        <ul class="mission-naming-invalid">${invalidList}</ul>`;
+      methodCard.card.hidden = false;
+      methodCard.card.querySelector(".mission-method-close")?.addEventListener("click", () => { methodCard.card.hidden = true; });
+      return;
+    }
+
     const parameters = method.parameters.length
       ? `<dl>${method.parameters.map(([name, description]) => `<dt><code>${escapeHtml(name)}</code></dt><dd>${escapeHtml(description)}</dd>`).join("")}</dl>`
       : "<p><em>Aucun paramètre requis.</em></p>";
@@ -410,6 +449,42 @@
     if (method) showMethod(method, methodCard);
   }
 
+  /* Suggestions DÉPENDANT DE L'ÉTAPE ACTIVE : pour un affichage, propose Serial.println(variable); */
+  /* avec la variable réellement lue par l'élève pour ce capteur (repli sur un nom canonique). */
+  function stepSuggestions(editor) {
+    const target = typeof window !== "undefined" ? window.TechnoQuestMissionGuidedTarget : null;
+    if (!target || typeof target.getCurrent !== "function") return [];
+    const sessionId = Number(document.body?.dataset?.session || 1);
+    /* État guidé courant (étape active + variables déjà lues), sans cache. */
+    const current = target.getCurrent(editor.value, sessionId) || {};
+    const vars = current.result?.context?.vars || {};
+    /* Lectures : propose la déclaration complète avec un nom d'identifiant conseillé et distinct. */
+    const readByStep = {
+      readHumidity: { insert: "int humiditeSol = analogRead(PIN_HUMIDITE_SOL);", description: "Lis la mesure sur A0 et mémorise-la dans une variable distincte." },
+      readLight: { insert: "int lumiere = analogRead(PIN_LUMIERE);", description: "Lis la mesure sur A1 et mémorise-la dans une variable distincte." },
+      readWater: { insert: "int niveauEau = analogRead(PIN_NIVEAU_EAU);", description: "Lis la mesure sur A2 et mémorise-la dans une variable distincte." }
+    };
+    if (readByStep[current.stepId]) {
+      const r = readByStep[current.stepId];
+      return [{ label: r.insert, aliases: ["int", "ana", "analogread", "lire", "capteur"], insert: r.insert, description: r.description }];
+    }
+    /* Affichages : propose Serial.println(variable) avec la variable réellement lue. */
+    const variableByStep = {
+      showHumidity: vars.humidity || "humiditeSol",
+      showLight: vars.light || "lumiere",
+      showWater: vars.water || "niveauEau"
+    };
+    const variable = variableByStep[current.stepId];
+    if (!variable) return [];
+    /* Une seule proposition ciblée, présentée comme les autres (description au-dessus, code dessous). */
+    return [{
+      label: `Serial.println(${variable});`,
+      aliases: ["ser", "serial", "print", "println", "ligne", "afficher"],
+      insert: `Serial.println(${variable});`,
+      description: "Affiche la valeur puis passe à la ligne suivante."
+    }];
+  }
+
   /* Active l’autocomplétion uniquement dans le niveau Guidé. */
   function bindCompletion(editor, helpLevel, completion, methodCard) {
     const refresh = event => {
@@ -424,9 +499,23 @@
         return;
       }
       const query = fragment.text.toLowerCase();
-      const matches = METHODS.filter(method => {
+      /* Suggestions propres à l'étape active (affichages), filtrées par le fragment saisi. */
+      const dynamic = stepSuggestions(editor).filter(method => {
         const searchable = [method.label, ...method.aliases].join(" ").toLowerCase();
         return searchable.includes(query);
+      });
+      const base = METHODS.filter(method => {
+        /* Les fiches pédagogiques (guides) n'insèrent pas de code : jamais dans les propositions. */
+        if (method.guide) return false;
+        const searchable = [method.label, ...method.aliases].join(" ").toLowerCase();
+        return searchable.includes(query);
+      });
+      /* Les propositions ciblées passent en tête ; on déduplique par libellé et on limite à 7. */
+      const seenLabels = new Set();
+      const matches = [...dynamic, ...base].filter(method => {
+        if (seenLabels.has(method.label)) return false;
+        seenLabels.add(method.label);
+        return true;
       }).slice(0, 7);
       if (!matches.length) {
         hideCompletion(completion);

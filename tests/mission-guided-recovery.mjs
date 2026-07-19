@@ -92,7 +92,7 @@ function seedOld(code) {
     const backups = window.TechnoQuestMissionRecovery.list();
     return { migrated: store.structureVersions.session1, state: store.sessions[1].migrationState, backupCode: backups[0] ? backups[0].code : null, backupFields: backups[0] ? Object.keys(backups[0]).sort() : [] };
   });
-  check(r.migrated === "session-1-guided-include-slot-v5" && r.state === "migrated", `1. migration appliquée seulement après sauvegarde (état ${r.state})`);
+  check(r.migrated === "session-1-guided-print-labels-v6" && r.state === "migrated", `1. migration appliquée seulement après sauvegarde (état ${r.state})`);
   check(r.backupCode === OLD_CODE, `2. sauvegarde strictement identique à l'ancien code`);
   check(["code", "fromVersion", "id", "migratedAt", "reflection", "resolved", "sessionId", "toVersion", "values"].every(k => r.backupFields.includes(k)), `2. sauvegarde enrichie (id/sessionId/fromVersion/toVersion/migratedAt/reflection/values/resolved)`);
   allConsoleErrors.push(...consoleErrors);
@@ -184,7 +184,7 @@ function seedOld(code) {
   check(afterConsult.helpMode === before.helpMode, `3h. helpMode inchangé`);
   check(afterConsult.activeStep === before.activeStep && afterConsult.migrationState === before.migrationState, `3i. progression (activeStep/migrationState) inchangée`);
   check(afterConsult.attempted === before.attempted, `3j. attempted inchangé`);
-  check(afterConsult.version === "session-1-guided-include-slot-v5", `3k. aucune nouvelle migration (reste en v5)`);
+  check(afterConsult.version === "session-1-guided-print-labels-v6", `3k. aucune nouvelle migration (reste en v6)`);
   check(afterConsult.unresolved === true, `3l. la sauvegarde est TOUJOURS non résolue après consultation`);
   /* Égalité stricte de l'état actif complet avant/après consultation. */
   check(afterConsult.active === before.active, `3m. état actif complet IDENTIQUE avant et après consultation`);
@@ -235,7 +235,7 @@ function seedOld(code) {
     return { code: st.sessions[1].code, version: st.structureVersions.session1, editorHasOld: ed ? ed.value.includes("analogRead(PIN_HUMIDITE_SOL)") && ed.value.split("\n").length < 15 : false };
   });
   check(reloaded.code === before, `7e. après plusieurs rechargements, la nouvelle version reste active`);
-  check(reloaded.version === "session-1-guided-include-slot-v5", `8. plusieurs rechargements sans nouvelle migration (reste en v5)`);
+  check(reloaded.version === "session-1-guided-print-labels-v6", `8. plusieurs rechargements sans nouvelle migration (reste en v6)`);
   check(!reloaded.editorHasOld, `7f. aucun ancien code n'apparaît silencieusement dans l'éditeur`);
   allConsoleErrors.push(...consoleErrors);
   await context.close();

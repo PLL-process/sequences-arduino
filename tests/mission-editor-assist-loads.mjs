@@ -77,7 +77,7 @@ const server = http.createServer(async (request, response) => {
 });
 
 /* Nombre attendu de méthodes du catalogue (voir METHODS dans mission-editor-assist.js). */
-const EXPECTED_METHOD_COUNT = 11;
+const EXPECTED_METHOD_COUNT = 12;
 
 /* Démarre le serveur. */
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));

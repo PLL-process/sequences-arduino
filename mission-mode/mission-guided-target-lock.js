@@ -26,12 +26,13 @@
     readLight: { comment: /Lire la lumi[eè]re sur A1/i },
     /* La lecture du réservoir utilise son commentaire propre. */
     readWater: { comment: /Lire le niveau d'eau sur A2/i },
-    /* Chaque affichage série possède une cible distincte. */
-    showHumidity: { comment: /Afficher l'humidit[eé] dans le Moniteur S[ée]rie/i },
+    /* Chaque affichage vise la LIGNE VIDE située sous la ligne Serial.print("Libellé : ") */
+    /* préremplie et protégée : c'est là que l'élève écrit Serial.println(variable);. */
+    showHumidity: { comment: /Afficher l'humidit[eé] du sol dans le Moniteur s[ée]rie/i, answerAfterLabel: /Serial\s*\.\s*print\s*\(\s*"[^"]*[Hh]umidit/i },
     /* L'affichage de lumière possède une cible distincte. */
-    showLight: { comment: /Afficher la lumi[eè]re dans le Moniteur S[ée]rie/i },
+    showLight: { comment: /Afficher la lumi[eè]re dans le Moniteur s[ée]rie/i, answerAfterLabel: /Serial\s*\.\s*print\s*\(\s*"[^"]*[Ll]umi/i },
     /* L'affichage du niveau d'eau possède une cible distincte. */
-    showWater: { comment: /Afficher le niveau d'eau dans le Moniteur S[ée]rie/i },
+    showWater: { comment: /Afficher le niveau d'eau dans le Moniteur s[ée]rie/i, answerAfterLabel: /Serial\s*\.\s*print\s*\(\s*"[^"]*[Nn]iveau/i },
     /* L'arrêt de sécurité dans loop possède une cible distincte du setup. */
     pumpStop: { comment: /Garder la pompe arr[eê]t[eé]e pendant cette s[ée]ance|Garder la pompe arr[eê]t[eé]e\.?$/i },
     /* La temporisation se saisit sous son commentaire exact. */
@@ -60,6 +61,26 @@
     pattern.lastIndex = 0;
     /* Retourne le résultat du test. */
     return pattern.test(String(text || ""));
+  }
+
+  /* Recherche la LIGNE VIDE de réponse située juste sous une ligne « Serial.print("Libellé : ") » */
+  /* préremplie et protégée. Le commentaire sert d'ancre de bloc ; le libellé sert de repère. */
+  /* La ligne de réponse est celle qui suit immédiatement le libellé, jamais le libellé lui-même. */
+  function answerLineAfterLabel(lines, commentPattern, labelPattern) {
+    /* Parcourt le programme à la recherche du commentaire de bloc. */
+    for (let index = 0; index < lines.length; index += 1) {
+      /* Ignore les lignes qui ne correspondent pas au commentaire attendu. */
+      if (!matches(commentPattern, lines[index])) continue;
+      /* Examine quelques lignes suivantes pour trouver le libellé prérempli. */
+      for (let candidate = index + 1; candidate <= Math.min(lines.length - 1, index + 6); candidate += 1) {
+        /* Le libellé Serial.print("…") repère l'emplacement ; la réponse est juste en dessous. */
+        if (matches(labelPattern, lines[candidate])) return Math.min(lines.length - 1, candidate + 1);
+        /* Ne traverse jamais une accolade ni une nouvelle fonction. */
+        if (/^(?:[{}]|void\s+(?:setup|loop)\s*\()/.test(String(lines[candidate] || "").trim())) break;
+      }
+    }
+    /* Signale qu'aucune cible précise n'a été trouvée. */
+    return null;
   }
 
   /* Recherche la première ligne de saisie placée sous un commentaire précis. */
@@ -94,6 +115,11 @@
     const lines = String(code || "").split("\n");
     /* Retourne directement la ligne prévue lorsqu'elle est fixe. */
     if (Number.isInteger(anchor.directLine)) return clampLine(code, anchor.directLine);
+    /* Affichage : la réponse est la ligne vide sous le libellé Serial.print("…") prérempli. */
+    if (anchor.answerAfterLabel) {
+      const afterLabel = answerLineAfterLabel(lines, anchor.comment, anchor.answerAfterLabel);
+      if (afterLabel !== null) return afterLabel;
+    }
     /* Recherche la ligne située juste sous le commentaire exact. */
     return lineAfterComment(lines, anchor.comment);
   }
