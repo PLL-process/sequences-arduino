@@ -12,8 +12,8 @@
 
   /* Associe chaque étape de la séance 1 à un commentaire précis. */
   const SESSION_ONE_ANCHORS = {
-    /* La bibliothèque se saisit sur la toute première ligne. */
-    include: { directLine: 0 },
+    /* La bibliothèque se saisit sur la LIGNE VIDE dédiée, juste sous son commentaire. */
+    include: { comment: /Charger ici la biblioth[eè]que de base Arduino/i },
     /* La communication série se saisit immédiatement sous son commentaire. */
     serialBegin: { comment: /Initialiser le Moniteur S[ée]rie à 9600 bauds/i },
     /* La configuration du relais possède son propre commentaire. */

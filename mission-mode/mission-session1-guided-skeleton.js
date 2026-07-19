@@ -13,7 +13,10 @@
   if (!mission?.skeletons) return;
 
   /* Remplace seulement le niveau Guidé par une progression à une instruction par ligne. */
+  /* L'étape include dispose désormais d'une LIGNE DE CODE VIDE dédiée sous son commentaire */
+  /* (le commentaire reste prérempli et protégé ; l'emplacement de réponse est la ligne vide). */
   mission.skeletons.guided = `  // Charger ici la bibliothèque de base Arduino.
+
 const int PIN_HUMIDITE_SOL = A0; // Donne un nom simple à l'entrée analogique A0.
 const int PIN_LUMIERE = A1; // Donne un nom simple à l'entrée analogique A1.
 const int PIN_NIVEAU_EAU = A2; // Donne un nom simple à l'entrée analogique A2.

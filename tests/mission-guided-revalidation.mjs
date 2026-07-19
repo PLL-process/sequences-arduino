@@ -36,13 +36,26 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-/* Remplit le squelette guidé réel avec des remplacements de lignes (index figés). */
-function fillGuided(overrides) {
-  const lines = window.TechnoQuestMissionValidator.getSkeleton("guided", 1).split("\n");
-  Object.keys(overrides).forEach(k => { lines[Number(k)] = overrides[k]; });
+/* Remplit le squelette guidé réel via des remplacements PAR ÉTAPE (robuste aux décalages). */
+/* Chaque ligne cible est résolue dynamiquement par findLineForStep sur le squelette vierge. */
+function fillGuided(overridesByStep) {
+  const v = window.TechnoQuestMissionValidator;
+  const skeleton = v.getSkeleton("guided", 1);
+  const lines = skeleton.split("\n");
+  const result = v.validate(skeleton, 1);
+  Object.keys(overridesByStep).forEach(stepId => {
+    const line = v.findLineForStep(skeleton, stepId, result, 1, "edition");
+    if (Number.isInteger(line) && line >= 0 && line < lines.length) lines[line] = overridesByStep[stepId];
+  });
   const editor = document.getElementById("codeEditor");
   editor.value = lines.join("\n");
   editor.dispatchEvent(new Event("input", { bubbles: true }));
+}
+/* Résout la ligne courante d'une étape (pour les sondes et les modifications ciblées). */
+function stepLine(stepId) {
+  const v = window.TechnoQuestMissionValidator;
+  const code = document.getElementById("codeEditor").value;
+  return v.findLineForStep(code, stepId, v.validate(code, 1), 1, "edition");
 }
 
 /* Sonde de l'état de progression et de la géométrie guidée. */
@@ -62,24 +75,27 @@ function probe() {
     stepId: model.stepId,
     revealed: model.revealedCodeLines,
     frameLabel: frame && !frame.hidden ? frame.querySelector(".mission-target-line-label").textContent : "(caché)",
-    line22: L[22], line24: L[24], line26: L[26], line28: L[28]
+    /* Textes des lignes de réponse showHumidity/showLight/showWater, résolus dynamiquement. */
+    showHumidityText: L[window.TechnoQuestMissionValidator.findLineForStep(editor.value, "showHumidity", result, 1, "edition")],
+    showLightText: L[window.TechnoQuestMissionValidator.findLineForStep(editor.value, "showLight", result, 1, "edition")],
+    showWaterText: L[window.TechnoQuestMissionValidator.findLineForStep(editor.value, "showWater", result, 1, "edition")]
   };
 }
 
-/* Programme guidé COMPLET et valide (variable d'humidité nommée humiditeSol). */
+/* Programme guidé COMPLET et valide (variable d'humidité nommée humiditeSol), PAR ÉTAPE. */
 const COMPLETE = {
-  0: "#include <Arduino.h>",
-  7: "  Serial.begin(9600);",
-  9: "  pinMode(PIN_RELAIS_POMPE, OUTPUT);",
-  11: "  digitalWrite(PIN_RELAIS_POMPE, LOW);",
-  16: "  int humiditeSol = analogRead(PIN_HUMIDITE_SOL);",
-  18: "  int lumiere = analogRead(PIN_LUMIERE);",
-  20: "  int niveauEau = analogRead(PIN_NIVEAU_EAU);",
-  22: "  Serial.println(humiditeSol);",
-  24: "  Serial.println(lumiere);",
-  26: "  Serial.println(niveauEau);",
-  28: "  digitalWrite(PIN_RELAIS_POMPE, LOW);",
-  30: "  delay(1000);"
+  include: "#include <Arduino.h>",
+  serialBegin: "  Serial.begin(9600);",
+  pinMode: "  pinMode(PIN_RELAIS_POMPE, OUTPUT);",
+  safeLowSetup: "  digitalWrite(PIN_RELAIS_POMPE, LOW);",
+  readHumidity: "  int humiditeSol = analogRead(PIN_HUMIDITE_SOL);",
+  readLight: "  int lumiere = analogRead(PIN_LUMIERE);",
+  readWater: "  int niveauEau = analogRead(PIN_NIVEAU_EAU);",
+  showHumidity: "  Serial.println(humiditeSol);",
+  showLight: "  Serial.println(lumiere);",
+  showWater: "  Serial.println(niveauEau);",
+  pumpStop: "  digitalWrite(PIN_RELAIS_POMPE, LOW);",
+  delay: "  delay(1000);"
 };
 
 await new Promise(resolve => server.listen(0, "127.0.0.1", resolve));
@@ -118,21 +134,25 @@ async function preparePage(clearInit = true) {
 {
   const { context, page, consoleErrors } = await preparePage();
   /* Programme valide jusqu'à showWater (pumpStop/delay laissés vides). */
-  const partial = { ...COMPLETE }; delete partial[28]; delete partial[30];
+  const partial = { ...COMPLETE }; delete partial.pumpStop; delete partial.delay;
   await run(page, fillGuided, partial);
   await pause(500);
   let p = await run(page, probe);
   check(p.ok.showHumidity === true && p.firstMissing === "pumpStop", `état initial : showHumidity validé, cible pumpStop (obtenu ${p.firstMissing})`);
+  /* Résout dynamiquement les lignes des affichages. */
+  const showHumLine = await run(page, stepLine, "showHumidity");
+  const showLightLine = await run(page, stepLine, "showLight");
+  const showWaterLine = await run(page, stepLine, "showWater");
 
-  /* Casse showHumidity par une FRAPPE RÉELLE : clic ligne 22 puis suppression de « Sol ». */
-  await page.evaluate(() => {
+  /* Casse showHumidity par une FRAPPE RÉELLE : clic sur sa ligne puis suppression de « Sol ». */
+  await page.evaluate(shl => {
     const e = document.getElementById("codeEditor");
     const L = e.value.split("\n");
-    const start = L.slice(0, 22).reduce((t, l) => t + l.length + 1, 0);
-    const col = L[22].indexOf("humiditeSol") + "humiditeSol".length;
+    const start = L.slice(0, shl).reduce((t, l) => t + l.length + 1, 0);
+    const col = L[shl].indexOf("humiditeSol") + "humiditeSol".length;
     e.focus(); e.setSelectionRange(start + col, start + col);
     e.dispatchEvent(new Event("click", { bubbles: true }));
-  });
+  }, showHumLine);
   await pause(150);
   await page.keyboard.press("Backspace");
   await page.keyboard.press("Backspace");
@@ -141,9 +161,9 @@ async function preparePage(clearInit = true) {
   p = await run(page, probe);
   check(p.ok.showHumidity === false, `cas 1 : showHumidity redevient invalide après modification`);
   check(p.firstMissing === "showHumidity", `cas 2 : firstMissing revient sur showHumidity (obtenu ${p.firstMissing})`);
-  check(p.target === 22 && p.frameLabel.includes("ligne 23"), `cas 3 : cadre et flèche reviennent sur showHumidity (ligne 23, obtenu "${p.frameLabel}")`);
-  check(p.line24 === "  Serial.println(lumiere);" && p.line26 === "  Serial.println(niveauEau);", `cas 5 : le code écrit APRÈS showHumidity est conservé`);
-  check(p.revealed.includes(24) && p.revealed.includes(26), `cas 4 : les lignes lumière/eau déjà révélées restent accessibles`);
+  check(p.target === showHumLine && p.frameLabel.includes("ligne " + (showHumLine + 1)), `cas 3 : cadre et flèche reviennent sur showHumidity (ligne ${showHumLine + 1}, obtenu "${p.frameLabel}")`);
+  check(p.showLightText === "  Serial.println(lumiere);" && p.showWaterText === "  Serial.println(niveauEau);", `cas 5 : le code écrit APRÈS showHumidity est conservé`);
+  check(p.revealed.includes(showLightLine) && p.revealed.includes(showWaterLine), `cas 4 : les lignes lumière/eau déjà révélées restent accessibles`);
   check(/mesure attendue|variable|Affiche/.test(p.firstMissingMsg), `cas 3 : message pédagogique précis affiché ("${p.firstMissingMsg.slice(0, 60)}…")`);
 
   /* Correction manuelle : réécrit « Sol ». */
@@ -166,25 +186,25 @@ async function preparePage(clearInit = true) {
   check(p.firstMissing === null, `programme complet initial : toutes les étapes validées`);
 
   /* Cas 8 : suppression de Serial.begin après validation. */
-  await run(page, fillGuided, { ...COMPLETE, 7: "" });
+  await run(page, fillGuided, { ...COMPLETE, serialBegin: "" });
   await pause(300);
   p = await run(page, probe);
   check(p.ok.serialBegin === false && p.firstMissing === "serialBegin", `cas 8 : suppression de Serial.begin → serialBegin invalide, cible dessus`);
 
   /* Cas 9 : OUTPUT remplacé par INPUT. */
-  await run(page, fillGuided, { ...COMPLETE, 9: "  pinMode(PIN_RELAIS_POMPE, INPUT);" });
+  await run(page, fillGuided, { ...COMPLETE, pinMode: "  pinMode(PIN_RELAIS_POMPE, INPUT);" });
   await pause(300);
   p = await run(page, probe);
   check(p.ok.pinMode === false && p.firstMissing === "pinMode", `cas 9 : OUTPUT→INPUT → pinMode invalide, cible dessus`);
 
   /* Cas 10 : suppression du LOW dans setup (safeLowSetup) ; le LOW de loop reste. */
-  await run(page, fillGuided, { ...COMPLETE, 11: "" });
+  await run(page, fillGuided, { ...COMPLETE, safeLowSetup: "" });
   await pause(300);
   p = await run(page, probe);
   check(p.ok.safeLowSetup === false && p.firstMissing === "safeLowSetup" && p.ok.pumpStop === true, `cas 10 : suppression du LOW de setup → safeLowSetup invalide (pumpStop conservé)`);
 
   /* Cas 11 : bon capteur remplacé par le mauvais (A0 lu à la place de A1). */
-  await run(page, fillGuided, { ...COMPLETE, 18: "  int lumiere = analogRead(PIN_HUMIDITE_SOL);" });
+  await run(page, fillGuided, { ...COMPLETE, readLight: "  int lumiere = analogRead(PIN_HUMIDITE_SOL);" });
   await pause(300);
   p = await run(page, probe);
   check(p.ok.readLight === false && p.firstMissing === "readLight", `cas 11 : mauvais capteur → readLight invalide, cible dessus`);
@@ -200,7 +220,7 @@ async function preparePage(clearInit = true) {
   await run(page, fillGuided, COMPLETE);
   await pause(300);
   /* Introduit une erreur sur showHumidity puis enregistre. */
-  await run(page, fillGuided, { ...COMPLETE, 22: "  Serial.println(humidite);" });
+  await run(page, fillGuided, { ...COMPLETE, showHumidity: "  Serial.println(humidite);" });
   await pause(300);
   let p = await run(page, probe);
   check(p.ok.showHumidity === false && p.firstMissing === "showHumidity", `cas 12 : erreur introduite avant rechargement (showHumidity invalide)`);
@@ -216,7 +236,7 @@ async function preparePage(clearInit = true) {
   await pause(500);
   p = await run(page, probe);
   check(p.ok.showHumidity === false && p.firstMissing === "showHumidity", `cas 13 : étape toujours invalide APRÈS rechargement`);
-  check(p.line24 === "  Serial.println(lumiere);", `cas 13 : code postérieur conservé après rechargement`);
+  check(p.showLightText === "  Serial.println(lumiere);", `cas 13 : code postérieur conservé après rechargement`);
 
   /* Corrige après rechargement. */
   await run(page, fillGuided, COMPLETE);

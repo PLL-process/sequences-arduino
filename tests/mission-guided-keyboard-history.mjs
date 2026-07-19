@@ -37,51 +37,66 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-/* Remplit le squelette guidé réel avec des remplacements de lignes (index figés). */
-function fillGuided(overrides) {
-  const lines = window.TechnoQuestMissionValidator.getSkeleton("guided", 1).split("\n");
-  Object.keys(overrides).forEach(k => { lines[Number(k)] = overrides[k]; });
+/* Remplit le squelette guidé PAR ÉTAPE (robuste aux décalages). */
+function fillGuided(overridesByStep) {
+  const v = window.TechnoQuestMissionValidator;
+  const skeleton = v.getSkeleton("guided", 1);
+  const lines = skeleton.split("\n");
+  const result = v.validate(skeleton, 1);
+  Object.keys(overridesByStep).forEach(stepId => {
+    const line = v.findLineForStep(skeleton, stepId, result, 1, "edition");
+    if (Number.isInteger(line) && line >= 0 && line < lines.length) lines[line] = overridesByStep[stepId];
+  });
   const editor = document.getElementById("codeEditor");
   editor.value = lines.join("\n");
   editor.dispatchEvent(new Event("input", { bubbles: true }));
 }
 /* Programme valide jusqu'à showWater (pumpStop/delay laissés vides → firstMissing = pumpStop). */
 const PARTIAL = {
-  0: "#include <Arduino.h>", 7: "  Serial.begin(9600);", 9: "  pinMode(PIN_RELAIS_POMPE, OUTPUT);", 11: "  digitalWrite(PIN_RELAIS_POMPE, LOW);",
-  16: "  int humiditeSol = analogRead(PIN_HUMIDITE_SOL);", 18: "  int lumiere = analogRead(PIN_LUMIERE);", 20: "  int niveauEau = analogRead(PIN_NIVEAU_EAU);",
-  22: "  Serial.println(humiditeSol);", 24: "  Serial.println(lumiere);", 26: "  Serial.println(niveauEau);"
+  include: "#include <Arduino.h>", serialBegin: "  Serial.begin(9600);", pinMode: "  pinMode(PIN_RELAIS_POMPE, OUTPUT);", safeLowSetup: "  digitalWrite(PIN_RELAIS_POMPE, LOW);",
+  readHumidity: "  int humiditeSol = analogRead(PIN_HUMIDITE_SOL);", readLight: "  int lumiere = analogRead(PIN_LUMIERE);", readWater: "  int niveauEau = analogRead(PIN_NIVEAU_EAU);",
+  showHumidity: "  Serial.println(humiditeSol);", showLight: "  Serial.println(lumiere);", showWater: "  Serial.println(niveauEau);"
 };
-/* Positionne le curseur à la fin d'une ligne. */
-function caretEnd(lineIndex) {
+/* Positionne le curseur à la fin d'une ligne (référence : nombre / id d'étape / "COMMENT"). */
+function caretEnd(lineRef) {
   const e = document.getElementById("codeEditor");
   const L = e.value.split("\n");
-  const start = L.slice(0, lineIndex).reduce((t, l) => t + l.length + 1, 0);
-  e.focus(); e.setSelectionRange(start + L[lineIndex].length, start + L[lineIndex].length);
+  const v = window.TechnoQuestMissionValidator;
+  const line = typeof lineRef === "number" ? lineRef : (lineRef === "COMMENT" ? L.findIndex(l => /Lire l'humidit/.test(l)) : v.findLineForStep(e.value, lineRef, v.validate(e.value, 1), 1, "edition"));
+  const start = L.slice(0, line).reduce((t, l) => t + l.length + 1, 0);
+  e.focus(); e.setSelectionRange(start + L[line].length, start + L[line].length);
   e.dispatchEvent(new Event("click", { bubbles: true }));
 }
-/* Sélectionne un intervalle de colonnes/lignes (par index de ligne + sous-chaînes). */
-function selectRange(startLine, startText, endLine, endText) {
+/* Sélectionne un intervalle (références de ligne : nombre / id d'étape / "COMMENT"). */
+function selectRange(startRef, startText, endRef, endText) {
   const e = document.getElementById("codeEditor");
   const L = e.value.split("\n");
+  const v = window.TechnoQuestMissionValidator;
+  const resolve = ref => typeof ref === "number" ? ref : (ref === "COMMENT" ? L.findIndex(l => /Lire l'humidit/.test(l)) : v.findLineForStep(e.value, ref, v.validate(e.value, 1), 1, "edition"));
+  const startLine = resolve(startRef); const endLine = resolve(endRef);
   const off = i => L.slice(0, i).reduce((t, l) => t + l.length + 1, 0);
   const a = off(startLine) + (startText === null ? 0 : L[startLine].indexOf(startText));
   const b = off(endLine) + (endText === null ? L[endLine].length : L[endLine].indexOf(endText) + endText.length);
   e.focus(); e.setSelectionRange(a, b);
 }
-/* Sonde compacte. */
+/* Sonde compacte (lignes résolues dynamiquement par étape). */
 function probe() {
   const e = document.getElementById("codeEditor");
+  const v = window.TechnoQuestMissionValidator;
   const model = window.TechnoQuestGuidedGeometry ? window.TechnoQuestGuidedGeometry.model() : { targetLine: null, revealedCodeLines: [], classify: () => "?" };
-  const r = window.TechnoQuestMissionValidator.validate(e.value, 1);
+  const r = v.validate(e.value, 1);
   const L = e.value.split("\n");
   let attempted = null;
   try { attempted = JSON.parse(localStorage.getItem("technoquest-mission-v1")).sessions[1].attempted; } catch (x) {}
+  const showHumidityLine = v.findLineForStep(e.value, "showHumidity", r, 1, "edition");
+  const delayLine = v.findLineForStep(e.value, "delay", r, 1, "edition");
+  const commentLine = L.findIndex(l => /Lire l'humidit/.test(l));
   return {
     firstMissing: r.firstMissing ? r.firstMissing.id : null,
     showHumidityOk: r.steps.find(s => s.id === "showHumidity").ok,
-    value: e.value, line15: L[15], line22: L[22],
+    value: e.value, protectedComment: L[commentLine], showHumidityText: L[showHumidityLine],
     attempted, revealed: model.revealedCodeLines,
-    classify30: model.classify ? model.classify(30) : "?", line30: L[30]
+    classifyDelay: model.classify ? model.classify(delayLine) : "?", delayText: L[delayLine], delayLine
   };
 }
 
@@ -127,21 +142,21 @@ const readClip = page => page.evaluate(() => navigator.clipboard.readText().catc
   const before = await run(page, probe);
 
   /* 1. Ctrl+C sur une ligne éditable. */
-  await run(page, selectRange, 22, "Serial", 22, ";");
+  await run(page, selectRange, "showHumidity", "Serial", "showHumidity", ";");
   await pause(80);
   await page.keyboard.press("Control+C");
   await pause(150);
   check((await readClip(page)) === "Serial.println(humiditeSol);", `1. Ctrl+C copie une ligne éditable`);
 
   /* 2. Ctrl+C sur un commentaire pédagogique protégé (copie autorisée). */
-  await run(page, selectRange, 15, "//", 15, null);
+  await run(page, selectRange, "COMMENT", "//", "COMMENT", null);
   await pause(80);
   await page.keyboard.press("Control+C");
   await pause(150);
   check(/Lire l'humidit/i.test(await readClip(page)), `2. Ctrl+C copie un commentaire protégé (lecture autorisée)`);
 
   /* 3. Ctrl+C sur plusieurs lignes. */
-  await run(page, selectRange, 22, "Serial", 24, ";");
+  await run(page, selectRange, "showHumidity", "Serial", "showLight", ";");
   await pause(80);
   await page.keyboard.press("Control+C");
   await pause(150);
@@ -174,55 +189,55 @@ const readClip = page => page.evaluate(() => navigator.clipboard.readText().catc
   await pause(400);
 
   /* 6. Ctrl+Z après saisie. */
-  await run(page, caretEnd, 22);
+  await run(page, caretEnd, "showHumidity");
   await pause(100);
   await page.keyboard.type("AB");
   await pause(150);
-  check((await run(page, probe)).line22.endsWith("AB"), `6. saisie appliquée avant annulation`);
+  check((await run(page, probe)).showHumidityText.endsWith("AB"), `6. saisie appliquée avant annulation`);
   await page.keyboard.press("Control+Z");
   await pause(200);
-  check(!(await run(page, probe)).line22.endsWith("AB"), `6. Ctrl+Z annule la dernière saisie`);
+  check(!(await run(page, probe)).showHumidityText.endsWith("AB"), `6. Ctrl+Z annule la dernière saisie`);
 
   /* 7. Ctrl+Z après suppression. */
-  await run(page, caretEnd, 22);
+  await run(page, caretEnd, "showHumidity");
   await pause(100);
   await page.keyboard.press("Backspace");
   await pause(150);
-  const afterDel = (await run(page, probe)).line22;
+  const afterDel = (await run(page, probe)).showHumidityText;
   await page.keyboard.press("Control+Z");
   await pause(200);
-  check((await run(page, probe)).line22.length > afterDel.length, `7. Ctrl+Z restaure un caractère supprimé`);
+  check((await run(page, probe)).showHumidityText.length > afterDel.length, `7. Ctrl+Z restaure un caractère supprimé`);
 
   /* 8. Plusieurs Ctrl+Z successifs (chaque caractère est une unité d'annulation). */
-  await run(page, caretEnd, 22);
+  await run(page, caretEnd, "showHumidity");
   await pause(100);
   /* Capture l'état exact AVANT la saisie (robuste face à d'éventuels résidus des cas précédents). */
-  const base8 = (await run(page, probe)).line22;
+  const base8 = (await run(page, probe)).showHumidityText;
   await page.keyboard.type("A"); await pause(120);
   await page.keyboard.type("B"); await pause(120);
   await page.keyboard.type("C"); await pause(120);
-  check((await run(page, probe)).line22.endsWith("ABC"), `8. trois saisies appliquées`);
+  check((await run(page, probe)).showHumidityText.endsWith("ABC"), `8. trois saisies appliquées`);
   await page.keyboard.press("Control+Z"); await pause(150);
   await page.keyboard.press("Control+Z"); await pause(150);
   await page.keyboard.press("Control+Z"); await pause(150);
-  check((await run(page, probe)).line22 === base8, `8. trois Ctrl+Z reviennent à l'état initial`);
+  check((await run(page, probe)).showHumidityText === base8, `8. trois Ctrl+Z reviennent à l'état initial`);
 
   /* 9 & 10. Ctrl+Y et Ctrl+Maj+Z rétablissent. */
-  await run(page, caretEnd, 22);
+  await run(page, caretEnd, "showHumidity");
   await pause(80);
   await page.keyboard.type("Q");
   await pause(120);
   await page.keyboard.press("Control+Z");
   await pause(150);
-  check(!(await run(page, probe)).line22.endsWith("Q"), `9. Ctrl+Z annule avant rétablissement`);
+  check(!(await run(page, probe)).showHumidityText.endsWith("Q"), `9. Ctrl+Z annule avant rétablissement`);
   await page.keyboard.press("Control+Y");
   await pause(150);
-  check((await run(page, probe)).line22.endsWith("Q"), `9. Ctrl+Y rétablit la modification annulée`);
+  check((await run(page, probe)).showHumidityText.endsWith("Q"), `9. Ctrl+Y rétablit la modification annulée`);
   await page.keyboard.press("Control+Z");
   await pause(120);
   await page.keyboard.press("Control+Shift+Z");
   await pause(150);
-  check((await run(page, probe)).line22.endsWith("Q"), `10. Ctrl+Maj+Z rétablit également`);
+  check((await run(page, probe)).showHumidityText.endsWith("Q"), `10. Ctrl+Maj+Z rétablit également`);
 
   allConsoleErrors.push(...consoleErrors);
   await context.close();
@@ -233,10 +248,10 @@ const readClip = page => page.evaluate(() => navigator.clipboard.readText().catc
   const { context, page, consoleErrors } = await preparePage();
   await run(page, fillGuided, PARTIAL);
   await pause(400);
-  const comment15 = (await run(page, probe)).line15;
+  const comment15 = (await run(page, probe)).protectedComment;
 
   /* Casse showHumidity en une seule opération : sélectionne « Sol » puis Suppr. */
-  await run(page, selectRange, 22, "Sol", 22, "Sol");
+  await run(page, selectRange, "showHumidity", "Sol", "showHumidity", "Sol");
   await pause(120);
   await page.keyboard.press("Delete");
   await pause(300);
@@ -247,7 +262,7 @@ const readClip = page => page.evaluate(() => navigator.clipboard.readText().catc
   await page.keyboard.press("Control+Z");
   await pause(300);
   p = await run(page, probe);
-  check(p.line22 === "  Serial.println(humiditeSol);" && p.showHumidityOk === true, `11. Ctrl+Z restaure la ligne et revalide showHumidity`);
+  check(p.showHumidityText === "  Serial.println(humiditeSol);" && p.showHumidityOk === true, `11. Ctrl+Z restaure la ligne et revalide showHumidity`);
   check(p.firstMissing === "pumpStop", `11. reprise automatique vers la première étape suivante (${p.firstMissing})`);
 
   /* 12. Ctrl+Y rétablit l'erreur → showHumidity invalide de nouveau. */
@@ -257,14 +272,14 @@ const readClip = page => page.evaluate(() => navigator.clipboard.readText().catc
   check(p.showHumidityOk === false && p.firstMissing === "showHumidity", `12. Ctrl+Y rétablit l'erreur → revalidation rétroactive (showHumidity)`);
 
   /* 13. Commentaire pédagogique intact après undo/redo. */
-  check((await run(page, probe)).line15 === comment15, `13. commentaires protégés intacts après undo/redo`);
+  check((await run(page, probe)).protectedComment === comment15, `13. commentaires protégés intacts après undo/redo`);
 
   /* 14. Ligne future toujours verrouillée/vide après undo/redo. */
   /* Le Ctrl+Z revalide showHumidity → cible pumpStop (ligne 28) ; la ligne 30 (delay) reste future. */
   await page.keyboard.press("Control+Z");
   await pause(250);
   p = await run(page, probe);
-  check(p.classify30 === "future" && !p.revealed.includes(30) && String(p.line30 || "").trim() === "", `14. ligne future (30) reste verrouillée et vide après undo/redo`);
+  check(p.classifyDelay === "future" && !p.revealed.includes(p.delayLine) && String(p.delayText || "").trim() === "", `14. ligne future (30) reste verrouillée et vide après undo/redo`);
 
   allConsoleErrors.push(...consoleErrors);
   await context.close();
@@ -313,7 +328,7 @@ for (const level of ["standard", "expert"]) {
   await page.evaluate(() => localStorage.clear());
   await run(page, fillGuided, PARTIAL);
   await pause(300);
-  await run(page, caretEnd, 22);
+  await run(page, caretEnd, "showHumidity");
   await pause(100);
   await page.keyboard.type(" // note");
   await pause(150);
@@ -330,7 +345,7 @@ for (const level of ["standard", "expert"]) {
   check((await page.evaluate(() => document.getElementById("codeEditor").value.split("\n")[22])) === afterUndo, `18. sauvegarde/rechargement cohérents après undo`);
 
   /* Refait une modification, la rétablit, enregistre, recharge. */
-  await run(page, caretEnd, 22);
+  await run(page, caretEnd, "showHumidity");
   await pause(100);
   await page.keyboard.type(" // r");
   await pause(120);

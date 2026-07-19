@@ -59,10 +59,10 @@ function showBanner(text) {
 /* Remplit certaines étapes du squelette guidé (index figés). */
 function fillSteps(filledSteps) {
   const lines = window.TechnoQuestMissionValidator.getSkeleton("guided", 1).split("\n");
-  if (filledSteps.includes("include")) lines[0] = "#include <Arduino.h>";
-  if (filledSteps.includes("serialBegin")) lines[7] = "  Serial.begin(9600);";
-  if (filledSteps.includes("pinMode")) lines[9] = "  pinMode(PIN_RELAIS_POMPE, OUTPUT);";
-  if (filledSteps.includes("safeLowSetup")) lines[11] = "  digitalWrite(PIN_RELAIS_POMPE, LOW);";
+  if (filledSteps.includes("include")) lines[1] = "#include <Arduino.h>";
+  if (filledSteps.includes("serialBegin")) lines[8] = "  Serial.begin(9600);";
+  if (filledSteps.includes("pinMode")) lines[10] = "  pinMode(PIN_RELAIS_POMPE, OUTPUT);";
+  if (filledSteps.includes("safeLowSetup")) lines[12] = "  digitalWrite(PIN_RELAIS_POMPE, LOW);";
   const editor = document.getElementById("codeEditor");
   editor.value = lines.join("\n");
   editor.dispatchEvent(new Event("input", { bubbles: true }));

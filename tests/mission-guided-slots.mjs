@@ -37,18 +37,30 @@ const server = http.createServer(async (request, response) => {
   }
 });
 
-/* Remplit le squelette guidé réel (index figés). */
-function fillGuided(overrides) {
-  const lines = window.TechnoQuestMissionValidator.getSkeleton("guided", 1).split("\n");
-  Object.keys(overrides).forEach(k => { lines[Number(k)] = overrides[k]; });
+/* Remplit le squelette guidé PAR ÉTAPE (robuste aux décalages). */
+function fillGuided(overridesByStep) {
+  const v = window.TechnoQuestMissionValidator;
+  const skeleton = v.getSkeleton("guided", 1);
+  const lines = skeleton.split("\n");
+  const result = v.validate(skeleton, 1);
+  Object.keys(overridesByStep).forEach(stepId => {
+    const line = v.findLineForStep(skeleton, stepId, result, 1, "edition");
+    if (Number.isInteger(line) && line >= 0 && line < lines.length) lines[line] = overridesByStep[stepId];
+  });
   const editor = document.getElementById("codeEditor");
   editor.value = lines.join("\n");
   editor.dispatchEvent(new Event("input", { bubbles: true }));
 }
+/* Résout la ligne courante d'une étape. */
+function stepLine(stepId) {
+  const v = window.TechnoQuestMissionValidator;
+  const code = document.getElementById("codeEditor").value;
+  return v.findLineForStep(code, stepId, v.validate(code, 1), 1, "edition");
+}
 const PARTIAL = {
-  0: "#include <Arduino.h>", 7: "  Serial.begin(9600);", 9: "  pinMode(PIN_RELAIS_POMPE, OUTPUT);", 11: "  digitalWrite(PIN_RELAIS_POMPE, LOW);",
-  16: "  int humiditeSol = analogRead(PIN_HUMIDITE_SOL);", 18: "  int lumiere = analogRead(PIN_LUMIERE);", 20: "  int niveauEau = analogRead(PIN_NIVEAU_EAU);",
-  22: "  Serial.println(humiditeSol);", 24: "  Serial.println(lumiere);", 26: "  Serial.println(niveauEau);"
+  include: "#include <Arduino.h>", serialBegin: "  Serial.begin(9600);", pinMode: "  pinMode(PIN_RELAIS_POMPE, OUTPUT);", safeLowSetup: "  digitalWrite(PIN_RELAIS_POMPE, LOW);",
+  readHumidity: "  int humiditeSol = analogRead(PIN_HUMIDITE_SOL);", readLight: "  int lumiere = analogRead(PIN_LUMIERE);", readWater: "  int niveauEau = analogRead(PIN_NIVEAU_EAU);",
+  showHumidity: "  Serial.println(humiditeSol);", showLight: "  Serial.println(lumiere);", showWater: "  Serial.println(niveauEau);"
 };
 /* Place le curseur (réduit) sur une ligne, au retrait, et signale un clic. */
 function clickLine(lineIndex) {
@@ -95,8 +107,11 @@ async function preparePage() {
   return { context, page, consoleErrors };
 }
 
-/* Ensemble attendu des emplacements éditables (lignes cibles d'étape). */
-const EXPECTED_SLOTS = [0, 7, 9, 11, 16, 18, 20, 22, 24, 26, 28, 30];
+/* Ensemble attendu des emplacements éditables (lignes cibles d'étape, squelette include-slot). */
+/* include a désormais sa propre ligne de code vide (ligne 1), donc aucun slot n'est un commentaire. */
+const EXPECTED_SLOTS = [1, 8, 10, 12, 17, 19, 21, 23, 25, 27, 29, 31];
+/* Ligne vide STRUCTURELLE (séparateur entre setup() et loop()) : ne doit jamais être éditable. */
+const SEPARATOR_LINE = 14;
 
 {
   const { context, page, consoleErrors } = await preparePage();
@@ -119,29 +134,33 @@ const EXPECTED_SLOTS = [0, 7, 9, 11, 16, 18, 20, 22, 24, 26, 28, 30];
     const leaks = blanksWithoutStep.filter(i => model.isEditable(i));
     return { blanks, blanksWithoutStep, leaks };
   });
-  check(blankAudit.blanksWithoutStep.includes(13), `séparateur : la ligne vide 13 (entre setup() et loop()) existe et est hors des emplacements`);
+  check(blankAudit.blanksWithoutStep.includes(SEPARATOR_LINE), `séparateur : la ligne vide ${SEPARATOR_LINE + 1} (entre setup() et loop()) existe et est hors des emplacements`);
   check(blankAudit.leaks.length === 0, `verrou général : aucune ligne vide sans étape n'est éditable (fuites : ${JSON.stringify(blankAudit.leaks)})`);
 
+  /* Résout dynamiquement les lignes utiles. */
+  const showHumLine = await run(page, stepLine, "showHumidity");
+  const delayLine = await run(page, stepLine, "delay");
+
   /* 1. Une ligne vide associée à une étape RÉVÉLÉE est éditable (clic conservé). */
-  await run(page, clickLine, 22);
+  await run(page, clickLine, showHumLine);
   await pause(200);
-  check((await page.evaluate(caretLineOf)) === 22, `1. ligne d'étape révélée (22) éditable : le clic y reste`);
+  check((await page.evaluate(caretLineOf)) === showHumLine, `1. ligne d'étape révélée (${showHumLine + 1}) éditable : le clic y reste`);
 
   /* 2. Une ligne vide associée à une étape FUTURE reste verrouillée (clic ramené). */
-  await run(page, clickLine, 30);
+  await run(page, clickLine, delayLine);
   await pause(200);
-  const c30 = await page.evaluate(caretLineOf);
-  check(c30 !== 30, `2. ligne d'étape future (30) verrouillée : le clic est ramené (obtenu ${c30})`);
+  const cFuture = await page.evaluate(caretLineOf);
+  check(cFuture !== delayLine, `2. ligne d'étape future (${delayLine + 1}) verrouillée : le clic est ramené (obtenu ${cFuture})`);
 
-  /* 3. Une ligne vide de SÉPARATION (13) reste non éditable (clic ramené). */
-  await run(page, clickLine, 13);
+  /* 3. Une ligne vide de SÉPARATION reste non éditable (clic ramené). */
+  await run(page, clickLine, SEPARATOR_LINE);
   await pause(200);
-  const c13 = await page.evaluate(caretLineOf);
-  check(c13 !== 13, `3. ligne de séparation (13) non éditable : le clic est ramené (obtenu ${c13})`);
+  const cSep = await page.evaluate(caretLineOf);
+  check(cSep !== SEPARATOR_LINE, `3. ligne de séparation (${SEPARATOR_LINE + 1}) non éditable : le clic est ramené (obtenu ${cSep})`);
 
-  /* 4. La ligne vide près d'une accolade (13, juste après « } // Fin de setup(). ») reste non éditable. */
-  const classify13 = await page.evaluate(() => window.TechnoQuestGuidedGeometry.model().classify(13));
-  check(classify13 !== "target" && classify13 !== "revealed", `4. ligne près d'une accolade (13) classée non éditable (${classify13})`);
+  /* 4. La ligne vide près d'une accolade (séparateur, juste après « } // Fin de setup(). ») reste non éditable. */
+  const classifySep = await page.evaluate(sep => window.TechnoQuestGuidedGeometry.model().classify(sep), SEPARATOR_LINE);
+  check(classifySep !== "target" && classifySep !== "revealed", `4. ligne près d'une accolade (séparateur) classée non éditable (${classifySep})`);
 
   allConsoleErrors.push(...consoleErrors);
   await context.close();
@@ -152,18 +171,23 @@ const EXPECTED_SLOTS = [0, 7, 9, 11, 16, 18, 20, 22, 24, 26, 28, 30];
   const { context, page, consoleErrors } = await preparePage();
   await run(page, fillGuided, PARTIAL);
   await pause(400);
-  /* Casse showHumidity (ligne 22) par frappe réelle. */
+  /* Casse showHumidity par frappe réelle (ligne résolue dynamiquement). */
   await page.evaluate(() => {
-    const e = document.getElementById("codeEditor"); const L = e.value.split("\n");
-    const start = L.slice(0, 22).reduce((t, l) => t + l.length + 1, 0);
-    const col = L[22].indexOf("humiditeSol") + "humiditeSol".length;
+    const e = document.getElementById("codeEditor"); const v = window.TechnoQuestMissionValidator;
+    const shl = v.findLineForStep(e.value, "showHumidity", v.validate(e.value, 1), 1, "edition");
+    const L = e.value.split("\n");
+    const start = L.slice(0, shl).reduce((t, l) => t + l.length + 1, 0);
+    const col = L[shl].indexOf("humiditeSol") + "humiditeSol".length;
     e.focus(); e.setSelectionRange(start + col, start + col); e.dispatchEvent(new Event("click", { bubbles: true }));
   });
   await pause(150);
   await page.keyboard.press("Backspace"); await page.keyboard.press("Backspace"); await page.keyboard.press("Backspace");
   await pause(400);
-  const after = await page.evaluate(() => { const L = document.getElementById("codeEditor").value.split("\n"); return { l24: L[24], l26: L[26], first: window.TechnoQuestMissionValidator.validate(document.getElementById("codeEditor").value, 1).firstMissing?.id }; });
-  check(after.l24 === "  Serial.println(lumiere);" && after.l26 === "  Serial.println(niveauEau);" && after.first === "showHumidity", `5. code postérieur conservé après rétrogradation (firstMissing=${after.first})`);
+  const after = await page.evaluate(() => {
+    const e = document.getElementById("codeEditor"); const v = window.TechnoQuestMissionValidator; const res = v.validate(e.value, 1); const L = e.value.split("\n");
+    return { lLight: L[v.findLineForStep(e.value, "showLight", res, 1, "edition")], lWater: L[v.findLineForStep(e.value, "showWater", res, 1, "edition")], first: res.firstMissing?.id };
+  });
+  check(after.lLight === "  Serial.println(lumiere);" && after.lWater === "  Serial.println(niveauEau);" && after.first === "showHumidity", `5. code postérieur conservé après rétrogradation (firstMissing=${after.first})`);
   allConsoleErrors.push(...consoleErrors);
   await context.close();
 }
@@ -173,17 +197,26 @@ const EXPECTED_SLOTS = [0, 7, 9, 11, 16, 18, 20, 22, 24, 26, 28, 30];
   const { context, page, consoleErrors } = await preparePage();
   await run(page, fillGuided, PARTIAL);
   await pause(400);
-  const before = await page.evaluate(() => { const L = document.getElementById("codeEditor").value.split("\n"); return { comment15: L[15], structure1: L[1] }; });
-  /* Corrompt par programme un commentaire (15) ET une ligne de structure (1). */
-  await page.evaluate(() => {
-    const e = document.getElementById("codeEditor"); const L = e.value.split("\n");
-    L[15] = "  // PIRATE COMMENTAIRE"; L[1] = "const int PIN_HUMIDITE_SOL = A5; // pirate structure";
-    e.value = L.join("\n"); e.setSelectionRange(0, 0); e.dispatchEvent(new Event("input", { bubbles: true }));
+  /* Repère une ligne de commentaire et une ligne de structure (const) réelles. */
+  const idx = await page.evaluate(() => {
+    const L = document.getElementById("codeEditor").value.split("\n");
+    return { comment: L.findIndex(l => /Lire l'humidit/.test(l)), structure: L.findIndex(l => /const int PIN_HUMIDITE_SOL/.test(l)) };
   });
+  const before = await page.evaluate(i => { const L = document.getElementById("codeEditor").value.split("\n"); return { comment: L[i.comment], structure: L[i.structure] }; }, idx);
+  /* Corrompt par programme un commentaire ET une ligne de structure. */
+  await page.evaluate(i => {
+    const e = document.getElementById("codeEditor"); const L = e.value.split("\n");
+    L[i.comment] = "  // PIRATE COMMENTAIRE"; L[i.structure] = "const int PIN_HUMIDITE_SOL = A5; // pirate structure";
+    e.value = L.join("\n"); e.setSelectionRange(0, 0); e.dispatchEvent(new Event("input", { bubbles: true }));
+  }, idx);
   await pause(400);
-  const restored = await page.evaluate(() => { const L = document.getElementById("codeEditor").value.split("\n"); return { comment15: L[15], structure1: L[1], l22: L[22], count: L.length }; });
-  check(restored.comment15 === before.comment15 && restored.structure1 === before.structure1, `6. commentaire ET structure restaurés après altération`);
-  check(restored.l22 === "  Serial.println(humiditeSol);", `6. code de l'élève préservé pendant la restauration`);
+  const restored = await page.evaluate(i => {
+    const e = document.getElementById("codeEditor"); const v = window.TechnoQuestMissionValidator; const L = e.value.split("\n");
+    const shl = v.findLineForStep(e.value, "showHumidity", v.validate(e.value, 1), 1, "edition");
+    return { comment: L[i.comment], structure: L[i.structure], show: L[shl] };
+  }, idx);
+  check(restored.comment === before.comment && restored.structure === before.structure, `6. commentaire ET structure restaurés après altération`);
+  check(restored.show === "  Serial.println(humiditeSol);", `6. code de l'élève préservé pendant la restauration`);
   allConsoleErrors.push(...consoleErrors);
   await context.close();
 }
@@ -194,9 +227,10 @@ const EXPECTED_SLOTS = [0, 7, 9, 11, 16, 18, 20, 22, 24, 26, 28, 30];
   await run(page, fillGuided, PARTIAL);
   await pause(400);
   await page.evaluate(() => {
-    const e = document.getElementById("codeEditor"); const L = e.value.split("\n");
+    const e = document.getElementById("codeEditor"); const v = window.TechnoQuestMissionValidator; const res = v.validate(e.value, 1); const L = e.value.split("\n");
+    const a = v.findLineForStep(e.value, "showHumidity", res, 1, "edition"); const b = v.findLineForStep(e.value, "showLight", res, 1, "edition");
     const off = i => L.slice(0, i).reduce((t, l) => t + l.length + 1, 0);
-    e.focus(); e.setSelectionRange(off(22) + L[22].indexOf("Serial"), off(24) + L[24].indexOf(";") + 1);
+    e.focus(); e.setSelectionRange(off(a) + L[a].indexOf("Serial"), off(b) + L[b].indexOf(";") + 1);
   });
   await pause(120);
   await page.keyboard.press("Control+C");
@@ -212,10 +246,10 @@ const EXPECTED_SLOTS = [0, 7, 9, 11, 16, 18, 20, 22, 24, 26, 28, 30];
   const { context, page, consoleErrors } = await preparePage();
   await run(page, fillGuided, PARTIAL);
   await pause(400);
-  await page.evaluate(() => { const e = document.getElementById("codeEditor"); const L = e.value.split("\n"); const s = L.slice(0, 22).reduce((t, l) => t + l.length + 1, 0); e.focus(); e.setSelectionRange(s + L[22].length, s + L[22].length); e.dispatchEvent(new Event("click", { bubbles: true })); });
+  await page.evaluate(() => { const e = document.getElementById("codeEditor"); const v = window.TechnoQuestMissionValidator; const shl = v.findLineForStep(e.value, "showHumidity", v.validate(e.value, 1), 1, "edition"); const L = e.value.split("\n"); const s = L.slice(0, shl).reduce((t, l) => t + l.length + 1, 0); e.focus(); e.setSelectionRange(s + L[shl].length, s + L[shl].length); e.dispatchEvent(new Event("click", { bubbles: true })); });
   await pause(120);
   await page.keyboard.type("Q"); await pause(150);
-  const l22 = () => page.evaluate(() => document.getElementById("codeEditor").value.split("\n")[22]);
+  const l22 = () => page.evaluate(() => { const e = document.getElementById("codeEditor"); const v = window.TechnoQuestMissionValidator; const shl = v.findLineForStep(e.value, "showHumidity", v.validate(e.value, 1), 1, "edition"); return e.value.split("\n")[shl]; });
   check((await l22()).endsWith("Q"), `8. saisie appliquée`);
   await page.keyboard.press("Control+Z"); await pause(150);
   check(!(await l22()).endsWith("Q"), `8. Ctrl+Z annule`);

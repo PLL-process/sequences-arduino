@@ -57,9 +57,9 @@ const server = http.createServer(async (request, response) => {
 /* Remplit certaines étapes du squelette guidé (index figés). */
 function buildProgram(filledSteps) {
   const lines = window.TechnoQuestMissionValidator.getSkeleton("guided", 1).split("\n");
-  if (filledSteps.includes("include")) lines[0] = "#include <Arduino.h>";
-  if (filledSteps.includes("serialBegin")) lines[7] = "  Serial.begin(9600);";
-  if (filledSteps.includes("pinMode")) lines[9] = "  pinMode(PIN_RELAIS_POMPE, OUTPUT);";
+  if (filledSteps.includes("include")) lines[1] = "#include <Arduino.h>";
+  if (filledSteps.includes("serialBegin")) lines[8] = "  Serial.begin(9600);";
+  if (filledSteps.includes("pinMode")) lines[10] = "  pinMode(PIN_RELAIS_POMPE, OUTPUT);";
   const editor = document.getElementById("codeEditor");
   editor.value = lines.join("\n");
   editor.dispatchEvent(new Event("input", { bubbles: true }));
@@ -191,9 +191,10 @@ function navProbe() {
     frameLabel: frame?.querySelector(".mission-target-line-label")?.textContent || "",
     codeBandVisible: codeBand ? !codeBand.hidden : false,
     lineCount: lines.length,
-    line0: lines[0],
+    line1: lines[1],
     line6: lines[6],
     line7: lines[7],
+    line8: lines[8],
     value: editor.value
   };
 }
@@ -245,21 +246,21 @@ const allConsoleErrors = [];
   const { context, page, consoleErrors } = await preparePage({ width: 1366, height: 768 }, ["include", "serialBegin"]);
   /* Étape active attendue : pinMode (ligne 9). */
   let p = await run(page, navProbe);
-  check(p.stepId === "pinMode" && p.targetLine === 9, `état initial : étape pinMode ciblant la ligne 10 (obtenu ${p.stepId}/${p.targetLine})`);
-  check(p.revealed.includes(0) && p.revealed.includes(7) && p.revealed.includes(9), `lignes révélées incluent include(0), serialBegin(7), cible(9) : ${JSON.stringify(p.revealed)}`);
+  check(p.stepId === "pinMode" && p.targetLine === 10, `état initial : étape pinMode ciblant la ligne 10 (obtenu ${p.stepId}/${p.targetLine})`);
+  check(p.revealed.includes(1) && p.revealed.includes(8) && p.revealed.includes(10), `lignes révélées incluent include(0), serialBegin(7), cible(9) : ${JSON.stringify(p.revealed)}`);
 
   /* Cas 1 : clic sur une ancienne ligne révélée (ligne 7). */
-  await run(page, setCaretLine, 7, true);
+  await run(page, setCaretLine, 8, true);
   await pause(200);
   p = await run(page, navProbe);
-  check(p.caretLine === 7, `cas 1 : clic place le curseur sur l'ancienne ligne 7 (obtenu ${p.caretLine + 1})`);
-  check(p.editingLine === 7 && p.holding === true, `cas 1 : consultation d'une ancienne ligne détectée (editingLine=${p.editingLine}, hold=${p.holding})`);
+  check(p.caretLine === 8, `cas 1 : clic place le curseur sur l'ancienne ligne 7 (obtenu ${p.caretLine + 1})`);
+  check(p.editingLine === 8 && p.holding === true, `cas 1 : consultation d'une ancienne ligne détectée (editingLine=${p.editingLine}, hold=${p.holding})`);
 
   /* Cas 5 : surbrillance secondaire sur la ligne éditée. */
   check(p.editingBandVisible === true && p.editingBandDelta !== null && p.editingBandDelta <= 3, `cas 5 : surbrillance secondaire alignée sur la ligne 7 (Δ${p.editingBandDelta === null ? "n/a" : Math.round(p.editingBandDelta)}px)`);
 
   /* Cas 4 : le cadre principal reste sur l'étape manquante (ligne 10). */
-  check(p.frameVisible === true && p.frameLabel.includes("ligne 10"), `cas 4 : cadre principal maintenu sur l'étape (label "${p.frameLabel}")`);
+  check(p.frameVisible === true && p.frameLabel.includes("ligne 11"), `cas 4 : cadre principal maintenu sur l'étape (label "${p.frameLabel}")`);
   check(p.codeBandVisible === true, `cas 4 : surbrillance principale toujours affichée sur la cible`);
 
   /* Cas 7a : le bouton « Revenir à l'étape » apparaît quand on s'éloigne. */
@@ -269,16 +270,16 @@ const allConsoleErrors = [];
   await page.keyboard.type("  ");
   await pause(250);
   p = await run(page, navProbe);
-  check(p.line7.startsWith("  Serial.begin(9600);") && p.line7.length > "  Serial.begin(9600);".length, `cas 2 : correction de la ligne 7 persistée ("${p.line7}")`);
+  check(p.line8.startsWith("  Serial.begin(9600);") && p.line8.length > "  Serial.begin(9600);".length, `cas 2 : correction de la ligne 7 persistée ("${p.line8}")`);
   check(p.stepId === "pinMode", `cas 2 : l'étape active reste pinMode après correction d'une ancienne ligne`);
 
   /* Cas 3 : navigation clavier (flèche haut) et souris entre lignes révélées. */
-  await run(page, setCaretLine, 9, false);
+  await run(page, setCaretLine, 10, false);
   await pause(150);
   await page.keyboard.press("ArrowUp");
   await pause(200);
   p = await run(page, navProbe);
-  check(p.caretLine !== 9 && p.revealed.includes(p.caretLine), `cas 3 : flèche haut déplace vers une ligne révélée (obtenu ligne ${p.caretLine + 1})`);
+  check(p.caretLine !== 10 && p.revealed.includes(p.caretLine), `cas 3 : flèche haut déplace vers une ligne révélée (obtenu ligne ${p.caretLine + 1})`);
   /* Page précédente reste dans les lignes autorisées (pas de saut dans le futur ni les commentaires verrouillés). */
   await page.keyboard.press("PageUp");
   await pause(200);
@@ -286,29 +287,29 @@ const allConsoleErrors = [];
   check(p.revealed.includes(p.caretLine), `cas 3 : Page précédente reste sur une ligne autorisée (ligne ${p.caretLine + 1})`);
 
   /* Cas 6 : tentative d'accès à une ligne future (ligne 11 = étape suivante verrouillée). */
-  await run(page, setCaretLine, 11, false);
+  await run(page, setCaretLine, 12, false);
   await pause(200);
   p = await run(page, navProbe);
   check(p.classify11 === "future", `cas 6 : la ligne 12 est classée « future »`);
-  check(p.caretLine !== 11 && p.revealed.includes(p.caretLine), `cas 6 : curseur ramené hors de la ligne future (obtenu ligne ${p.caretLine + 1})`);
+  check(p.caretLine !== 12 && p.revealed.includes(p.caretLine), `cas 6 : curseur ramené hors de la ligne future (obtenu ligne ${p.caretLine + 1})`);
 
   /* Cas 7b : « Revenir à l'étape » à la souris recentre sur la cible. */
-  await run(page, setCaretLine, 7, false);
+  await run(page, setCaretLine, 8, false);
   await pause(150);
   await page.click(".mission-return-step");
   await pause(300);
   p = await run(page, navProbe);
-  check(p.caretLine === 9 && p.holding === false, `cas 7 : bouton (souris) recentre le curseur sur l'étape (ligne ${p.caretLine + 1})`);
+  check(p.caretLine === 10 && p.holding === false, `cas 7 : bouton (souris) recentre le curseur sur l'étape (ligne ${p.caretLine + 1})`);
   check(p.buttonHidden === true, `cas 7 : bouton masqué après recentrage`);
 
   /* Cas 7c : « Revenir à l'étape » au clavier (focus + Entrée). */
-  await run(page, setCaretLine, 7, false);
+  await run(page, setCaretLine, 8, false);
   await pause(200);
   await page.locator(".mission-return-step").focus();
   await page.keyboard.press("Enter");
   await pause(300);
   p = await run(page, navProbe);
-  check(p.caretLine === 9 && p.holding === false, `cas 7 : bouton (clavier) recentre le curseur sur l'étape (ligne ${p.caretLine + 1})`);
+  check(p.caretLine === 10 && p.holding === false, `cas 7 : bouton (clavier) recentre le curseur sur l'étape (ligne ${p.caretLine + 1})`);
 
   allConsoleErrors.push(...consoleErrors);
   await context.close();
@@ -328,7 +329,7 @@ const allConsoleErrors = [];
   let p = await run(page, navProbe);
   check(p.lineCount === baseline.lineCount, `cas 8 : Ctrl+A+Suppr préserve le nombre de lignes (${p.lineCount}/${baseline.lineCount})`);
   check(p.line6 === commentSix, `cas 8 : commentaire pédagogique intact après Ctrl+A+Suppr`);
-  check(p.line0 === "#include <Arduino.h>" && p.line7.includes("Serial.begin"), `cas 8 : code de l'élève préservé après Ctrl+A+Suppr`);
+  check(p.line1 === "#include <Arduino.h>" && p.line8.includes("Serial.begin"), `cas 8 : code de l'élève préservé après Ctrl+A+Suppr`);
 
   /* Cas 9 : couper une sélection couvrant commentaire + code est bloqué. */
   await page.locator("#codeEditor").focus();
@@ -337,10 +338,10 @@ const allConsoleErrors = [];
   await pause(300);
   p = await run(page, navProbe);
   check(p.lineCount === baseline.lineCount && p.line6 === commentSix, `cas 9 : couper (sélection totale) bloqué, commentaires et structure intacts`);
-  check(p.line0 === "#include <Arduino.h>" && p.line7.includes("Serial.begin"), `cas 9 : couper préserve le code de l'élève`);
+  check(p.line1 === "#include <Arduino.h>" && p.line8.includes("Serial.begin"), `cas 9 : couper préserve le code de l'élève`);
 
   /* Cas 10a : chemin DÉTERMINISTE — un collage multi-lignes natif reproduit est bloqué. */
-  await run(page, setCaretLine, 9, false);
+  await run(page, setCaretLine, 10, false);
   const det = await run(page, dispatchDeterministicPaste);
   check(det.text.includes("\n"), `cas 10 : texte multi-lignes réellement proposé à l'éditeur (déterministe)`);
   check(det.prevented === true, `cas 10 : collage multi-lignes annulé par la protection (déterministe, defaultPrevented=${det.prevented})`);
@@ -350,7 +351,7 @@ const allConsoleErrors = [];
   await run(page, installPasteSpy);
   const wrote = await page.evaluate(() => navigator.clipboard.writeText("HACK_A\nHACK_B\nHACK_C").then(() => true).catch(() => false));
   await page.locator("#codeEditor").focus();
-  await run(page, setCaretLine, 9, false);
+  await run(page, setCaretLine, 10, false);
   await page.keyboard.press("Control+V");
   await pause(300);
   const spy = await page.evaluate(() => window.__pasteSpy);
@@ -383,7 +384,7 @@ const allConsoleErrors = [];
   await pause(300);
   const p = await run(page, navProbe);
   check(p.line6 === baseline.line6, `cas 12 : commentaire restauré après insertion programmatique ("${p.line6}")`);
-  check(p.line0 === "#include <Arduino.h>" && p.line7.includes("Serial.begin"), `cas 12 : code de l'élève préservé pendant la restauration`);
+  check(p.line1 === "#include <Arduino.h>" && p.line8.includes("Serial.begin"), `cas 12 : code de l'élève préservé pendant la restauration`);
   check(p.lineCount === baseline.lineCount, `cas 12 : aucune réinitialisation de l'éditeur (nombre de lignes ${p.lineCount})`);
   allConsoleErrors.push(...consoleErrors);
   await context.close();
@@ -431,7 +432,7 @@ const allConsoleErrors = [];
   await run(page, buildProgram, ["include", "serialBegin"]);
   await pause(300);
   /* Corrige l'ancienne ligne 7 (ajout d'un marqueur inoffensif). */
-  await run(page, setCaretLine, 7, true);
+  await run(page, setCaretLine, 8, true);
   await pause(150);
   await page.keyboard.type(" // corrige");
   await pause(250);
@@ -446,8 +447,8 @@ const allConsoleErrors = [];
   await page.waitForFunction(() => Boolean(window.TechnoQuestGuidedGeometry && window.TechnoQuestGuidedGeometry.model)).catch(() => {});
   await pause(500);
   const p = await run(page, navProbe);
-  check(p.line7.includes("// corrige"), `cas 13 : correction conservée après rechargement ("${p.line7}")`);
-  check(p.line6.includes("Initialiser le Moniteur"), `cas 13 : commentaire pédagogique intact après rechargement`);
+  check(p.line8.includes("// corrige"), `cas 13 : correction conservée après rechargement ("${p.line8}")`);
+  check(p.line7.includes("Initialiser le Moniteur"), `cas 13 : commentaire pédagogique intact après rechargement`);
   allConsoleErrors.push(...consoleErrors);
   await context.close();
 }
@@ -485,11 +486,11 @@ const viewports = [
 for (const vp of viewports) {
   const { context, page, consoleErrors } = await preparePage({ width: vp.width, height: vp.height }, ["include", "serialBegin"]);
   /* Remontée vers l'ancienne ligne. */
-  await run(page, setCaretLine, 7, false);
+  await run(page, setCaretLine, 8, false);
   await pause(250);
   let p = await run(page, navProbe);
-  check(p.editingLine === 7 && p.editingBandVisible === true, `cas 15 (${vp.name}) : surbrillance secondaire active sur l'ancienne ligne`);
-  check(p.frameVisible === true && p.frameLabel.includes("ligne 10"), `cas 15 (${vp.name}) : cadre principal maintenu sur l'étape`);
+  check(p.editingLine === 8 && p.editingBandVisible === true, `cas 15 (${vp.name}) : surbrillance secondaire active sur l'ancienne ligne`);
+  check(p.frameVisible === true && p.frameLabel.includes("ligne 11"), `cas 15 (${vp.name}) : cadre principal maintenu sur l'étape`);
   check(p.buttonHidden === false, `cas 15 (${vp.name}) : bouton « Revenir à l'étape » compact et visible`);
   /* Protection commentaire (Ctrl+A+Suppr). */
   await page.locator("#codeEditor").focus();
@@ -497,12 +498,12 @@ for (const vp of viewports) {
   await page.keyboard.press("Delete");
   await pause(300);
   p = await run(page, navProbe);
-  check(p.line6.includes("Initialiser le Moniteur") && p.line0 === "#include <Arduino.h>", `cas 15 (${vp.name}) : protection commentaire + code préservés`);
+  check(p.line7.includes("Initialiser le Moniteur") && p.line1 === "#include <Arduino.h>", `cas 15 (${vp.name}) : protection commentaire + code préservés`);
   /* Recentrage à la demande. */
   await page.click(".mission-return-step").catch(() => {});
   await pause(300);
   p = await run(page, navProbe);
-  check(p.caretLine === 9, `cas 15 (${vp.name}) : recentrage sur l'étape depuis le bouton (ligne ${p.caretLine + 1})`);
+  check(p.caretLine === 10, `cas 15 (${vp.name}) : recentrage sur l'étape depuis le bouton (ligne ${p.caretLine + 1})`);
   allConsoleErrors.push(...consoleErrors);
   await context.close();
 }

@@ -65,9 +65,9 @@ function showBanner(text) {
 /* Remplit certaines étapes du squelette guidé (index figés). */
 function fillSteps(filledSteps) {
   const lines = window.TechnoQuestMissionValidator.getSkeleton("guided", 1).split("\n");
-  if (filledSteps.includes("include")) lines[0] = "#include <Arduino.h>";
-  if (filledSteps.includes("serialBegin")) lines[7] = "  Serial.begin(9600);";
-  if (filledSteps.includes("pinMode")) lines[9] = "  pinMode(PIN_RELAIS_POMPE, OUTPUT);";
+  if (filledSteps.includes("include")) lines[1] = "#include <Arduino.h>";
+  if (filledSteps.includes("serialBegin")) lines[8] = "  Serial.begin(9600);";
+  if (filledSteps.includes("pinMode")) lines[10] = "  pinMode(PIN_RELAIS_POMPE, OUTPUT);";
   const editor = document.getElementById("codeEditor");
   editor.value = lines.join("\n");
   editor.dispatchEvent(new Event("input", { bubbles: true }));
@@ -109,9 +109,9 @@ function probe() {
     holding: window.TechnoQuestGuidedGeometry.isHolding(),
     buttonVisible: button ? !button.hidden : false,
     bandVisible: band ? !band.hidden : false,
-    line6: editor.value.split("\n")[6],
-    line7: editor.value.split("\n")[7],
-    line0: editor.value.split("\n")[0]
+    line1: editor.value.split("\n")[1],
+    line8: editor.value.split("\n")[8],
+    line9: editor.value.split("\n")[9]
   };
 }
 
@@ -155,15 +155,15 @@ try {
   await call(page, fillSteps, ["include", "serialBegin"]);
   await pause(beat);
   let p = await call(page, probe);
-  check(p.targetLine === 9, `démo : cible active sur la ligne 10 (obtenu ${p.targetLine + 1})`);
+  check(p.targetLine === 10, `démo : cible active sur la ligne 10 (obtenu ${p.targetLine + 1})`);
 
   /* 3) Remontée vers une ancienne ligne révélée (Serial.begin, ligne 8). */
   await call(page, showBanner, "3) Remontée : l'élève clique sur une ancienne ligne déjà révélée (ligne 8)");
-  await call(page, setCaretLine, 7, true);
+  await call(page, setCaretLine, 8, true);
   await pause(beat);
   p = await call(page, probe);
-  check(p.editingLine === 7 && p.bandVisible, `démo : surbrillance secondaire sur l'ancienne ligne 8`);
-  check(p.targetLine === 9, `démo : cadre principal maintenu sur l'étape (ligne 10)`);
+  check(p.editingLine === 8 && p.bandVisible, `démo : surbrillance secondaire sur l'ancienne ligne 8`);
+  check(p.targetLine === 10, `démo : cadre principal maintenu sur l'étape (ligne 10)`);
   check(p.buttonVisible, `démo : bouton « Revenir à l'étape » apparaît`);
 
   /* 4) Correction de l'ancienne ligne. */
@@ -171,7 +171,7 @@ try {
   await page.keyboard.type("  // relu", { delay: HEADLESS ? 0 : 55 });
   await pause(beat);
   p = await call(page, probe);
-  check(p.line7.includes("// relu"), `démo : correction de l'ancienne ligne appliquée`);
+  check(p.line8.includes("// relu"), `démo : correction de l'ancienne ligne appliquée`);
 
   /* 5) La cible principale reste indiquée. */
   await call(page, showBanner, "5) La cible principale reste indiquée sur l'étape à compléter");
@@ -182,23 +182,23 @@ try {
   await page.click(".mission-return-step");
   await pause(beat);
   p = await call(page, probe);
-  check(p.caretLine === 9 && !p.holding, `démo : recentrage sur l'étape depuis le bouton`);
+  check(p.caretLine === 10 && !p.holding, `démo : recentrage sur l'étape depuis le bouton`);
 
   /* 7) Tentative bloquée de modification d'un commentaire. */
   await call(page, showBanner, "7) Protection : une modification programmatique d'un commentaire est annulée");
-  const commentBefore = (await call(page, probe)).line6;
-  await call(page, corruptComment, 6);
+  const commentBefore = (await call(page, probe)).line9;
+  await call(page, corruptComment, 9);
   await pause(beat);
   p = await call(page, probe);
-  check(p.line6 === commentBefore, `démo : commentaire pédagogique restauré`);
-  check(p.line0 === "#include <Arduino.h>" && p.line7.includes("Serial.begin"), `démo : code de l'élève préservé`);
+  check(p.line9 === commentBefore, `démo : commentaire pédagogique restauré`);
+  check(p.line1 === "#include <Arduino.h>" && p.line8.includes("Serial.begin"), `démo : code de l'élève préservé`);
 
   /* 8) Tentative bloquée d'accès à une ligne future. */
   await call(page, showBanner, "8) Verrouillage : tentative d'accès à une ligne future (curseur ramené)");
-  await call(page, setCaretLine, 11, false);
+  await call(page, setCaretLine, 12, false);
   await pause(beat);
   p = await call(page, probe);
-  check(p.caretLine !== 11, `démo : curseur ramené hors de la ligne future`);
+  check(p.caretLine !== 12, `démo : curseur ramené hors de la ligne future`);
 
   await call(page, showBanner, "Fin de la démonstration.");
   await pause(HEADLESS ? 120 : 3200);

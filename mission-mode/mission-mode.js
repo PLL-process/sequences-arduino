@@ -180,6 +180,11 @@
         persistState();
       });
       editor.addEventListener("input", event => {
+        // Le textarea #codeEditor est PARTAGÉ avec la vue Classique (exercice algorithme).
+        // Tant que le mode Mission est masqué, les saisies appartiennent à la vue Classique :
+        // on ne les enregistre PAS comme code de Mission (sinon elles écraseraient un code migré
+        // ou sauvegardé). On ne suit l'éditeur comme code de Mission que lorsque Mission est visible.
+        if (root.classList.contains("mission-hidden")) return;
         state.code = editor.value;
         // Une restauration interne d'un commentaire protégé (event.__tqRestore) met à jour
         // coloration, validateur, géométrie et stockage, mais ne compte PAS comme une

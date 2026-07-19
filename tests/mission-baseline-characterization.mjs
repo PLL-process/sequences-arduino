@@ -91,18 +91,18 @@ function buildProgramInPage(filledSteps) {
   /* Relève d'éventuels écarts de structure pour diagnostic. */
   const structureNotes = [];
   /* Vérifie que les lignes cibles attendues sont bien vides. */
-  [7, 9, 11].forEach(index => {
+  [8, 10, 12].forEach(index => {
     /* Note toute ligne cible non vide. */
     if ((lines[index] || "").trim() !== "") structureNotes.push(`ligne ${index} non vide: "${lines[index]}"`);
   });
   /* Remplit l'inclusion sur la ligne 0 (qui est le commentaire cible de l'étape include). */
-  if (filledSteps.includes("include")) lines[0] = "#include <Arduino.h>";
+  if (filledSteps.includes("include")) lines[1] = "#include <Arduino.h>";
   /* Remplit Serial.begin sur la ligne 7. */
-  if (filledSteps.includes("serialBegin")) lines[7] = "  Serial.begin(9600);";
+  if (filledSteps.includes("serialBegin")) lines[8] = "  Serial.begin(9600);";
   /* Remplit pinMode sur la ligne 9. */
-  if (filledSteps.includes("pinMode")) lines[9] = "  pinMode(PIN_RELAIS_POMPE, OUTPUT);";
+  if (filledSteps.includes("pinMode")) lines[10] = "  pinMode(PIN_RELAIS_POMPE, OUTPUT);";
   /* Remplit l'état sûr sur la ligne 11. */
-  if (filledSteps.includes("safeLowSetup")) lines[11] = "  digitalWrite(PIN_RELAIS_POMPE, LOW);";
+  if (filledSteps.includes("safeLowSetup")) lines[12] = "  digitalWrite(PIN_RELAIS_POMPE, LOW);";
   /* Retourne le programme et les notes de structure. */
   return { program: lines.join("\n"), structureNotes };
 }
@@ -427,16 +427,17 @@ for (const viewport of viewports) {
     const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
     /* Prépare l'état localStorage avant chargement selon le scénario. */
     if (scenario.seedPartial) {
-      /* Injecte une sauvegarde partielle non destructive (structure v4 pour éviter l'effacement par la migration). */
+      /* Injecte une sauvegarde partielle DÉJÀ EN v5 (squelette include-slot), donc non re-migrée. */
       await context.addInitScript(() => {
-        /* Construit un programme partiel (include + Serial.begin déjà écrits). */
+        /* Programme partiel bâti sur le NOUVEAU squelette (include ligne 1 + Serial.begin ligne 8). */
         const partial = [
+          "  // Charger ici la bibliothèque de base Arduino.",
           "#include <Arduino.h>",
-          "const int PIN_HUMIDITE_SOL = A0;",
-          "const int PIN_LUMIERE = A1;",
-          "const int PIN_NIVEAU_EAU = A2;",
-          "const int PIN_RELAIS_POMPE = 6;",
-          "void setup() {",
+          "const int PIN_HUMIDITE_SOL = A0; // Donne un nom simple à l'entrée analogique A0.",
+          "const int PIN_LUMIERE = A1; // Donne un nom simple à l'entrée analogique A1.",
+          "const int PIN_NIVEAU_EAU = A2; // Donne un nom simple à l'entrée analogique A2.",
+          "const int PIN_RELAIS_POMPE = 6; // Donne un nom simple à la sortie numérique D6.",
+          "void setup() { // Cette fonction s'exécute une seule fois au démarrage.",
           "  // Initialiser le Moniteur Série à 9600 bauds.",
           "  Serial.begin(9600);",
           "  // Configurer D6 en sortie pour commander le relais.",
@@ -445,13 +446,29 @@ for (const viewport of viewports) {
           "",
           "} // Fin de setup().",
           "",
-          "void loop() {",
+          "void loop() { // Cette fonction recommence continuellement.",
+          "  // Lire l'humidité du sol sur A0.",
+          "",
+          "  // Lire la lumière sur A1.",
+          "",
+          "  // Lire le niveau d'eau sur A2.",
+          "",
+          "  // Afficher l'humidité dans le Moniteur Série.",
+          "",
+          "  // Afficher la lumière dans le Moniteur Série.",
+          "",
+          "  // Afficher le niveau d'eau dans le Moniteur Série.",
+          "",
+          "  // Garder la pompe arrêtée pendant cette séance d'observation.",
+          "",
+          "  // Attendre une seconde avant de recommencer les mesures.",
+          "",
           "} // Fin de loop()."
         ].join("\n");
         /* Écrit la sauvegarde dans la clé du contrôleur. */
         localStorage.setItem("technoquest-mission-v1", JSON.stringify({
-          /* Marque la structure comme déjà migrée pour préserver le code. */
-          structureVersions: { session1: "session-1-progressive-guided-v4" },
+          /* Marque la structure comme la version courante (aucune re-migration). */
+          structureVersions: { session1: "session-1-guided-include-slot-v5" },
           /* Décrit la séance 1 reprise. */
           sessions: { 1: { modeMission: true, helpMode: "guided", activeStep: "pinMode", badges: {}, values: {}, reflection: "", code: partial, attempted: true } }
         }));
@@ -568,9 +585,9 @@ for (const viewport of viewports) {
           /* Calcule le décalage caractère du début de la ligne 7. */
           let offset = 0;
           /* Additionne les longueurs des lignes précédentes. */
-          for (let index = 0; index < 7; index += 1) offset += lines[index].length + 1;
-          /* Positionne le curseur en fin de ligne 7. */
-          const desired = offset + lines[7].length;
+          for (let index = 0; index < 8; index += 1) offset += lines[index].length + 1;
+          /* Positionne le curseur en fin de la ligne serialBegin (ligne 8, ancienne ligne révélée). */
+          const desired = offset + lines[8].length;
           /* Applique la sélection sur la ligne révélée. */
           editor.focus();
           /* Déplace le point d'insertion. */
@@ -594,12 +611,12 @@ for (const viewport of viewports) {
           const caretLine = editor.value.slice(0, editor.selectionStart).split("\n").length - 1;
           /* Retourne le constat de remontée. */
           return {
-            /* Ligne visée par l'élève (0-based). */
-            requestedLineIndex: 6,
+            /* Ligne visée par l'élève (0-based) : la ligne serialBegin déjà révélée. */
+            requestedLineIndex: 8,
             /* Ligne réellement obtenue après verrouillage éventuel. */
             resultingCaretLineIndex: caretLine,
             /* Indique si la correction sur une ligne révélée a été possible. */
-            editAllowedOnRevealedLine: caretLine === 6 || caretLine === 7
+            editAllowedOnRevealedLine: caretLine === 8 || caretLine === 7
           };
         }, scrollBackResult);
       }
