@@ -23,24 +23,48 @@
     let baselineLines = null;
     /* Indices des lignes de commentaire dans la baseline. */
     let baselineCommentIndices = new Set();
+    /* Indices des lignes VIDES de la baseline = emplacements éditables de l'élève. */
+    /* Ces lignes lui appartiennent : leur contenu ne doit JAMAIS être restauré/effacé. */
+    let baselineSlotIndices = new Set();
     /* Nombre de lignes de la baseline (garde-fou de réconciliation). */
     let baselineLen = 0;
     /* Dernier contenu connu et valide des lignes éditables (secours structurel). */
     const lastGoodEditable = new Map();
 
     /* Enregistre la baseline à partir du squelette guidé fourni par le validateur. */
-    function captureBaseline(skeletonCode) {
+    function captureBaseline(skeletonCode, sessionId) {
       /* Découpe le squelette de référence en lignes. */
       baselineLines = String(skeletonCode || "").split("\n");
       /* Mémorise son nombre de lignes. */
       baselineLen = baselineLines.length;
-      /* Réinitialise l'ensemble des commentaires. */
+      /* Réinitialise les ensembles de commentaires et d'emplacements éditables. */
       baselineCommentIndices = new Set();
-      /* Repère chaque ligne de commentaire pédagogique. */
+      baselineSlotIndices = new Set();
+      /* Repère chaque ligne de commentaire pédagogique (protégée). */
       baselineLines.forEach((line, index) => {
-        /* Une ligne de commentaire commence par // une fois les espaces retirés. */
+        /* Une ligne de commentaire commence par //. */
         if (line.trim().startsWith("//")) baselineCommentIndices.add(index);
       });
+      /* SOURCE EXPLICITE des emplacements éditables : la LIGNE CIBLE de chaque étape, calculée */
+      /* via les ancres pédagogiques du validateur — et NON « toute ligne vide ». Cela exclut */
+      /* les lignes vides de structure ou de séparation (ex. entre setup() et loop()) qui ne */
+      /* correspondent à aucune étape : elles ne deviennent jamais éditables. */
+      try {
+        /* Valide le squelette pour disposer du contexte de recherche de ligne. */
+        const result = validator.validate(skeletonCode, sessionId);
+        /* Récupère les étapes de la séance. */
+        const steps = typeof validator.getSteps === "function" ? validator.getSteps(sessionId) : [];
+        /* Ajoute la ligne cible réelle de chaque étape. */
+        steps.forEach(step => {
+          /* Calcule la ligne de réponse de l'étape sur le squelette vierge. */
+          const line = validator.findLineForStep(skeletonCode, step.id, result, sessionId, "edition");
+          /* Retient uniquement une ligne valide et bornée. */
+          if (Number.isInteger(line) && line >= 0 && line < baselineLen) baselineSlotIndices.add(line);
+        });
+      } catch (error) {
+        /* En cas d'indisponibilité du validateur, aucun emplacement éditable (protection maximale). */
+        baselineSlotIndices = new Set();
+      }
       /* Oublie les anciens contenus éditables mémorisés. */
       lastGoodEditable.clear();
     }
@@ -58,7 +82,7 @@
     }
 
     /* Calcule la ligne cible de chaque étape déjà atteinte ou active. */
-    function revealedLinesFor(code, sessionId, result, targetLine) {
+    function revealedLinesFor(code, sessionId, result, targetLine, lines) {
       /* Ensemble des lignes révélées (évite les doublons). */
       const revealed = new Set();
       /* L'étape active est toujours éditable. */
@@ -72,6 +96,16 @@
         /* Ne garde que les lignes situées au niveau ou avant l'étape active. */
         if (Number.isInteger(line) && line <= targetLine) revealed.add(line);
       });
+      /* Révélation PERSISTANTE : tout emplacement éditable DÉJÀ rempli par l'élève reste */
+      /* accessible, même si une rétrogradation ramène la cible plus haut. On ne re-verrouille */
+      /* jamais une ligne où l'élève a écrit ; seuls les emplacements encore vides restent futurs. */
+      if (hasBaseline() && Array.isArray(lines)) {
+        /* Parcourt les emplacements éditables de la baseline. */
+        baselineSlotIndices.forEach(index => {
+          /* Ajoute l'emplacement s'il contient réellement du code de l'élève. */
+          if (index < lines.length && String(lines[index] || "").trim() !== "") revealed.add(index);
+        });
+      }
       /* Retourne un tableau trié pour un usage stable. */
       return [...revealed].sort((a, b) => a - b);
     }
@@ -114,8 +148,8 @@
 
       /* Borne la ligne cible dans les limites du programme. */
       const targetLine = Math.max(0, Math.min(maxLine, Math.round(Number(current.lineIndex) || 0)));
-      /* Calcule les lignes révélées (éditables) jusqu'à l'étape active. */
-      const revealedCodeLines = revealedLinesFor(code, sessionId, result, targetLine);
+      /* Calcule les lignes révélées (éditables) jusqu'à l'étape active + emplacements déjà remplis. */
+      const revealedCodeLines = revealedLinesFor(code, sessionId, result, targetLine, lines);
       /* Ensemble rapide des lignes éditables. */
       const revealedSet = new Set(revealedCodeLines);
       /* Lignes de commentaire protégées = commentaires baseline non éditables. */
@@ -185,7 +219,7 @@
       /*  sessions reprises d'un format antérieur en refusant une réécriture hasardeuse.) */
       if (lines.length !== baselineLen) return { value: code, changed: false };
 
-      /* Ensemble des lignes éditables. */
+      /* Ensemble des lignes éditables actives (étapes atteintes + emplacements remplis). */
       const revealedSet = new Set(model.revealedCodeLines);
       /* Copie de travail. */
       const out = lines.slice();
@@ -193,14 +227,17 @@
       let changed = false;
       /* Parcourt chaque ligne. */
       for (let index = 0; index < baselineLen; index += 1) {
-        /* Conserve et mémorise le contenu des lignes éditables (code de l'élève). */
-        if (revealedSet.has(index)) {
+        /* PRÉSERVE toute ligne qui appartient à l'élève :                                 */
+        /*  - un emplacement éditable de la baseline (ligne vide au départ), REMPLI OU NON, */
+        /*    y compris situé APRÈS une étape rétrogradée → on n'efface jamais son code ;   */
+        /*  - une ligne actuellement révélée (dont la cible-include écrite sur un commentaire).*/
+        if (baselineSlotIndices.has(index) || revealedSet.has(index)) {
           /* Retient le dernier bon contenu éditable pour un éventuel secours. */
           lastGoodEditable.set(index, lines[index]);
-          /* Ne modifie pas la ligne éditable. */
+          /* Ne modifie jamais le territoire de l'élève. */
           continue;
         }
-        /* Restaure une ligne non éditable altérée (commentaire ou structure). */
+        /* Restaure UNIQUEMENT une ligne pédagogique non éditable altérée (commentaire ou structure). */
         if (lines[index] !== baselineLines[index]) {
           /* Rétablit exactement le texte pédagogique d'origine. */
           out[index] = baselineLines[index];
@@ -223,7 +260,11 @@
       /* Réconcilie les lignes protégées. */
       reconcile,
       /* Utilitaire de conversion position → ligne. */
-      lineForPosition
+      lineForPosition,
+      /* Expose la liste triée des emplacements éditables (diagnostic/tests). */
+      editableSlots: () => [...baselineSlotIndices].sort((a, b) => a - b),
+      /* Expose la liste triée des commentaires protégés (diagnostic/tests). */
+      protectedComments: () => [...baselineCommentIndices].sort((a, b) => a - b)
     };
   }
 

@@ -196,12 +196,15 @@
     function ensureBaseline() {
       /* Ne recapture pas une baseline déjà enregistrée. */
       if (targetModel.hasBaseline()) return;
+      /* Capture UNIQUEMENT en mode Guidé : les ancres pédagogiques (donc les lignes cibles */
+      /* d'étape servant de source explicite aux emplacements éditables) n'y sont actives que là. */
+      if (!guidedModeEnabled()) return;
       /* Récupère le squelette guidé canonique depuis le validateur. */
       const skeleton = typeof refs.validator.getSkeleton === "function"
         ? refs.validator.getSkeleton("guided", sessionId)
         : null;
-      /* Enregistre la baseline lorsqu'elle est disponible. */
-      if (skeleton) targetModel.captureBaseline(skeleton);
+      /* Enregistre la baseline (les emplacements éditables proviennent des lignes cibles d'étape). */
+      if (skeleton) targetModel.captureBaseline(skeleton, sessionId);
     }
 
     /* Convertit une position absolue en index de ligne. */
@@ -616,6 +619,10 @@
       if (model.targetLine === null) return;
       /* Type d'opération. */
       const type = event.inputType || "";
+      /* AUTORISE explicitement l'annulation/rétablissement natifs (Ctrl+Z / Ctrl+Y / Ctrl+Maj+Z). */
+      /* On ne les bloque jamais : la protection des commentaires est assurée après coup par */
+      /* reconcileComments (qui ne restaure que les commentaires/structure, jamais le code élève). */
+      if (type === "historyUndo" || type === "historyRedo") return;
       /* Bornes de la plage affectée. */
       let start = refs.editor.selectionStart;
       /* Fin de la plage affectée. */
@@ -687,11 +694,21 @@
       if (model.targetLine === null) return;
       /* Ligne de début de sélection. */
       const startLine = lineForPos(value, refs.editor.selectionStart);
-      /* Ligne de fin de sélection. */
-      const endLine = lineForPos(value, refs.editor.selectionEnd);
+      /* Indique si la sélection est réduite à un simple point d'insertion. */
+      const collapsed = refs.editor.selectionStart === refs.editor.selectionEnd;
 
-      /* Ramène le curseur lorsqu'il quitte une ligne éditable ou franchit une frontière. */
-      if (!model.isEditable(startLine) || !model.isEditable(endLine) || startLine !== endLine) {
+      /* Une SÉLECTION (plage) est laissée intacte : elle sert à COPIER/lire, y compris à travers */
+      /* commentaires, lignes futures ou plusieurs lignes. La modification d'une telle plage reste */
+      /* bloquée par guardBeforeInput ; la copie, elle, ne doit jamais être perturbée. */
+      if (!collapsed) {
+        /* Recalcule les décorations sans toucher à la sélection. */
+        scheduleUpdate();
+        /* Termine. */
+        return;
+      }
+
+      /* Curseur réduit sur une ligne NON éditable : le ramène sur la ligne éditable la plus proche. */
+      if (!model.isEditable(startLine)) {
         /* Détermine la ligne éditable la plus proche. */
         const snapLine = nearestEditable(startLine, model);
         /* Replace le curseur. */
@@ -704,7 +721,7 @@
         return;
       }
 
-      /* Sur une ligne éditable, distingue la cible d'une ancienne ligne. */
+      /* Curseur réduit sur une ligne éditable : distingue la cible d'une ancienne ligne. */
       if (startLine === model.targetLine) {
         /* Le retour sur l'étape active relance le guidage. */
         holdGuiding = false;
@@ -850,6 +867,10 @@
       model: () => targetModel.compute(refs.editor.value, sessionId, lineForPos(refs.editor.value, refs.editor.selectionStart)),
       /* Recentre par programme (équivalent du bouton). */
       returnToStep: () => { placeCaretOnTarget(); scheduleUpdate(); },
+      /* Expose la liste des emplacements éditables réels (diagnostic/tests). */
+      editableSlots: () => targetModel.editableSlots(),
+      /* Expose la liste des commentaires protégés (diagnostic/tests). */
+      protectedComments: () => targetModel.protectedComments(),
       /* Indique si le recentrage est actuellement suspendu. */
       isHolding: () => holdGuiding
     };
