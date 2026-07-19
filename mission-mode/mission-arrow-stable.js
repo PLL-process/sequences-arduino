@@ -31,6 +31,8 @@
 
   /* Installe un seul calcul partagé par la flèche, le cadre et la gouttière. */
   function installStableArrow(refs) {
+    /* Se retire complètement lorsque la nouvelle géométrie guidée possède la propriété unique. */
+    if (window.__TQ_GEOMETRY_CLAIM__) return;
     /* Bloque un ancien module de précision encore présent dans une ancienne page. */
     refs.shell.dataset.precisionArrowReady = "true";
     /* Évite une seconde installation. */

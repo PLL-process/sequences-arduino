@@ -341,6 +341,8 @@
 
     function updateArrow() {
       if (!root.isConnected || root.classList.contains("mission-hidden")) return;
+      // En édition, la géométrie guidée est l'écrivain unique de la flèche ; ne rien écrire ici.
+      if (window.__TQ_GEOMETRY_CLAIM__ && !executionLineStep) return;
       refs.lineNumbers.scrollTop = editor.scrollTop;
       const line = executionLineStep
         ? validator.findLineForStep(editor.value, executionLineStep, currentResult, sessionId, "simulation")

@@ -495,8 +495,13 @@ for (const viewport of viewports) {
 
       /* Applique un zoom à 200 % lorsque le scénario l'exige (modèle CSS zoom de Chromium). */
       if (scenario.zoom) {
-        /* Applique le zoom sur la racine du document. */
-        await page.evaluate(() => { document.documentElement.style.zoom = "2"; });
+        /* Applique le zoom puis émet resize comme le fait le zoom navigateur réel. */
+        await page.evaluate(() => {
+          /* Applique le zoom sur la racine du document. */
+          document.documentElement.style.zoom = "2";
+          /* Signale le changement de mise en page comme un vrai zoom navigateur. */
+          window.dispatchEvent(new Event("resize"));
+        });
       }
 
       /* Effectue une tentative de remontée et de correction lorsque demandé. */

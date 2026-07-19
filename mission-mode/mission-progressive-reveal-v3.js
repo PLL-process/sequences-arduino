@@ -172,6 +172,8 @@
 
     /* Place automatiquement la nouvelle étape tout en laissant ensuite la relecture libre. */
     function alignNewStep(progress) {
+      /* La géométrie guidée possède désormais le défilement : ne plus le forcer ici. */
+      if (window.__TQ_GEOMETRY_CLAIM__) return;
       /* Ignore un alignement devenu inutile. */
       if (!guidedModeEnabled()) return;
       /* Recalcule les dimensions réellement rendues. */

@@ -237,6 +237,8 @@
 
     /* Fait défiler l’éditeur afin de garder la ligne active visible. */
     function scrollLineIntoView(lineIndex) {
+      /* La géométrie guidée est l'écrivain unique du défilement : ne rien faire ici. */
+      if (window.__TQ_GEOMETRY_CLAIM__) return;
       /* Lit les métriques réellement appliquées au textarea. */
       const style = window.getComputedStyle(editor);
       /* Convertit la hauteur d’une ligne. */
