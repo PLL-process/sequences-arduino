@@ -6,7 +6,16 @@
   left: var(--mission-completion-left, 5.4rem) !important;
   right: auto !important;
   width: min(520px, calc(100% - var(--mission-completion-left, 5.4rem) - .75rem)) !important;
-  max-height: min(310px, 44dvh);
+  max-height: min(340px, 52dvh);
+}
+
+/* Panneau opaque et bien détaché du code : aucun texte de l’éditeur ne doit transparaître. */
+.mission-completion-menu {
+  z-index: 60 !important;
+  padding: .5rem !important;
+  background-color: #061019 !important;
+  border: 1.5px solid #facc15 !important;
+  box-shadow: 0 22px 52px rgba(0, 0, 0, .72) !important;
 }
 
 /* Un court titre indique explicitement que la souris peut être utilisée. */
@@ -34,16 +43,54 @@
   font-weight: 700;
 }
 
-/* Les propositions deviennent de véritables cartes cliquables. */
+/* Chaque proposition est une carte quasi opaque empilant DEUX zones verticales : */
+/* la description pédagogique EN HAUT, puis la commande sur SA PROPRE ligne EN BAS. */
+/* Cette disposition supprime le chevauchement dû à l’ancienne grille à deux colonnes. */
 .mission-completion-item {
-  border: 1px solid transparent !important;
+  display: flex !important;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .4rem;
+  height: auto;
+  min-height: 0;
+  padding: .72rem .82rem !important;
+  background: #0d2033 !important;
+  border: 1px solid #24405a !important;
+  border-radius: 9px !important;
 }
 
-/* Le survol de la souris rend le choix très visible. */
+/* Un léger espace sépare les cartes successives. */
+.mission-completion-item + .mission-completion-item {
+  margin-top: .42rem;
+}
+
+/* Description pédagogique : au-dessus, secondaire, sur plusieurs lignes si besoin. */
+.mission-completion-item span {
+  order: 1;
+  display: block;
+  color: #d7e3ea !important;
+  font-size: .82rem !important;
+  line-height: 1.45 !important;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Commande proposée : en dessous, sur sa propre ligne, monospace et plus visible. */
+.mission-completion-item code {
+  order: 2;
+  display: block;
+  width: 100%;
+  color: #ffe08a !important;
+  font: 800 .95rem/1.45 Consolas, "Courier New", monospace !important;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* Le survol de la souris et la proposition active restent très identifiables. */
 .mission-completion-item:hover,
 .mission-completion-item.active {
   border-color: #facc15 !important;
-  background: #20364b !important;
+  background: #24394e !important;
   box-shadow: inset 3px 0 0 #facc15;
 }
 
