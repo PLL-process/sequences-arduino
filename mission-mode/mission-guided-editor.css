@@ -93,6 +93,126 @@
   display: none;
 }
 
+/* Surbrillance SECONDAIRE, discrète, de l'ancienne ligne révélée en cours de correction. */
+/* Elle se distingue nettement de la cible (jaune) par une teinte bleutée et un trait pointillé. */
+.mission-editing-line {
+  /* Positionnement absolu dans le repère commun. */
+  position: absolute;
+  /* S'étend jusqu'au bord droit de la zone. */
+  right: 0;
+  /* Sous le curseur, au-dessus de la coloration, distincte de la bande cible. */
+  z-index: 4;
+  /* Décor non interactif. */
+  pointer-events: none;
+  /* Coins légèrement arrondis. */
+  border-radius: 6px;
+  /* Fond bleuté très léger pour ne pas gêner la lecture. */
+  background: rgba(96, 165, 250, .12);
+  /* Repère latéral discret et pointillé pour marquer « ancienne ligne ». */
+  box-shadow: inset 4px 0 0 rgba(96, 165, 250, .75);
+  /* Liseré pointillé subtil. */
+  outline: 1px dashed rgba(96, 165, 250, .45);
+  /* Décalage du liseré vers l'intérieur. */
+  outline-offset: -2px;
+  /* Transitions douces. */
+  transition: top .16s ease, height .16s ease;
+}
+
+/* La surbrillance secondaire disparaît lorsqu'elle est masquée. */
+.mission-editing-line[hidden] {
+  /* Retrait complet. */
+  display: none;
+}
+
+/* En simulation, la surbrillance secondaire est retirée comme le reste. */
+.mission-code-shell.mission-execution-target .mission-editing-line {
+  /* Masque la surbrillance secondaire. */
+  display: none;
+}
+
+/* Respecte la réduction des animations pour la bande secondaire. */
+@media (prefers-reduced-motion: reduce) {
+  .mission-editing-line {
+    /* Supprime les transitions. */
+    transition: none !important;
+  }
+}
+
+/* La bande secondaire n'est pas imprimée. */
+@media print {
+  .mission-editing-line {
+    /* Masque à l'impression. */
+    display: none !important;
+  }
+}
+
+/* Bouton « Revenir à l'étape » : compact, intégré à la barre d'outils pédagogique. */
+.mission-toolbar .mission-return-step {
+  /* Prend place à droite dans la barre. */
+  margin-left: auto;
+  /* Taille compacte. */
+  padding: .28rem .7rem;
+  /* Coins arrondis façon pastille. */
+  border-radius: 999px;
+  /* Contour jaune pédagogique. */
+  border: 1.4px solid rgba(250, 204, 21, .7);
+  /* Fond jaune très léger. */
+  background: rgba(250, 204, 21, .14);
+  /* Texte lisible. */
+  color: inherit;
+  /* Police compacte. */
+  font-size: .82rem;
+  /* Léger renforcement. */
+  font-weight: 600;
+  /* Curseur d'action. */
+  cursor: pointer;
+  /* Ne se réduit pas et ne casse pas la ligne. */
+  white-space: nowrap;
+}
+
+/* État de survol/focus du bouton de recentrage. */
+.mission-toolbar .mission-return-step:hover,
+.mission-toolbar .mission-return-step:focus-visible {
+  /* Renforce le fond au survol. */
+  background: rgba(250, 204, 21, .26);
+  /* Anneau de focus visible et contrasté. */
+  outline: 2px solid rgba(250, 204, 21, .9);
+  /* Décalage de l'anneau. */
+  outline-offset: 2px;
+}
+
+/* Le bouton reste masqué tant que l'élève n'a pas quitté la cible. */
+.mission-toolbar .mission-return-step[hidden] {
+  /* Retrait complet. */
+  display: none;
+}
+
+/* Message accessible de verrouillage : discret, sous l'éditeur. */
+.mission-code-shell .mission-line-lock-note {
+  /* Décollé du bord. */
+  margin: .35rem .2rem 0;
+  /* Petite taille. */
+  font-size: .8rem;
+  /* Couleur atténuée. */
+  color: rgba(250, 204, 21, .92);
+}
+
+/* Le message disparaît lorsqu'il est masqué. */
+.mission-code-shell .mission-line-lock-note[hidden] {
+  /* Retrait complet. */
+  display: none;
+}
+
+/* Sur téléphone, le bouton reste compact et n'occupe pas toute la largeur. */
+@media (max-width: 680px) {
+  .mission-toolbar .mission-return-step {
+    /* Conserve une taille réduite. */
+    padding: .24rem .6rem;
+    /* Police encore plus compacte. */
+    font-size: .78rem;
+  }
+}
+
 /* En simulation, la surbrillance d'écriture est retirée comme le cadre. */
 .mission-code-shell.mission-execution-target .mission-target-code {
   /* Masque la surbrillance de code. */

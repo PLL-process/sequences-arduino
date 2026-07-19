@@ -264,6 +264,43 @@
       };
     }
 
+    /* Calcule la bande (surbrillance) d'une ligne quelconque, pour la ligne éditée. */
+    function computeLineBand(lines, lineIndex) {
+      /* Synchronise le miroir avant la mesure. */
+      sync(lines);
+      /* Rectangle visible du textarea. */
+      const editorRect = refs.editor.getBoundingClientRect();
+      /* Rectangle du repère commun. */
+      const shellRect = refs.shell.getBoundingClientRect();
+      /* Rectangle de la gouttière (début de la zone de code). */
+      const gutterRect = refs.lineNumbers.getBoundingClientRect();
+      /* Facteur de zoom. */
+      const zoom = zoomFactor(editorRect);
+      /* Mesure de la ligne demandée. */
+      const rect = lineRect(lineIndex);
+      /* Masque lorsque la mesure manque. */
+      if (!rect) return { visible: false };
+      /* Masque lorsque la ligne sort de la zone visible. */
+      if (rect.bottom <= editorRect.top + 1 || rect.top >= editorRect.bottom - 1) return { visible: false };
+      /* Convertit une distance écran en pixels locaux. */
+      const toLocal = value => value / zoom;
+      /* Bornes verticales visibles de la ligne. */
+      const visibleTop = Math.max(rect.top, editorRect.top);
+      /* Bas visible de la ligne. */
+      const visibleBottom = Math.min(rect.bottom, editorRect.bottom);
+      /* Retourne la bande prête à écrire. */
+      return {
+        /* Bande visible. */
+        visible: true,
+        /* Début horizontal après la gouttière. */
+        left: toLocal(gutterRect.right - shellRect.left),
+        /* Haut de la bande. */
+        top: toLocal(visibleTop - shellRect.top),
+        /* Hauteur visible de la bande. */
+        height: toLocal(visibleBottom - visibleTop)
+      };
+    }
+
     /* Expose l'interface pure du moteur. */
     return {
       /* Calcule le défilement souhaité. */
@@ -272,6 +309,8 @@
       syncScroll,
       /* Calcule la géométrie des décorations. */
       computeDecorations,
+      /* Calcule la bande d'une ligne éditée (surbrillance secondaire). */
+      computeLineBand,
       /* Recherche du bloc de commentaire (exposée pour les tests). */
       commentBlockStart
     };

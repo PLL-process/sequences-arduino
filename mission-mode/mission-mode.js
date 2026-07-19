@@ -179,9 +179,12 @@
         state.reflection = refs.reflection.value;
         persistState();
       });
-      editor.addEventListener("input", () => {
+      editor.addEventListener("input", event => {
         state.code = editor.value;
-        if (!programmaticEditorChange) {
+        // Une restauration interne d'un commentaire protégé (event.__tqRestore) met à jour
+        // coloration, validateur, géométrie et stockage, mais ne compte PAS comme une
+        // tentative pédagogique de l'élève.
+        if (!programmaticEditorChange && !event?.__tqRestore) {
           state.attempted = true;
           attempted = true;
         }

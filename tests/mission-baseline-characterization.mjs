@@ -207,11 +207,40 @@ function measureStateInPage() {
     }
   }
 
+  /* Relève, quand il existe, le modèle de cible guidé (remontée éditable). */
+  let guidedModel = null;
+  /* Protège la lecture du modèle (absent hors mode Guidé installé). */
+  try {
+    /* Récupère l'accès de test au contrôleur guidé. */
+    const geo = window.TechnoQuestGuidedGeometry;
+    /* Calcule le modèle courant lorsqu'il est disponible. */
+    if (geo && typeof geo.model === "function") {
+      /* Calcule le modèle avec la position réelle du curseur. */
+      const model = geo.model();
+      /* Extrait les informations utiles à la caractérisation. */
+      guidedModel = {
+        /* Ligne de la première étape manquante selon le contrôleur. */
+        targetLine: model.targetLine,
+        /* Ancienne ligne éditée (le cas échéant). */
+        editingLine: model.editingLine,
+        /* Indique si le curseur est sur une ligne révélée éditable. */
+        caretIsRevealed: typeof model.isEditable === "function" ? model.isEditable(caretLine) : null,
+        /* Lignes révélées éditables. */
+        revealedCodeLines: model.revealedCodeLines
+      };
+    }
+  } catch (error) {
+    /* Ignore toute indisponibilité du modèle. */
+    guidedModel = null;
+  }
+
   /* Retourne l'ensemble des mesures. */
   return {
     /* Étape active / première instruction manquante. */
     activeStep: stepId,
     firstMissingInstruction: stepLabel,
+    /* Modèle de cible guidé (remontée éditable). */
+    guidedModel,
     /* Curseur. */
     selectionStart,
     caretLineIndex: caretLine,
@@ -249,16 +278,38 @@ function measureStateInPage() {
 
 /* Calcule, à partir d'une mesure, les écarts par rapport au comportement IDÉAL attendu. */
 /* Ces écarts ne sont pas des erreurs de test : ils documentent les bugs présents. */
-function evaluateDefects(measure) {
+function evaluateDefects(measure, options) {
   /* Prépare la liste des constats. */
   const defects = [];
+  /* Récupère les options (comportements attendus par scénario). */
+  const opts = options || {};
   /* Ignore l'analyse lorsqu'aucune cible n'est active. */
   if (measure.targetLineIndex === null) return defects;
 
-  /* B4/curseur : le point d'insertion doit être sur la ligne de code cible. */
-  if (measure.caretLineIndex !== measure.targetLineIndex) {
+  /* Détecte le comportement VOULU de remontée : curseur sur une ancienne ligne révélée */
+  /* tandis que la cible pédagogique reste sur la première étape manquante. */
+  const remonteeRecognized = Boolean(
+    /* Le scénario attend explicitement une remontée éditable. */
+    opts.remontee &&
+    /* Le modèle guidé est disponible. */
+    measure.guidedModel &&
+    /* Le curseur se trouve sur une ligne révélée éditable. */
+    measure.guidedModel.caretIsRevealed === true &&
+    /* La cible principale reste bien la première étape manquante. */
+    measure.guidedModel.targetLine === measure.targetLineIndex
+  );
+
+  /* B4/curseur : le point d'insertion doit être sur la ligne de code cible, */
+  /* SAUF lorsqu'il s'agit de la remontée éditable volontaire (nouveau comportement). */
+  if (measure.caretLineIndex !== measure.targetLineIndex && !remonteeRecognized) {
     /* Note le décalage curseur / cible. */
     defects.push(`curseur ligne ${measure.caretLineHuman} ≠ cible ligne ${measure.targetLineHuman}`);
+  }
+
+  /* Constat NÉGATIF si une remontée était attendue mais n'a pas fonctionné. */
+  if (opts.remontee && !remonteeRecognized && measure.caretLineIndex === measure.targetLineIndex) {
+    /* La remontée éditable a échoué : le curseur n'a pas pu rester sur l'ancienne ligne. */
+    defects.push("remontée éditable non fonctionnelle (curseur non maintenu sur l'ancienne ligne révélée)");
   }
 
   /* B2 : le cadre doit exister et englober le commentaire ET la ligne de code. */
@@ -570,12 +621,22 @@ for (const viewport of viewports) {
       }, measureStateInPage.toString());
 
       /* Évalue les écarts au comportement idéal (documente les bugs). */
-      const defects = await page.evaluate(({ fn, m }) => {
+      const defects = await page.evaluate(({ fn, m, opts }) => {
         /* Reconstruit la fonction d'évaluation. */
         const run = new Function(`return (${fn})`)();
-        /* Exécute l'évaluation. */
-        return run(m);
-      }, { fn: evaluateDefects.toString(), m: measure });
+        /* Exécute l'évaluation en passant le comportement attendu du scénario. */
+        return run(m, opts);
+      }, { fn: evaluateDefects.toString(), m: measure, opts: { remontee: Boolean(scenario.scrollBack) } });
+
+      /* Reconnaît explicitement le nouveau comportement voulu pour le scénario de remontée. */
+      if (scenario.scrollBack) {
+        /* Détermine si la remontée éditable est bien reconnue. */
+        const remonteeOk = measure.guidedModel && measure.guidedModel.caretIsRevealed === true
+          && measure.guidedModel.targetLine === measure.targetLineIndex
+          && measure.caretLineIndex !== measure.targetLineIndex;
+        /* Journalise le comportement attendu (curseur sur ancienne ligne, cible maintenue). */
+        console.log(`   ↳ remontée éditable ${remonteeOk ? "RECONNUE" : "NON reconnue"} — curseur ligne ${measure.caretLineHuman}, cible maintenue ligne ${measure.targetLineHuman}`);
+      }
 
       /* Construit le nom de capture. */
       const captureName = `${scenario.id}__${scenario.mode}__${viewport.name}.png`;

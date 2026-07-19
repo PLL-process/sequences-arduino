@@ -110,6 +110,10 @@
 
   /* Installe le guidage du curseur après la création du mode Mission. */
   ready(() => {
+    /* Le contrôleur guidé (mission-guided-controller) est désormais le SEUL gestionnaire */
+    /* du curseur, de la navigation et de la protection : ce verrou historique se retire. */
+    /* La surcharge de findLineForStep (au niveau module ci-dessus) reste, elle, active. */
+    if (window.__TQ_CARET_CLAIM__) return;
     /* Lit le numéro de la séance depuis la page. */
     const sessionId = Number(document.body.dataset.session || 0);
     /* Récupère la racine du mode Mission. */
@@ -274,6 +278,8 @@
 
     /* Place le curseur sur la ligne attendue. */
     function placeCaret(force = false, preferredColumn = null) {
+      /* Se retire lorsque le contrôleur guidé gère le curseur (revendication tardive). */
+      if (window.__TQ_CARET_CLAIM__) return;
       /* Ignore la demande hors du mode Mission ou pendant la simulation. */
       if (!missionVisible() || simulationActive()) return;
 
@@ -314,6 +320,8 @@
 
     /* Replace le curseur sur la ligne verrouillée en conservant sa colonne relative. */
     function enforceGuidedLine({ announce = false } = {}) {
+      /* Se retire lorsque le contrôleur guidé gère le curseur (revendication tardive). */
+      if (window.__TQ_CARET_CLAIM__) return;
       /* Ignore les appels récursifs déclenchés par setSelectionRange. */
       if (correctingSelection) return;
       /* Ignore le verrouillage hors du niveau Guidé. */
@@ -368,6 +376,8 @@
 
     /* Empêche les opérations qui fusionneraient ou créeraient une autre ligne. */
     editor.addEventListener("beforeinput", event => {
+      /* Se retire lorsque le contrôleur guidé gère la protection (revendication tardive). */
+      if (window.__TQ_CARET_CLAIM__) return;
       /* Ignore les restrictions hors du niveau Guidé. */
       if (!guidedLockEnabled() || !missionVisible() || simulationActive()) return;
       /* Calcule la cible actuelle. */
@@ -398,6 +408,8 @@
 
     /* Intercepte les touches de navigation verticale dans le niveau Guidé. */
     editor.addEventListener("keydown", event => {
+      /* Se retire lorsque le contrôleur guidé gère la navigation (revendication tardive). */
+      if (window.__TQ_CARET_CLAIM__) return;
       /* Laisse fonctionner les raccourcis avec Ctrl, Alt ou Meta. */
       if (event.ctrlKey || event.altKey || event.metaKey) return;
       /* Ignore les restrictions hors du niveau Guidé. */
