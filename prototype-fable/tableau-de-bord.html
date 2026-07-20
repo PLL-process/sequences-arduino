@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="TechnoQuest — tableau de bord enseignant : agrégation locale des bilans élèves (fichiers ou codes), vue classe, vue élève, vue séance, export CSV. Aucune donnée n'est envoyée sur Internet.">
+  <link rel="icon" href="data:,">
+  <title>TechnoQuest — Tableau de bord enseignant</title>
+  <style>
+    :root {
+      --bg: #0b1220; --card: #101a2a; --card2: #0e1726; --line: #24344a;
+      --text: #e6eef7; --muted: #93a7bd; --cyan: #22d3ee; --green: #4ade80;
+      --amber: #facc15; --red: #fb7185;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; padding: 0 0 4rem;
+      background: var(--bg); color: var(--text);
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+      font-size: 15px; line-height: 1.55;
+    }
+    header.tb-top {
+      display: flex; flex-wrap: wrap; align-items: center; gap: .8rem;
+      padding: 1rem clamp(14px, 4vw, 40px);
+      border-bottom: 1px solid var(--line); background: var(--card2);
+    }
+    header.tb-top h1 { margin: 0; font-size: 1.05rem; letter-spacing: .03em; }
+    header.tb-top h1 small { display: block; font-size: .72rem; font-weight: 600; color: var(--muted); letter-spacing: .12em; text-transform: uppercase; }
+    .tb-top-actions { margin-left: auto; display: flex; gap: .5rem; flex-wrap: wrap; }
+    main { padding: 1.2rem clamp(14px, 4vw, 40px); max-width: 1240px; margin: 0 auto; }
+    .btn {
+      padding: .5rem .8rem; border: 1px solid var(--line); border-radius: 10px;
+      background: #0b1727; color: var(--text); cursor: pointer; font-size: .88rem;
+    }
+    .btn:hover, .btn:focus-visible { border-color: var(--cyan); outline: none; }
+    .btn.primary { background: #063441; border-color: #0e7490; color: #cffafe; font-weight: 700; }
+    .btn.danger:hover { border-color: var(--red); }
+    .tb-card {
+      border: 1px solid var(--line); border-radius: 14px; background: var(--card);
+      padding: 1rem 1.1rem; margin: 0 0 1.1rem;
+    }
+    .tb-card h2 { margin: 0 0 .35rem; font-size: .95rem; }
+    .tb-card p.tb-note { margin: .15rem 0 .75rem; color: var(--muted); font-size: .84rem; }
+
+    /* ------- Import ------- */
+    #tbDrop {
+      border: 2px dashed #2c4b62; border-radius: 12px; padding: 1.1rem;
+      text-align: center; color: var(--muted); cursor: pointer;
+      transition: border-color .2s, background .2s;
+    }
+    #tbDrop.tb-drag { border-color: var(--cyan); background: rgba(34, 211, 238, .06); color: var(--text); }
+    #tbDrop strong { color: var(--text); }
+    .tb-import-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; }
+    #tbCodes {
+      width: 100%; min-height: 84px; resize: vertical;
+      border: 1px solid var(--line); border-radius: 10px; background: #0a1526;
+      color: var(--text); padding: .6rem .7rem; font-family: ui-monospace, monospace; font-size: .8rem;
+    }
+    #tbCodes:focus-visible { outline: none; border-color: var(--cyan); }
+    #tbImportStatus { margin: .6rem 0 0; font-size: .86rem; min-height: 1.2em; }
+    #tbImportStatus .ok { color: var(--green); }
+    #tbImportStatus .warn { color: var(--amber); }
+    #tbImportStatus .err { color: var(--red); }
+
+    /* ------- Barre d'outils / filtres ------- */
+    .tb-toolbar { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin: 0 0 1rem; }
+    .tb-tabs { display: flex; gap: .4rem; flex-wrap: wrap; }
+    .tb-tabs .btn[aria-selected="true"] { border-color: var(--cyan); background: #063441; color: #cffafe; font-weight: 700; }
+    .tb-toolbar select {
+      padding: .45rem .6rem; border: 1px solid var(--line); border-radius: 10px;
+      background: #0b1727; color: var(--text); font-size: .88rem;
+    }
+    .tb-count { color: var(--muted); font-size: .84rem; margin-left: auto; }
+
+    /* ------- Vue classe ------- */
+    .tb-table-wrap { overflow-x: auto; }
+    table.tb-classe { border-collapse: collapse; width: 100%; min-width: 760px; }
+    table.tb-classe th, table.tb-classe td {
+      border: 1px solid var(--line); padding: .45rem .55rem; text-align: center; font-size: .86rem;
+    }
+    table.tb-classe th { background: var(--card2); font-weight: 700; }
+    table.tb-classe th:first-child, table.tb-classe td:first-child { text-align: left; position: sticky; left: 0; background: var(--card2); min-width: 160px; }
+    .tb-cell { display: inline-flex; flex-direction: column; gap: .15rem; align-items: center; border: 0; background: none; color: inherit; cursor: pointer; font: inherit; padding: .1rem .3rem; border-radius: 8px; }
+    .tb-cell:hover, .tb-cell:focus-visible { outline: 2px solid var(--cyan); }
+    .tb-score { font-weight: 800; font-size: .95rem; }
+    .tb-score.s-haut { color: var(--green); }
+    .tb-score.s-moyen { color: var(--amber); }
+    .tb-score.s-bas { color: var(--red); }
+    .tb-score.s-aucun { color: #5b7280; font-weight: 400; }
+    .tb-dots { letter-spacing: .18em; font-size: .68rem; }
+    .tb-dots b { color: var(--green); font-weight: 400; }
+    .tb-dots span { color: #44566b; }
+    .tb-alerte { color: var(--amber); font-size: .72rem; }
+    .tb-eleve-nom { border: 0; background: none; color: var(--cyan); cursor: pointer; font: inherit; font-weight: 700; padding: 0; text-align: left; }
+    .tb-eleve-nom:hover, .tb-eleve-nom:focus-visible { text-decoration: underline; outline: none; }
+
+    /* ------- Vue séance ------- */
+    .tb-stats { display: flex; flex-wrap: wrap; gap: .9rem; margin: 0 0 1rem; }
+    .tb-stat { border: 1px solid var(--line); border-radius: 12px; background: var(--card2); padding: .6rem 1rem; min-width: 130px; }
+    .tb-stat b { display: block; font-size: 1.3rem; }
+    .tb-stat span { color: var(--muted); font-size: .76rem; }
+    .tb-qrow { border: 1px solid var(--line); border-radius: 12px; padding: .7rem .9rem; margin: 0 0 .6rem; background: var(--card2); }
+    .tb-qrow-head { display: flex; gap: .7rem; align-items: baseline; flex-wrap: wrap; }
+    .tb-qrow-head .tb-qid { font-weight: 800; color: var(--cyan); }
+    .tb-qrow-head .tb-qtheme { color: var(--muted); font-size: .78rem; }
+    .tb-qrow-head .tb-qtaux { margin-left: auto; font-weight: 800; }
+    .tb-qbar { height: 7px; border-radius: 5px; background: #1b2c3f; overflow: hidden; margin: .45rem 0; }
+    .tb-qbar i { display: block; height: 100%; background: linear-gradient(90deg, var(--amber), var(--red)); }
+    .tb-qdetail { font-size: .84rem; color: var(--muted); margin: .3rem 0 0; }
+    .tb-qdetail b { color: var(--text); }
+
+    /* ------- Vue élève ------- */
+    .tb-eleve-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: .8rem; }
+    .tb-eleve-head h2 { font-size: 1.15rem; }
+    .tb-chip { display: inline-block; padding: .12rem .55rem; border-radius: 999px; border: 1px solid var(--line); font-size: .76rem; color: var(--muted); }
+    .tb-chip.ok { border-color: #14532d; color: var(--green); }
+    .tb-chip.warn { border-color: #713f12; color: var(--amber); }
+    details.tb-seance-detail { border: 1px solid var(--line); border-radius: 12px; background: var(--card2); margin: 0 0 .6rem; }
+    details.tb-seance-detail > summary { cursor: pointer; padding: .65rem .9rem; font-weight: 700; display: flex; gap: .7rem; flex-wrap: wrap; align-items: baseline; }
+    details.tb-seance-detail > summary::marker { color: var(--cyan); }
+    .tb-seance-detail-body { padding: 0 .9rem .9rem; }
+    .tb-seance-detail-body h4 { margin: .8rem 0 .3rem; font-size: .84rem; color: var(--cyan); letter-spacing: .05em; text-transform: uppercase; }
+    .tb-seance-detail-body pre {
+      margin: 0; padding: .7rem .8rem; border: 1px solid var(--line); border-radius: 10px;
+      background: #0a1322; overflow-x: auto; font-size: .78rem; line-height: 1.5;
+      white-space: pre-wrap; word-break: break-word;
+    }
+    table.tb-reponses { border-collapse: collapse; width: 100%; font-size: .82rem; }
+    table.tb-reponses th, table.tb-reponses td { border: 1px solid var(--line); padding: .35rem .5rem; text-align: left; }
+    table.tb-reponses th { background: #0a1322; }
+    td.tb-ok { color: var(--green); }
+    td.tb-ko { color: var(--red); }
+    .tb-vide { color: var(--muted); font-style: italic; }
+
+    .tb-demo-banner {
+      border: 1px solid #713f12; background: rgba(250, 204, 21, .08); color: #fde68a;
+      border-radius: 12px; padding: .6rem .9rem; margin: 0 0 1rem; font-size: .86rem;
+      display: none;
+    }
+    body.tb-demo .tb-demo-banner { display: block; }
+
+    footer.tb-foot { padding: 1.4rem clamp(14px, 4vw, 40px); color: #5b7280; font-size: .78rem; max-width: 1240px; margin: 0 auto; }
+
+    @media (max-width: 760px) {
+      .tb-import-grid { grid-template-columns: 1fr; }
+      header.tb-top { position: static; }
+      .tb-count { margin-left: 0; width: 100%; }
+    }
+    @media print {
+      body { background: #fff; color: #000; }
+      header.tb-top, #tbImport, .tb-toolbar .btn, .tb-demo-banner, footer.tb-foot, #tbDrop { display: none !important; }
+      .tb-card, .tb-stat, .tb-qrow, details.tb-seance-detail { border-color: #999; background: #fff; color: #000; }
+      table.tb-classe th, table.tb-classe td { border-color: #999; background: #fff !important; color: #000; }
+      .tb-score.s-haut { color: #166534; } .tb-score.s-moyen { color: #854d0e; } .tb-score.s-bas { color: #991b1b; }
+      main { padding: 0; max-width: none; }
+      details.tb-seance-detail { break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <header class="tb-top">
+    <h1><small>TechnoQuest · Jardin connecté</small>Tableau de bord enseignant</h1>
+    <div class="tb-top-actions">
+      <button type="button" class="btn" id="tbCsv">⬇ Export CSV</button>
+      <button type="button" class="btn" id="tbPrint">🖨 Imprimer</button>
+      <button type="button" class="btn danger" id="tbClear">Vider le tableau</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="tb-demo-banner" role="status">
+      Données d’exemple affichées (élèves fictifs, non enregistrées). Rechargez la page pour revenir à vos données réelles.
+    </div>
+
+    <!-- ==================== Import des bilans ==================== -->
+    <section class="tb-card" id="tbImport" aria-labelledby="tbImportTitle">
+      <h2 id="tbImportTitle">1 · Récupérer les bilans des élèves</h2>
+      <p class="tb-note">
+        Chaque élève exporte son bilan depuis sa séance (bouton « 📤 Exporter mon bilan », sous le QCM) :
+        il obtient un fichier <code>bilan_….json</code> et un code copiable. Tout reste sur cet ordinateur —
+        rien n’est envoyé sur Internet, et les bilans chargés sont mémorisés dans ce navigateur.
+      </p>
+      <div class="tb-import-grid">
+        <div>
+          <div id="tbDrop" role="button" tabindex="0" aria-label="Déposer ou choisir des fichiers bilan">
+            <strong>Glissez-déposez</strong> les fichiers <code>bilan_….json</code> ici<br>
+            ou <strong>cliquez</strong> pour les choisir (plusieurs à la fois).
+            <input type="file" id="tbFiles" accept=".json,application/json" multiple hidden>
+          </div>
+        </div>
+        <div>
+          <label for="tbCodes" style="font-size:.84rem;color:var(--muted)">Ou collez un ou plusieurs codes bilan (<code>TQB1:…</code>), un par ligne :</label>
+          <textarea id="tbCodes" spellcheck="false" placeholder="TQB1:eyJmb3JtYXQiOiJ0ZWNobm9xdWVzdC1iaWxhbi12MSIsICJl…"></textarea>
+          <div style="display:flex;gap:.5rem;margin-top:.45rem;flex-wrap:wrap">
+            <button type="button" class="btn primary" id="tbAddCodes">Ajouter ces codes</button>
+            <button type="button" class="btn" id="tbDemo">Voir avec des données d’exemple</button>
+          </div>
+        </div>
+      </div>
+      <p id="tbImportStatus" aria-live="polite"></p>
+    </section>
+
+    <!-- ==================== Vues ==================== -->
+    <div class="tb-toolbar">
+      <div class="tb-tabs" role="tablist" aria-label="Vues du tableau de bord">
+        <button type="button" class="btn" id="tbTabClasse" role="tab" aria-selected="true">Vue classe</button>
+        <button type="button" class="btn" id="tbTabSeance" role="tab" aria-selected="false">Vue séance</button>
+        <button type="button" class="btn" id="tbTabEleve" role="tab" aria-selected="false">Vue élève</button>
+      </div>
+      <select id="tbFiltreClasse" aria-label="Filtrer par classe"><option value="">Toutes les classes</option></select>
+      <select id="tbFiltreSeance" aria-label="Choisir la séance (vue séance)" hidden></select>
+      <span class="tb-count" id="tbCount">Aucun bilan chargé pour l’instant.</span>
+    </div>
+
+    <section class="tb-card" id="tbVueClasse" aria-label="Vue classe"></section>
+    <section class="tb-card" id="tbVueSeance" aria-label="Vue séance" hidden></section>
+    <section class="tb-card" id="tbVueEleve" aria-label="Vue élève" hidden></section>
+  </main>
+
+  <footer class="tb-foot">
+    TechnoQuest — prototype Fable · Les intitulés des questions proviennent des fichiers QCM provisoires du dépôt.
+    Un bilan dont la somme de contrôle ne correspond pas est marqué « ⚠ modifié » : son contenu a probablement été édité après l’export.
+  </footer>
+
+  <!-- Données QCM (textes des questions et bonnes réponses, pour les vues séance et élève). -->
+  <script defer src="qcm/qcm-data-s1.js?v=1"></script>
+  <script defer src="qcm/qcm-data-s2.js?v=1"></script>
+  <script defer src="qcm/qcm-data-s3.js?v=1"></script>
+  <script defer src="qcm/qcm-data-s4.js?v=1"></script>
+  <script defer src="qcm/qcm-data-s5.js?v=1"></script>
+  <script defer src="qcm/qcm-data-s6.js?v=1"></script>
+  <script defer src="qcm/qcm-data-s7.js?v=1"></script>
+  <script defer src="qcm/qcm-data-s8.js?v=1"></script>
+  <script defer src="tableau-de-bord.js?v=1"></script>
+</body>
+</html>

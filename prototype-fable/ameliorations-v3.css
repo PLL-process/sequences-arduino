@@ -150,3 +150,93 @@ body.fv-twin-no-scroll::after {
 @media (prefers-reduced-motion: reduce) {
   .fv-twin-led, .fv-twin-frame { transition: none; }
 }
+
+/* ============ Bouton sons du jumeau ============ */
+.fv-twin-son-btn {
+  border: 1px solid #2c4b62;
+  border-radius: 9px;
+  background: #102438;
+  width: 2.1rem; height: 2.1rem;
+  font-size: .95rem;
+  cursor: pointer;
+}
+.fv-twin-son-btn:hover, .fv-twin-son-btn:focus-visible { border-color: #22d3ee; outline: none; }
+
+/* ============ Badge de fin de séance (impression) ============ */
+#fvBadgeCarte { display: none; }
+body.fv-impression-badge #fvBadgeCarte {
+  display: block;
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: #fff;
+  padding: 6vh 0;
+}
+.fv-badge {
+  width: min(420px, 92vw);
+  margin: 0 auto;
+  padding: 26px 30px;
+  border: 3px solid var(--accent, #22d3ee);
+  border-radius: 22px;
+  background: #fff;
+  color: #10222c;
+  text-align: center;
+  font-family: Inter, system-ui, sans-serif;
+  box-shadow: inset 0 0 0 6px #fff, inset 0 0 0 8px var(--accent, #22d3ee);
+}
+.fv-badge-rosette { width: 118px; height: 118px; margin: 0 auto 6px; display: block; }
+.fv-badge-titre { margin: 0; font-size: .74rem; font-weight: 900; letter-spacing: .16em; text-transform: uppercase; color: #46626f; }
+.fv-badge h2 { margin: .25rem 0 .5rem; font-size: 1.18rem; }
+.fv-badge-nom { margin: 0 0 .7rem; font-size: 1rem; }
+.fv-badge-coches { list-style: none; margin: 0 auto .7rem; padding: 0; display: grid; gap: .3rem; width: fit-content; text-align: left; }
+.fv-badge-coches li { font-size: .9rem; color: #5b7280; }
+.fv-badge-coches li.fait { color: #0f766e; font-weight: 700; }
+.fv-badge-date { margin: 0 0 1rem; font-size: .82rem; color: #46626f; }
+.fv-badge-signature { margin: 0; font-size: .82rem; color: #10222c; }
+@media print {
+  body.fv-impression-badge > *:not(#fvBadgeCarte) { display: none !important; }
+  body.fv-impression-badge #fvBadgeCarte { position: static; padding: 0; }
+  .fv-badge { box-shadow: none; }
+}
+
+/* ============ Mode « faible distraction » ============ */
+/* Aplats, sans ombres/halos/reflets, accents adoucis. Les animations
+   pédagogiques du jumeau (signaux, eau, rotor) restent actives. */
+body.fv-sobre { background: #0b1220; }
+body.fv-sobre .session-hero,
+body.fv-sobre .card,
+body.fv-sobre .s1-card,
+body.fv-sobre .qcm-root,
+body.fv-sobre .fv-part-body,
+body.fv-sobre .fv-part-head,
+body.fv-sobre .fv-mission-launcher {
+  background: #101a2a !important;
+  box-shadow: none !important;
+}
+body.fv-sobre .session-hero::after { display: none; }
+body.fv-sobre .fv-pastille,
+body.fv-sobre .score-badge { box-shadow: none; background: #1b2c3f; color: #cfe8f3; }
+body.fv-sobre .fv-twin-frame { box-shadow: none; background: #101a2a; }
+body.fv-sobre .fv-twin-glass { display: none; }
+body.fv-sobre .fv-twin-frame.fv-twin-active { box-shadow: none; border-color: #2c4b62; }
+body.fv-sobre .fv-twin-led { box-shadow: none; }
+body.fv-sobre .fv-twin-frame .twin-stage svg { filter: saturate(.82); }
+body.fv-sobre .fv-transition, body.fv-sobre .fv-banner { background: #101a2a; }
+body.fv-sobre .fv-rail { background: #0e1726; backdrop-filter: none; }
+body.fv-sobre * { transition: none !important; }
+body.fv-sobre .btn.primary { background: #14532d; border-color: #2d8b58; }
+body.fv-sobre .ag-svg { filter: saturate(.8); }
+
+#fvSobreBtn { white-space: nowrap; }
+
+/* Sur l'en-tête mobile compact des pages verticales, la bascule sobre rejoint
+   le menu « ⋯ » comme les autres commandes secondaires. */
+@media (max-width: 650px) {
+  body.fv-vertical .session-nav > #fvSobreBtn { display: none; }
+  body.fv-vertical .session-nav.fv-nav-open > #fvSobreBtn {
+    display: block;
+    width: 100%;
+    text-align: left;
+    order: 3;
+  }
+}
