@@ -121,6 +121,27 @@ sont des `details/summary` natifs, accessibles au clavier ; l'ordre de
 tabulation suit l'ordre visuel puisque le DOM n'est jamais réordonné
 visuellement par CSS.
 
+## Révision 2 — compacité et petit écran (ergonomie uniquement)
+
+Suite à la première revue, un second commit exclusivement ergonomique ajoute,
+sans toucher à la moindre logique :
+
+- **Rail mobile vertical** : sous 900 px, le rail horizontal disparaît au
+  profit d'un indicateur compact « Partie X sur 7 » + titre courant + barre de
+  progression à sept segments, avec un bouton ☰ dépliant la liste verticale
+  des sept parties. La rangée de pastilles reste réservée aux grands écrans.
+- **En-tête mobile compact** : sous 650 px, seuls la marque et le bouton
+  « Activer le Mode Mission » restent visibles ; Précédente / 8 séances /
+  Suivante / Imprimer se replient derrière un bouton ⋯ (rien n'est supprimé).
+- **Partie 4 clarifiée** : le mode Mission est étiqueté « Parcours
+  recommandé » ; l'éditeur classique devient une « Alternative » repliée par
+  défaut — il conserve tous ses comportements une fois déplié, et le mode
+  Mission le restitue à sa place au retour.
+- **Longueur perçue réduite** : chaque partie possède un bouton
+  Replier / Déplier dans son en-tête (jamais repliée par défaut, et tout se
+  déplie à l'impression) ; les questions d'observation fonctionnent en
+  accordéon (une seule ouverte à la fois).
+
 ## Les composants réutilisables (séances 2 à 8)
 
 `seance-verticale.css` définit un jeu de classes indépendantes de la séance :

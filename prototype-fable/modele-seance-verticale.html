@@ -27,13 +27,23 @@
     <p class="fv-banner">Maquette abstraite : ce modèle montre comment chaque séance 2 à 8 peut adopter la même lecture verticale. Les contenus pédagogiques réels des séances ne sont pas réécrits ici.</p>
 
     <nav class="fv-rail" aria-label="Progression de la séance : sept parties">
-      <a href="prototype-fable/modele-seance-verticale.html#m1" class="active"><span>1</span><em>Découvrir</em></a>
-      <a href="prototype-fable/modele-seance-verticale.html#m2"><span>2</span><em>Observer</em></a>
-      <a href="prototype-fable/modele-seance-verticale.html#m3"><span>3</span><em>Comprendre</em></a>
-      <a href="prototype-fable/modele-seance-verticale.html#m4"><span>4</span><em>Programmer</em></a>
-      <a href="prototype-fable/modele-seance-verticale.html#m5"><span>5</span><em>Tester</em></a>
-      <a href="prototype-fable/modele-seance-verticale.html#m6"><span>6</span><em>Montage réel</em></a>
-      <a href="prototype-fable/modele-seance-verticale.html#m7"><span>7</span><em>QCM</em></a>
+      <div class="fv-rail-compact">
+        <button type="button" class="fv-rail-toggle" aria-expanded="false" onclick="this.closest('.fv-rail').classList.toggle('open');this.setAttribute('aria-expanded', this.closest('.fv-rail').classList.contains('open'))">☰<span class="sr-only"> Afficher les sept parties</span></button>
+        <div class="fv-rail-now">
+          <span class="fv-rail-now-kicker">Partie 1 sur 7</span>
+          <strong class="fv-rail-now-title">Découvrir la mission</strong>
+        </div>
+        <div class="fv-rail-bar" aria-hidden="true"><i class="filled"></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </div>
+      <div class="fv-rail-list">
+        <a href="prototype-fable/modele-seance-verticale.html#m1" class="active"><span>1</span><em>Découvrir</em></a>
+        <a href="prototype-fable/modele-seance-verticale.html#m2"><span>2</span><em>Observer</em></a>
+        <a href="prototype-fable/modele-seance-verticale.html#m3"><span>3</span><em>Comprendre</em></a>
+        <a href="prototype-fable/modele-seance-verticale.html#m4"><span>4</span><em>Programmer</em></a>
+        <a href="prototype-fable/modele-seance-verticale.html#m5"><span>5</span><em>Tester</em></a>
+        <a href="prototype-fable/modele-seance-verticale.html#m6"><span>6</span><em>Montage réel</em></a>
+        <a href="prototype-fable/modele-seance-verticale.html#m7"><span>7</span><em>QCM</em></a>
+      </div>
     </nav>
 
     <!-- ============ PARTIE 1 ============ -->

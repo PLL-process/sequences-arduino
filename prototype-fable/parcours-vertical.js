@@ -115,13 +115,34 @@
        recherches par identifiant (getElementById) restent ainsi valides
        pendant les déplacements de conteneurs. */
 
-    /* ---------- Rail de progression (liens d'ancrage internes) ------------ */
+    /* ---------- Rail de progression (liens d'ancrage internes) ------------
+       Grand écran : rangée de pastilles. Écran étroit : indicateur compact
+       « Partie X sur 7 » + barre de progression + bouton dépliant la liste
+       verticale des sept parties (aucune lecture horizontale imposée). */
     const rail = el("nav", "fv-rail");
     rail.id = "fvRail";
     rail.setAttribute("aria-label", "Progression de la séance : sept parties");
-    rail.innerHTML = PARTS.map(p =>
-      `<a href="prototype-fable/seance-1-verticale.html#${p.id}" data-part="${p.n}"><span>${p.n}</span><em>${p.title}</em></a>`
-    ).join("");
+    rail.innerHTML = `
+      <div class="fv-rail-compact">
+        <button type="button" class="fv-rail-toggle" aria-expanded="false" aria-controls="fvRailList">☰<span class="sr-only"> Afficher les sept parties</span></button>
+        <div class="fv-rail-now">
+          <span class="fv-rail-now-kicker">Partie 1 sur 7</span>
+          <strong class="fv-rail-now-title">${PARTS[0].title}</strong>
+        </div>
+        <div class="fv-rail-bar" aria-hidden="true">${PARTS.map(() => "<i></i>").join("")}</div>
+      </div>
+      <div class="fv-rail-list" id="fvRailList">${PARTS.map(p =>
+        `<a href="prototype-fable/seance-1-verticale.html#${p.id}" data-part="${p.n}"><span>${p.n}</span><em>${p.title}</em></a>`
+      ).join("")}</div>`;
+    const railToggle = rail.querySelector(".fv-rail-toggle");
+    railToggle.addEventListener("click", () => {
+      const open = rail.classList.toggle("open");
+      railToggle.setAttribute("aria-expanded", String(open));
+    });
+    rail.querySelectorAll(".fv-rail-list a").forEach(link => link.addEventListener("click", () => {
+      rail.classList.remove("open");
+      railToggle.setAttribute("aria-expanded", "false");
+    }));
 
     /* ---------- Bandeau prototype ----------------------------------------- */
     const banner = el("p", "fv-banner",
@@ -284,12 +305,15 @@
     body(3).appendChild(algoFold);
 
     /* ==================== PARTIE 4 — Programmer =========================== */
+    /* Un seul chemin mis en avant : le mode Mission. L'éditeur classique est
+       conservé intégralement, mais présenté comme alternative repliée. */
     const missionButton = document.getElementById("missionActivate");
     if (missionButton) {
       const launcher = el("div", "fv-mission-launcher", `
+        <span class="fv-path-tag fv-path-reco">Parcours recommandé</span>
         <div>
           <h3>Mode Mission — écran complet</h3>
-          <p>L’éditeur guidé s’ouvre en pleine largeur avec le jumeau numérique, les objectifs, la validation en direct et tes sauvegardes. Quatre niveaux sont conservés : Guidé, Standard, Autonome et l’éditeur Classique ci-dessous.</p>
+          <p>L’éditeur guidé s’ouvre en pleine largeur avec le jumeau numérique, les objectifs, la validation en direct et tes sauvegardes. Trois niveaux d’aide : Guidé, Standard, Autonome.</p>
         </div>
         <button type="button" class="btn primary fv-mission-open">🚀 Ouvrir le mode Mission</button>`);
       launcher.querySelector(".fv-mission-open").addEventListener("click", () => missionButton.click());
@@ -297,7 +321,12 @@
     }
     const editorTitle = editorCard.querySelector(".card-head h2");
     if (editorTitle) editorTitle.textContent = "Écrire le programme C++ Arduino";
-    body(4).appendChild(editorCard);
+    const editorFold = el("details", "fv-fold fv-editor-alt");
+    editorFold.innerHTML = "<summary><span class=\"fv-path-tag\">Alternative</span> Éditeur classique dans la page (déplier si besoin)</summary>";
+    const editorFoldBody = el("div", "fv-fold-body");
+    editorFoldBody.appendChild(editorCard);
+    editorFold.appendChild(editorFoldBody);
+    body(4).appendChild(editorFold);
 
     /* L'aide d'écriture pas à pas reste disponible mais repliée par défaut
        (divulgation progressive) — son contenu n'est pas modifié. */
@@ -363,19 +392,68 @@
     if (practicalGrid && !practicalGrid.children.length) practicalGrid.remove();
 
     /* ---------- Surlignage de la partie active dans le rail --------------- */
+    const railKicker = rail.querySelector(".fv-rail-now-kicker");
+    const railTitle = rail.querySelector(".fv-rail-now-title");
+    const railSegments = [...rail.querySelectorAll(".fv-rail-bar i")];
+    const setActivePart = n => {
+      rail.querySelectorAll(".fv-rail-list a").forEach(link =>
+        link.classList.toggle("active", link.dataset.part === String(n)));
+      const part = PARTS[n - 1];
+      if (part) {
+        railKicker.textContent = `Partie ${part.n} sur 7`;
+        railTitle.textContent = part.title;
+        railSegments.forEach((seg, i) => seg.classList.toggle("filled", i < part.n));
+      }
+    };
+    setActivePart(1);
     if ("IntersectionObserver" in window) {
-      const links = new Map([...rail.querySelectorAll("a")].map(a => [a.dataset.part, a]));
       const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
-          const n = entry.target.id.replace("partie-", "");
-          if (entry.isIntersecting) {
-            links.forEach(link => link.classList.remove("active"));
-            links.get(n)?.classList.add("active");
-          }
+          if (entry.isIntersecting) setActivePart(Number(entry.target.id.replace("partie-", "")));
         });
       }, { rootMargin: "-30% 0px -60% 0px" });
       PARTS.forEach(p => observer.observe(parts[p.n]));
     }
+
+    /* ---------- En-tête mobile compact ------------------------------------ */
+    /* Les commandes secondaires (navigation entre séances, impression) sont
+       regroupées derrière un bouton « Menu » sur écran étroit ; le bouton du
+       mode Mission reste toujours visible. Aucun élément n'est supprimé. */
+    const sessionNav = shell.querySelector(".session-nav");
+    if (sessionNav && !sessionNav.querySelector(".fv-nav-toggle")) {
+      const navToggle = el("button", "fv-nav-toggle", "⋯<span class=\"sr-only\"> Menu de navigation</span>");
+      navToggle.type = "button";
+      navToggle.setAttribute("aria-expanded", "false");
+      sessionNav.prepend(navToggle);
+      navToggle.addEventListener("click", () => {
+        const open = sessionNav.classList.toggle("fv-nav-open");
+        navToggle.setAttribute("aria-expanded", String(open));
+      });
+    }
+
+    /* ---------- Parties refermables une fois terminées --------------------- */
+    PARTS.forEach(p => {
+      const head = parts[p.n].querySelector(".fv-part-head");
+      const collapse = el("button", "fv-part-collapse", "Replier");
+      collapse.type = "button";
+      collapse.setAttribute("aria-expanded", "true");
+      collapse.setAttribute("aria-label", `Replier la partie ${p.n} : ${p.title}`);
+      head.appendChild(collapse);
+      collapse.addEventListener("click", () => {
+        const collapsed = parts[p.n].classList.toggle("fv-collapsed");
+        collapse.textContent = collapsed ? "Déplier" : "Replier";
+        collapse.setAttribute("aria-expanded", String(!collapsed));
+        collapse.setAttribute("aria-label", `${collapsed ? "Déplier" : "Replier"} la partie ${p.n} : ${p.title}`);
+      });
+    });
+
+    /* ---------- Questions d'observation en accordéon ----------------------- */
+    document.querySelectorAll(".fv-questions").forEach(group => {
+      const questions = [...group.querySelectorAll("details.fv-q")];
+      questions.forEach(q => q.addEventListener("toggle", () => {
+        if (q.open) questions.forEach(other => { if (other !== q) other.open = false; });
+      }));
+    });
 
     document.body.classList.add("fv-vertical");
   };
