@@ -216,3 +216,52 @@ Observation (comportement identique dans les deux versions, donc antérieur au
 prototype et volontairement non corrigé ici) : l'activation du mode Mission
 réinitialise `practicalV1` (réponses QCM) dans `technoquest-premium-v1`. À
 discuter séparément de cette proposition d'ergonomie.
+
+## Révision 4 — sons, badge, bilan + tableau de bord, affichage sobre
+
+Quatre fonctions optionnelles, purement additives (aucune logique existante
+modifiée), câblées sur les 16 pages (8 classiques + 8 verticales) :
+
+- **Sons discrets du jumeau** (`sons-jumeau-v3.js`) : ronronnement grave de la
+  pompe et gouttes d'eau synthétisés en Web Audio (aucun fichier son),
+  uniquement pendant la démonstration et uniquement si l'élève a activé le
+  bouton 🔇/🔊 de l'écrin du jumeau. Désactivé par défaut, préférence mémorisée
+  (`technoquest-preferences-v1`).
+- **Badge de fin de séance imprimable** (`badge-seance-v3.js`) : après
+  validation du QCM, un bouton « 🏅 Imprimer mon badge de séance » compose une
+  carte (rosette avec le score /20, coches de progression réelles, date, ligne
+  de signature) et l'imprime seule. Le nom de l'élève est demandé une fois puis
+  mémorisé dans son profil.
+- **Export du bilan élève** (`bilan-eleve-v3.js`) : « 📤 Exporter mon bilan »
+  produit un fichier `bilan_<nom>_<classe>_seance-N.json` scellé par une somme
+  de contrôle (djb2), plus un code `TQB1:…` copié dans le presse-papiers pour
+  les ENT où déposer un fichier est difficile. Contenu : progression, QCM
+  (score, réponses), code C++, réponse argumentée.
+- **Tableau de bord enseignant** (`tableau-de-bord.html` + `.js`) : page 100 %
+  locale (aucune donnée envoyée sur Internet) qui agrège les bilans par
+  glisser-déposer de fichiers ou collage de codes. Vue classe (grille élèves ×
+  séances, score /20, points de progression, moyennes), vue séance (questions
+  triées des plus ratées aux mieux réussies, avec les intitulés lus dans les
+  fichiers QCM), vue élève (réponses détaillées, code C++, réponse argumentée,
+  alerte « ⚠ modifié » si la somme de contrôle ne correspond plus), export CSV
+  (compatible Excel/LibreOffice français) et impression. Les bilans chargés
+  sont mémorisés dans le navigateur de l'enseignant ; un bouton « Voir avec des
+  données d'exemple » montre le fonctionnement avec trois élèves fictifs, sans
+  rien enregistrer.
+- **Mode « faible distraction »** (`mode-sobre-v3.js`) : bascule
+  « 🎯 Affichage sobre » dans la barre du haut — fonds en aplats, suppression
+  des ombres, halos, reflets et transitions décoratives, couleurs adoucies.
+  Les animations pédagogiques du jumeau (signaux, eau, rotor) restent actives,
+  car elles portent du sens. Préférence mémorisée, appliquée dès le chargement.
+
+Tests automatisés (Playwright) : 60 contrôles du lot (activation des sons sans
+erreur, badge construit puis nettoyé après impression, bilan téléchargé avec
+somme de contrôle vérifiée, déduplication et alerte d'intégrité du tableau de
+bord, CSV, persistance, mode sobre conservé après rechargement, zéro
+débordement horizontal à 390 px) + fumée sur les 16 pages et aller-retour du
+mode Mission avec QCM conservé. Aucune erreur JavaScript.
+
+Note : l'observation d'une ancienne révision sur la réinitialisation du QCM à
+l'activation du mode Mission est obsolète — ce défaut a été corrigé (écriture
+en lecture-fusion dans `parcours-premium.js`) et le test d'aller-retour Mission
+le vérifie désormais.

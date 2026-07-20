@@ -100,15 +100,15 @@ window.TechnoQuestQCM.data[1] = {
       question: "Quelle instruction prépare D6 comme sortie ?",
       choices: [
         "pinMode(PIN_RELAIS_POMPE, OUTPUT);",
-        "analogRead(D6);",
-        "Serial.println(D6);"
+        "analogRead(PIN_RELAIS_POMPE);",
+        "Serial.println(PIN_RELAIS_POMPE);"
       ],
       answer: 0,
       explanation: "pinMode(PIN_RELAIS_POMPE, OUTPUT); indique à la carte que la broche D6 servira de sortie, capable d’envoyer LOW ou HIGH vers le module relais.",
       whyOthers: [
         "",
         "analogRead() sert à lire une entrée analogique ; cette instruction ne configure rien et D6 est ici une sortie.",
-        "Serial.println(D6) afficherait simplement un nombre dans le Moniteur Série, sans configurer la broche."
+        "Serial.println(PIN_RELAIS_POMPE) afficherait simplement le numéro de la broche dans le Moniteur Série, sans la configurer."
       ],
       exampleGarden: "Dans setup(), pinMode(PIN_RELAIS_POMPE, OUTPUT); prépare D6 avant d’imposer l’état LOW qui garde la pompe arrêtée.",
       exampleOther: "Dans une alarme de maison, on écrirait de même pinMode(PIN_SIRENE, OUTPUT); pour préparer la broche qui commande la sirène.",
@@ -160,9 +160,9 @@ window.TechnoQuestQCM.data[1] = {
       theme: "communication série",
       question: "Que fait Serial.println(valeurHumidite) ?",
       choices: [
-        "Elle mesure l’humidité",
+        "Elle mesure l’humidité du sol avec le capteur",
         "Elle affiche la valeur et revient à la ligne",
-        "Elle active le relais"
+        "Elle active le relais qui commande la pompe"
       ],
       answer: 1,
       explanation: "Serial.println(valeurHumidite) envoie la valeur de la variable vers le Moniteur Série puis passe à la ligne : chaque mesure s’affiche proprement.",
@@ -362,14 +362,14 @@ window.TechnoQuestQCM.data[1] = {
       theme: "jumeau numérique",
       question: "Pourquoi comparer la simulation au montage réel ?",
       choices: [
-        "Pour supprimer les capteurs",
-        "Pour éviter le téléversement",
+        "Pour se passer des capteurs sur le montage du jardin",
+        "Pour éviter de téléverser le programme dans la carte",
         "Pour vérifier que le modèle représente correctement le système"
       ],
       answer: 2,
       explanation: "Le jumeau numérique n’est utile que s’il se comporte comme le vrai montage : comparer les deux permet de vérifier que le modèle représente correctement le système.",
       whyOthers: [
-        "La comparaison ne supprime rien : les capteurs restent indispensables sur le montage réel.",
+        "La comparaison ne permet pas de s’en passer : les capteurs restent indispensables sur le montage réel.",
         "Le téléversement reste nécessaire pour tester le programme sur la carte réelle ; la simulation ne le remplace pas.",
         ""
       ],
