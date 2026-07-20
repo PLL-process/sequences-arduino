@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Modèle réutilisable — séance verticale (séances 2 à 8)</title>
+  <link rel="icon" href="data:,">
+  <base href="../">
+  <!-- Le modèle réutilise les jetons visuels existants et les composants du prototype. -->
+  <link rel="stylesheet" href="parcours-premium.css?v=5">
+  <link rel="stylesheet" href="prototype-fable/seance-verticale.css?v=1">
+  <style>
+    /* Styles propres à la maquette abstraite (zones fictives). */
+    .mock { border: 2px dashed #3b5a72; border-radius: 14px; padding: 1.1rem; text-align: center; color: #8fb3c6; background: rgba(15, 32, 48, .45); }
+    .mock strong { display: block; color: #cfe8f3; margin-bottom: .25rem; }
+    .mock small { display: block; margin-top: .3rem; color: #6d90a3; }
+    .doc-note { margin: .4rem 0 0; padding: .55rem .75rem; border-left: 4px solid #facc15; border-radius: 8px; background: #1c1809; color: #fde68a; font-size: .8rem; line-height: 1.45; }
+  </style>
+</head>
+<body class="fv-vertical" data-session="X">
+  <div class="session-shell">
+    <header class="session-topbar">
+      <a class="brand" href="prototype-fable/modele-seance-verticale.html">TECHNOQUEST · MODÈLE DE SÉANCE VERTICALE</a>
+      <nav class="session-nav"><a href="prototype-fable/modele-seance-verticale.html">← Précédente</a><a href="prototype-fable/modele-seance-verticale.html">8 séances</a><a href="prototype-fable/modele-seance-verticale.html">Suivante →</a></nav>
+    </header>
+
+    <p class="fv-banner">Maquette abstraite : ce modèle montre comment chaque séance 2 à 8 peut adopter la même lecture verticale. Les contenus pédagogiques réels des séances ne sont pas réécrits ici.</p>
+
+    <nav class="fv-rail" aria-label="Progression de la séance : sept parties">
+      <a href="prototype-fable/modele-seance-verticale.html#m1" class="active"><span>1</span><em>Découvrir</em></a>
+      <a href="prototype-fable/modele-seance-verticale.html#m2"><span>2</span><em>Observer</em></a>
+      <a href="prototype-fable/modele-seance-verticale.html#m3"><span>3</span><em>Comprendre</em></a>
+      <a href="prototype-fable/modele-seance-verticale.html#m4"><span>4</span><em>Programmer</em></a>
+      <a href="prototype-fable/modele-seance-verticale.html#m5"><span>5</span><em>Tester</em></a>
+      <a href="prototype-fable/modele-seance-verticale.html#m6"><span>6</span><em>Montage réel</em></a>
+      <a href="prototype-fable/modele-seance-verticale.html#m7"><span>7</span><em>QCM</em></a>
+    </nav>
+
+    <!-- ============ PARTIE 1 ============ -->
+    <section class="fv-part" id="m1">
+      <header class="fv-part-head">
+        <div class="fv-pastille" aria-hidden="true">1</div>
+        <div class="fv-part-head-text">
+          <p class="fv-part-kicker">Partie 1 sur 7</p>
+          <h2>Découvrir la mission</h2>
+          <p class="fv-part-goal">Situation, objectif, composants, compétences et résultat attendu — en bref.</p>
+        </div>
+      </header>
+      <div class="fv-part-body">
+        <div class="mock"><strong>Héros de la séance</strong>Titre, histoire courte, objectif, chips des notions<small>Composant existant : .session-hero — inchangé, simplement placé ici.</small></div>
+        <div class="mock"><strong>Trois boîtes d’introduction</strong>Composants · Compétences · Résultat attendu<small>Composant du prototype : .fv-intro-grid</small></div>
+        <details class="fv-fold"><summary>Déroulé détaillé de la séance (repliable)</summary><div class="fv-fold-body"><div class="mock">Chronologie et consignes détaillées de la séance</div></div></details>
+      </div>
+      <footer class="fv-transition"><span class="fv-transition-arrow" aria-hidden="true">↓</span><p>Transition rédigée vers l’observation.</p><a class="fv-continue" href="prototype-fable/modele-seance-verticale.html#m2">Continuer vers la partie 2</a></footer>
+    </section>
+
+    <!-- ============ PARTIE 2 ============ -->
+    <section class="fv-part" id="m2">
+      <header class="fv-part-head">
+        <div class="fv-pastille" aria-hidden="true">2</div>
+        <div class="fv-part-head-text">
+          <p class="fv-part-kicker">Partie 2 sur 7</p>
+          <h2>Observer le système</h2>
+          <p class="fv-part-goal">Le jumeau numérique de la séance, intact, avec sa consigne d’observation.</p>
+        </div>
+      </header>
+      <div class="fv-part-body">
+        <div class="fv-consigne"><strong>Consigne d’observation :</strong> une phrase qui oriente le regard de l’élève sur le phénomène clé de la séance.</div>
+        <div class="mock"><strong>Jumeau numérique</strong>SVG animé + boutons Lancer / Arrêter + chaînes d’information et d’énergie<small>Le composant existant est déplacé tel quel : ni son SVG, ni sa logique ne changent.</small></div>
+        <div class="mock"><strong>Grandeurs observées</strong>Cartes A0 · A1 · A2 · D6 (ou celles de la séance)<small>Composant du prototype : .fv-grandeurs-grid</small></div>
+        <div class="mock"><strong>Deux ou trois questions courtes</strong>Dépliables une à une<small>Composant du prototype : details.fv-q</small></div>
+      </div>
+      <footer class="fv-transition"><span class="fv-transition-arrow" aria-hidden="true">↓</span><p>Transition rédigée vers la compréhension du programme.</p><a class="fv-continue" href="prototype-fable/modele-seance-verticale.html#m3">Continuer vers la partie 3</a></footer>
+    </section>
+
+    <!-- ============ PARTIE 3 ============ -->
+    <section class="fv-part" id="m3">
+      <header class="fv-part-head">
+        <div class="fv-pastille" aria-hidden="true">3</div>
+        <div class="fv-part-head-text">
+          <p class="fv-part-kicker">Partie 3 sur 7</p>
+          <h2>Comprendre le programme</h2>
+          <p class="fv-part-goal">Trois notions distinctes : structure, algorithme textuel, algorigramme.</p>
+        </div>
+      </header>
+      <div class="fv-part-body">
+        <div class="mock"><strong>A. Structure du programme</strong>Bibliothèques et constantes · setup() une fois · loop() en continu</div>
+        <div class="mock"><strong>B. Algorithme en français</strong>Verbes d’action de la séance, sans numérotation 1-7<small>Pour les séances avec condition : ajouter les verbes COMPARER / DÉCIDER.</small></div>
+        <div class="mock"><strong>C. Algorigramme fidèle au programme</strong>Ovale début · rectangles · parallélogramme E/S · flèche de retour pour loop()<small>À partir de la séance 2 : le losange de décision apparaît quand un « if » réel existe dans le programme — jamais avant.</small></div>
+        <details class="fv-fold"><summary>Documentation détaillée (repliable)</summary><div class="fv-fold-body"><div class="mock">Cours complet et étapes détaillées existantes de la séance</div></div></details>
+      </div>
+      <footer class="fv-transition"><span class="fv-transition-arrow" aria-hidden="true">↓</span><p>Transition rédigée vers l’écriture du programme.</p><a class="fv-continue" href="prototype-fable/modele-seance-verticale.html#m4">Continuer vers la partie 4</a></footer>
+    </section>
+
+    <!-- ============ PARTIE 4 ============ -->
+    <section class="fv-part" id="m4">
+      <header class="fv-part-head">
+        <div class="fv-pastille" aria-hidden="true">4</div>
+        <div class="fv-part-head-text">
+          <p class="fv-part-kicker">Partie 4 sur 7</p>
+          <h2>Programmer en mode Mission</h2>
+          <p class="fv-part-goal">L’activité d’écriture, en pleine largeur, avec ses niveaux d’aide.</p>
+        </div>
+      </header>
+      <div class="fv-part-body">
+        <div class="mock"><strong>Lanceur du mode Mission</strong>Bouton plein écran + rappel des niveaux Guidé / Standard / Autonome / Classique<small>Composant du prototype : .fv-mission-launcher (il déclenche le bouton existant).</small></div>
+        <div class="mock"><strong>Éditeur de la séance</strong>Éditeur, niveau d’aide, sauvegarde — logique inchangée<small>Aides longues repliées par défaut dans details.fv-fold.</small></div>
+      </div>
+      <footer class="fv-transition"><span class="fv-transition-arrow" aria-hidden="true">↓</span><p>Transition rédigée vers les tests.</p><a class="fv-continue" href="prototype-fable/modele-seance-verticale.html#m5">Continuer vers la partie 5</a></footer>
+    </section>
+
+    <!-- ============ PARTIE 5 ============ -->
+    <section class="fv-part" id="m5">
+      <header class="fv-part-head">
+        <div class="fv-pastille" aria-hidden="true">5</div>
+        <div class="fv-part-head-text">
+          <p class="fv-part-kicker">Partie 5 sur 7</p>
+          <h2>Tester et interpréter</h2>
+          <p class="fv-part-goal">Exécution simulée, protocole de vérification, réponse argumentée.</p>
+        </div>
+      </header>
+      <div class="fv-part-body">
+        <div class="mock"><strong>Exécution simulée</strong>Bouton de vérification existant + résultat détaillé</div>
+        <div class="mock"><strong>Protocole de tests + réponse argumentée</strong>Cases à cocher et rédaction — logique inchangée</div>
+        <details class="fv-fold"><summary>Barème et correction complète (repliable)</summary><div class="fv-fold-body"><div class="mock">Barème /20 et correction exhaustive existants</div></div></details>
+      </div>
+      <footer class="fv-transition"><span class="fv-transition-arrow" aria-hidden="true">↓</span><p>Transition rédigée vers le montage réel.</p><a class="fv-continue" href="prototype-fable/modele-seance-verticale.html#m6">Continuer vers la partie 6</a></footer>
+    </section>
+
+    <!-- ============ PARTIE 6 ============ -->
+    <section class="fv-part" id="m6">
+      <header class="fv-part-head">
+        <div class="fv-pastille" aria-hidden="true">6</div>
+        <div class="fv-part-head-text">
+          <p class="fv-part-kicker">Partie 6 sur 7</p>
+          <h2>Passer au montage réel</h2>
+          <p class="fv-part-goal">Du simulateur à la carte : copie, téléversement, observation, comparaison.</p>
+        </div>
+      </header>
+      <div class="fv-part-body">
+        <div class="mock"><strong>Étapes en pictogrammes</strong>🔌 📋 🛠️ 🖥️ 👀 🛑 — verbes d’action, pas de série numérotée 1-7<small>Durées conservées mais visuellement secondaires.</small></div>
+        <div class="mock"><strong>Relevés expérimentaux</strong>Tableau de mesures existant (défilement interne, jamais de défilement de page)</div>
+      </div>
+      <footer class="fv-transition"><span class="fv-transition-arrow" aria-hidden="true">↓</span><p>Transition rédigée vers le QCM.</p><a class="fv-continue" href="prototype-fable/modele-seance-verticale.html#m7">Continuer vers la partie 7</a></footer>
+    </section>
+
+    <!-- ============ PARTIE 7 ============ -->
+    <section class="fv-part" id="m7">
+      <header class="fv-part-head">
+        <div class="fv-pastille" aria-hidden="true">7</div>
+        <div class="fv-part-head-text">
+          <p class="fv-part-kicker">Partie 7 sur 7</p>
+          <h2>QCM de fin de séance</h2>
+          <p class="fv-part-goal">Questions essentielles puis approfondissement, correction et bilan.</p>
+        </div>
+      </header>
+      <div class="fv-part-body">
+        <div class="mock"><strong>Questions badgées <span class="fv-qbadge">Q1</span> <span class="fv-qbadge">Q2</span> …</strong>Les badges Q distinguent les questions des sept parties<small>Après correction : bonne réponse surlignée, mauvaise réponse repérée, explication « À retenir ».</small></div>
+        <div class="mock"><strong>Question métacognitive + enregistrement du bilan</strong>Logique de sauvegarde inchangée</div>
+        <div class="doc-note"><strong>Convention QCM :</strong> les questions gardent leur logique et leurs données actuelles ; seule la présentation (badges, espacements, correction dépliée) est unifiée.</div>
+      </div>
+      <footer class="fv-transition fv-transition-end"><p>Fin de séance : message de clôture et rappel d’enregistrement.</p></footer>
+    </section>
+
+    <nav class="session-footer-nav"><a href="prototype-fable/modele-seance-verticale.html">← Séance précédente</a><a href="prototype-fable/modele-seance-verticale.html">Retour aux 8 séances</a><a href="prototype-fable/modele-seance-verticale.html">Séance suivante →</a></nav>
+  </div>
+</body>
+</html>

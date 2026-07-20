@@ -1,0 +1,544 @@
+/* ============================================================================
+   PROTOTYPE FABLE — Feuille de style du parcours vertical séquentiel.
+   Présentation uniquement : aucune règle ne masque un élément nécessaire à la
+   progression et aucune ne modifie le jumeau numérique ni le mode Mission.
+   ============================================================================ */
+
+/* ---------- Colonne unique, confortable sur grand écran -------------------- */
+body.fv-vertical .session-shell {
+  width: min(1120px, 100%);
+}
+
+/* ---------- Bandeau prototype ---------------------------------------------- */
+.fv-banner {
+  margin: 0 0 .9rem;
+  padding: .6rem .9rem;
+  border: 1px dashed #38bdf8;
+  border-radius: 12px;
+  background: #082334;
+  color: #bae6fd;
+  font-size: .82rem;
+  line-height: 1.4;
+}
+
+/* ---------- Rail de progression (ancres internes) --------------------------- */
+.fv-rail {
+  position: sticky;
+  top: 3.6rem;
+  z-index: 25;
+  display: flex;
+  gap: .4rem;
+  overflow-x: auto;
+  padding: .5rem;
+  margin: 0 0 1.2rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(5, 9, 20, .92);
+  backdrop-filter: blur(12px);
+  scrollbar-width: thin;
+}
+.fv-rail a {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  flex: 0 0 auto;
+  padding: .4rem .65rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--muted);
+  font-size: .78rem;
+  font-weight: 700;
+}
+.fv-rail a span {
+  display: grid;
+  place-items: center;
+  width: 1.55rem;
+  height: 1.55rem;
+  border-radius: 999px;
+  background: #123246;
+  color: #7dd3fc;
+  font-weight: 900;
+}
+.fv-rail a em { font-style: normal; }
+.fv-rail a.active,
+.fv-rail a:hover,
+.fv-rail a:focus-visible {
+  border-color: var(--cyan);
+  color: #eaffff;
+  outline: none;
+}
+.fv-rail a.active span { background: var(--cyan); color: #04222b; }
+
+/* ---------- Parties -------------------------------------------------------- */
+.fv-part {
+  margin: 0 0 1.4rem;
+  scroll-margin-top: 7.5rem;
+}
+.fv-part-head {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.15rem;
+  border: 1px solid #155e6b;
+  border-radius: 18px 18px 0 0;
+  background: linear-gradient(120deg, rgba(13, 74, 84, .55), rgba(7, 22, 34, .95));
+  border-bottom: none;
+}
+.fv-pastille {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 3.4rem;
+  height: 3.4rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 25%, #67e8f9, #0e7490 78%);
+  color: #032530;
+  font-size: 1.7rem;
+  font-weight: 950;
+  box-shadow: 0 0 22px rgba(34, 211, 238, .45);
+}
+.fv-part-kicker {
+  margin: 0;
+  color: var(--cyan);
+  font-size: .72rem;
+  font-weight: 900;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+}
+.fv-part-head-text h2 {
+  margin: .12rem 0;
+  font-size: clamp(1.25rem, 2.6vw, 1.7rem);
+  line-height: 1.15;
+}
+.fv-part-goal {
+  margin: 0;
+  color: var(--muted);
+  font-size: .92rem;
+  line-height: 1.4;
+}
+.fv-part-body {
+  display: grid;
+  gap: 1rem;
+  padding: 1.05rem;
+  border: 1px solid var(--line);
+  border-top: none;
+  border-radius: 0 0 18px 18px;
+  background: rgba(8, 17, 28, .55);
+}
+.fv-part-body > .card,
+.fv-part-body > .s1-card { margin: 0 !important; }
+
+/* Les anciens numéros de section des cartes sont retirés de l'affichage :
+   les numéros 1 à 7 sont réservés aux pastilles des parties. */
+.fv-part-body .card-head .section-number,
+.fv-part-body .subsection-title .section-number,
+.fv-part-body .s1-card-head .section-number { display: none; }
+
+/* ---------- Transitions entre parties -------------------------------------- */
+.fv-transition {
+  display: flex;
+  align-items: center;
+  gap: .8rem;
+  flex-wrap: wrap;
+  margin: .55rem auto 0;
+  padding: .7rem 1rem;
+  width: min(760px, 100%);
+  border: 1px solid #164e63;
+  border-radius: 14px;
+  background: #07202c;
+  color: #c7ecf7;
+}
+.fv-transition p { margin: 0; flex: 1 1 240px; line-height: 1.45; }
+.fv-transition-arrow {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #0e3a4a;
+  color: #67e8f9;
+  font-weight: 900;
+}
+.fv-continue {
+  padding: .55rem .8rem;
+  border: 1px solid var(--cyan);
+  border-radius: 10px;
+  background: #0b3441;
+  color: #d9fbff;
+  font-weight: 800;
+  font-size: .82rem;
+  text-decoration: none;
+}
+.fv-continue:hover, .fv-continue:focus-visible { filter: brightness(1.2); outline: none; }
+.fv-transition-end { justify-content: center; border-color: #14532d; background: #07200f; color: #bbf7d0; }
+
+/* ---------- Blocs repliables (divulgation progressive) ---------------------- */
+.fv-fold {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #071523;
+}
+.fv-fold > summary {
+  padding: .8rem 1rem;
+  cursor: pointer;
+  color: #cfe8f3;
+  font-weight: 800;
+  list-style: none;
+}
+.fv-fold > summary::before { content: "▸ "; color: var(--cyan); }
+.fv-fold[open] > summary::before { content: "▾ "; }
+.fv-fold > summary:focus-visible { outline: 2px solid var(--cyan); border-radius: 12px; }
+.fv-fold-body { display: grid; gap: 1rem; padding: 0 1rem 1rem; }
+.fv-fold-body .lesson-path { margin: 0; }
+
+/* ---------- Partie 1 -------------------------------------------------------- */
+.fv-vertical .session-hero { margin-bottom: 0; }
+.fv-intro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .8rem;
+}
+.fv-intro-box {
+  padding: .85rem .95rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #07131f;
+}
+.fv-intro-box h3 { margin: 0 0 .45rem; font-size: .95rem; color: #a5f3fc; }
+.fv-intro-box ul { margin: 0; padding-left: 1.05rem; display: grid; gap: .3rem; }
+.fv-intro-box li, .fv-intro-box p { color: #dbe9ef; font-size: .86rem; line-height: 1.45; margin: 0; }
+.fv-intro-result { border-color: #14532d; background: #07200f; }
+.fv-intro-result h3 { color: #86efac; }
+
+/* ---------- Consignes ------------------------------------------------------- */
+.fv-consigne {
+  padding: .75rem .9rem;
+  border-left: 4px solid var(--cyan);
+  border-radius: 10px;
+  background: #07131f;
+  color: #d9edf6;
+  line-height: 1.5;
+}
+
+/* ---------- Partie 2 : grandeurs et questions ------------------------------- */
+.fv-grandeurs h3, .fv-questions h3, .fv-sub {
+  margin: 0 0 .55rem;
+  font-size: 1.02rem;
+  color: #a5f3fc;
+}
+.fv-grandeurs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: .6rem;
+}
+.fv-grandeurs-grid article {
+  padding: .65rem .7rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #07131f;
+  display: grid;
+  gap: .3rem;
+}
+.fv-grandeurs-grid strong {
+  width: fit-content;
+  padding: .15rem .55rem;
+  border-radius: 8px;
+  background: #123246;
+  color: #7dd3fc;
+  font-size: .85rem;
+}
+.fv-grandeurs-grid span { color: #dbe9ef; font-size: .82rem; line-height: 1.4; }
+.fv-questions { display: grid; gap: .5rem; }
+.fv-q {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #07131f;
+}
+.fv-q > summary {
+  padding: .68rem .85rem;
+  cursor: pointer;
+  color: #e6f6fd;
+  font-weight: 700;
+  list-style: none;
+}
+.fv-q > summary::before { content: "❓ "; }
+.fv-q > p {
+  margin: 0;
+  padding: 0 .95rem .75rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+/* ---------- Partie 3 : structure, verbes, algorigramme ----------------------- */
+.fv-structure-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: .7rem;
+}
+.fv-structure-grid article {
+  display: grid;
+  gap: .35rem;
+  padding: .8rem .85rem;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #07131f;
+}
+.fv-structure-grid em { font-style: normal; font-size: 1.25rem; }
+.fv-structure-grid strong { color: #f2fbff; }
+.fv-structure-grid span { color: var(--muted); font-size: .85rem; line-height: 1.45; }
+
+.fv-algo-text .fv-note, .fv-legende .fv-note {
+  margin: .35rem 0 .6rem;
+  color: var(--muted);
+  font-size: .84rem;
+  line-height: 1.45;
+}
+.fv-verbes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .45rem;
+  padding: .75rem .8rem;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #04111c;
+}
+.fv-verbes span {
+  padding: .4rem .7rem;
+  border: 1px solid var(--v);
+  border-radius: 999px;
+  color: var(--v);
+  font-weight: 900;
+  font-size: .8rem;
+  letter-spacing: .05em;
+}
+.fv-verbes i { color: #607b8c; font-style: normal; font-weight: 900; }
+.fv-verbes-detail { margin: .7rem 0 0; padding: 0 0 0 1.1rem; display: grid; gap: .35rem; }
+.fv-verbes-detail li { color: #dbe9ef; font-size: .87rem; line-height: 1.5; }
+
+/* Algorigramme */
+.fv-flowchart {
+  display: grid;
+  justify-items: center;
+  gap: .3rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #04111c;
+}
+.fv-node {
+  display: grid;
+  justify-items: center;
+  gap: .15rem;
+  min-width: min(320px, 100%);
+  padding: .6rem 1.1rem;
+  color: #f4fbff;
+  font-weight: 900;
+  font-size: .88rem;
+  letter-spacing: .04em;
+  text-align: center;
+}
+.fv-node small { font-weight: 600; font-size: .74rem; color: #9fc3d2; font-family: Consolas, "Courier New", monospace; }
+.fv-oval { border: 2px solid #4ade80; border-radius: 999px; background: #062712; color: #bbf7d0; }
+.fv-rect { border: 2px solid #60a5fa; border-radius: 8px; background: #0a2038; }
+.fv-io {
+  border: 2px solid #67e8f9;
+  background: #062b33;
+  transform: skewX(-14deg);
+}
+.fv-io > * { transform: skewX(14deg); }
+.fv-arrow { color: #607b8c; font-size: 1.15rem; font-weight: 900; line-height: 1; }
+.fv-loop-zone {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: .3rem;
+  width: min(560px, 100%);
+  padding: 1.9rem 1rem 1rem;
+  border: 2px dashed #f472b6;
+  border-radius: 16px;
+  background: rgba(244, 114, 182, .05);
+}
+.fv-loop-label {
+  position: absolute;
+  top: -.05rem;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  padding: .25rem .7rem;
+  border: 1px solid #f472b6;
+  border-radius: 999px;
+  background: #2b0f1e;
+  color: #fbcfe8;
+  font-size: .75rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.fv-return {
+  justify-self: stretch;
+  margin-top: .4rem;
+  padding: .5rem .3rem .1rem;
+  border-left: 2px solid #f472b6;
+  border-bottom: 2px solid #f472b6;
+  border-bottom-left-radius: 14px;
+  display: flex;
+  justify-content: center;
+}
+.fv-return span { color: #fbcfe8; font-size: .8rem; font-weight: 800; }
+
+.fv-legende {
+  padding: .8rem .9rem;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #07131f;
+}
+.fv-legende h4 { margin: 0 0 .5rem; color: #a5f3fc; font-size: .9rem; }
+.fv-legende ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem 1.1rem;
+  margin: 0 0 .35rem;
+  padding: 0;
+  list-style: none;
+}
+.fv-legende li { display: flex; align-items: center; gap: .45rem; color: #dbe9ef; font-size: .82rem; }
+.fv-legende i { display: inline-block; width: 1.5rem; height: .95rem; flex: 0 0 auto; }
+.fv-l-oval { border: 2px solid #4ade80; border-radius: 999px; }
+.fv-l-rect { border: 2px solid #60a5fa; border-radius: 3px; }
+.fv-l-io { border: 2px solid #67e8f9; transform: skewX(-14deg); }
+.fv-l-diam { border: 2px solid #facc15; transform: rotate(45deg) scale(.8); }
+.fv-l-arrow { border: none !important; width: auto !important; height: auto !important; color: #9fc3d2; font-style: normal; font-weight: 900; }
+
+/* ---------- Partie 4 : lanceur du mode Mission ------------------------------- */
+.fv-mission-launcher {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.1rem;
+  border: 1px solid #0e7490;
+  border-radius: 16px;
+  background: linear-gradient(120deg, rgba(8, 51, 68, .75), rgba(7, 17, 29, .95));
+}
+.fv-mission-launcher h3 { margin: 0 0 .3rem; color: #a5f3fc; }
+.fv-mission-launcher p { margin: 0; color: var(--muted); font-size: .88rem; line-height: 1.5; max-width: 640px; }
+.fv-mission-launcher > div { flex: 1 1 320px; }
+.fv-mission-open { font-size: 1rem; padding: .85rem 1.2rem; }
+
+/* ---------- Partie 5 -------------------------------------------------------- */
+.fv-testbar { display: grid; gap: .7rem; justify-items: start; }
+.fv-testbar .run-status { width: 100%; margin: 0; }
+
+/* ---------- Partie 6 : étapes en pictogrammes, durées secondaires ------------ */
+.fv-part-body .s1-practical-steps {
+  list-style: none;
+  margin: .8rem 0;
+  padding: 0;
+  display: grid;
+  gap: .45rem;
+  counter-reset: none;
+}
+.fv-part-body .s1-practical-steps li {
+  position: relative;
+  padding: .62rem .75rem .62rem 2.9rem;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: #07131f;
+  color: #dbe9ef;
+  line-height: 1.45;
+}
+.fv-part-body .s1-practical-steps li::before {
+  content: "🔌";
+  position: absolute;
+  left: .7rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.15rem;
+}
+.fv-part-body .s1-practical-steps li:nth-child(2)::before { content: "📋"; }
+.fv-part-body .s1-practical-steps li:nth-child(3)::before { content: "🛠️"; }
+.fv-part-body .s1-practical-steps li:nth-child(4)::before { content: "🖥️"; }
+.fv-part-body .s1-practical-steps li:nth-child(5)::before { content: "👀"; }
+.fv-part-body .s1-practical-steps li:nth-child(6)::before { content: "🛑"; }
+
+/* Durées : conservées mais visuellement secondaires. */
+.fv-part-body .s1-timeplan { opacity: .78; transform: scale(.98); transform-origin: left top; }
+
+/* Tableaux : jamais de défilement horizontal de page. */
+.fv-part-body .s1-observation-table { display: block; width: 100%; overflow-x: auto; }
+
+/* ---------- Partie 7 : QCM -------------------------------------------------- */
+.fv-qbadge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.1rem;
+  padding: .2rem .4rem;
+  margin-right: .45rem;
+  border-radius: 8px;
+  background: #123246;
+  color: #7dd3fc;
+  font-weight: 900;
+  font-size: .8rem;
+}
+.fv-part-body .s1-question { border-radius: 13px; }
+.fv-part-body .s1-question > legend { line-height: 1.45; }
+.fv-part-body .s1-question > label { border-radius: 9px; }
+/* Après correction : bonne réponse et explication clairement identifiées. */
+.fv-part-body .s1-question.correct .fv-choice-correcte,
+.fv-part-body .s1-question.incorrect .fv-choice-correcte {
+  border: 1px solid #4ade80;
+  background: rgba(74, 222, 128, .12);
+}
+.fv-part-body .s1-question.correct .fv-choice-correcte::after,
+.fv-part-body .s1-question.incorrect .fv-choice-correcte::after {
+  content: " ✓ bonne réponse";
+  color: #86efac;
+  font-size: .78rem;
+  font-weight: 800;
+}
+.fv-part-body .s1-question.incorrect label:has(input:checked):not(.fv-choice-correcte) {
+  border: 1px solid #fb7185;
+  background: rgba(251, 113, 133, .1);
+}
+.fv-part-body .s1-question .s1-feedback:not([hidden]) {
+  border-left: 4px solid #facc15;
+  padding: .55rem .7rem;
+  border-radius: 8px;
+  background: #1c1809;
+  color: #fef3c7;
+}
+.fv-part-body .s1-question .s1-feedback:not([hidden])::before {
+  content: "À retenir — ";
+  font-weight: 900;
+  color: #fde68a;
+}
+
+/* ---------- Responsive ------------------------------------------------------ */
+@media (max-width: 900px) {
+  .fv-intro-grid, .fv-structure-grid { grid-template-columns: 1fr; }
+  .fv-grandeurs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 650px) {
+  .fv-rail { top: 0; }
+  .fv-part { scroll-margin-top: 4.6rem; }
+  .fv-part-head { flex-direction: row; padding: .85rem .9rem; }
+  .fv-pastille { width: 2.7rem; height: 2.7rem; font-size: 1.3rem; }
+  .fv-grandeurs-grid { grid-template-columns: 1fr; }
+  .fv-mission-launcher { flex-direction: column; align-items: stretch; }
+  .fv-transition { width: 100%; }
+  .fv-node { min-width: 0; width: 100%; }
+  .fv-io { transform: skewX(-8deg); }
+  .fv-io > * { transform: skewX(8deg); }
+}
+
+/* ---------- Impression ------------------------------------------------------ */
+@media print {
+  .fv-rail, .fv-banner, .fv-continue, .fv-mission-launcher { display: none !important; }
+  .fv-part-head, .fv-part-body { border-color: #999; background: #fff; color: #000; }
+  .fv-fold[open] > summary::before { content: ""; }
+}
+
+/* ---------- Accessibilité : mouvement réduit -------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .fv-rail a, .fv-continue { transition: none; }
+}

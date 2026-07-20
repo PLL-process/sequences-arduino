@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Comparaison — Séance 1 actuelle vs prototype vertical</title>
+  <link rel="icon" href="data:,">
+  <style>
+    :root { --bg:#050914; --line:#20364b; --cyan:#22d3ee; --text:#f7fbff; --muted:#a8bdca; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family:Inter,system-ui,sans-serif; height:100vh; display:flex; flex-direction:column; }
+    header { display:flex; align-items:center; gap:1rem; flex-wrap:wrap; padding:.7rem 1rem; border-bottom:1px solid var(--line); background:#0b1424; }
+    h1 { margin:0; font-size:1rem; }
+    p.hint { margin:0; color:var(--muted); font-size:.8rem; flex:1 1 260px; }
+    .modes { display:flex; gap:.4rem; }
+    .modes button { padding:.5rem .8rem; border:1px solid var(--line); border-radius:10px; background:#102438; color:#fff; font-weight:700; cursor:pointer; }
+    .modes button.active { border-color:var(--cyan); background:#0b3441; }
+    main { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--line); min-height:0; }
+    main.solo-actuel { grid-template-columns:1fr 0fr; }
+    main.solo-proto { grid-template-columns:0fr 1fr; }
+    section { display:flex; flex-direction:column; min-width:0; min-height:0; background:var(--bg); overflow:hidden; }
+    section h2 { margin:0; padding:.45rem .8rem; font-size:.78rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--line); white-space:nowrap; }
+    section h2 strong { color:var(--cyan); }
+    iframe { flex:1; width:100%; border:0; background:#fff; }
+    @media (max-width:900px){ main { grid-template-columns:1fr !important; grid-template-rows:1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Séance 1 — comparaison</h1>
+    <p class="hint">Les deux versions utilisent les mêmes scripts et les mêmes sauvegardes locales : le travail de l’élève apparaît dans les deux. Recharger la page après avoir travaillé dans un volet pour rafraîchir l’autre.</p>
+    <div class="modes" role="group" aria-label="Affichage">
+      <button type="button" data-mode="duo" class="active">Côte à côte</button>
+      <button type="button" data-mode="solo-actuel">Version actuelle</button>
+      <button type="button" data-mode="solo-proto">Prototype vertical</button>
+    </div>
+  </header>
+  <main id="panes">
+    <section>
+      <h2>Version <strong>actuelle</strong> — seance-1.html</h2>
+      <iframe src="../seance-1.html" title="Version actuelle de la séance 1"></iframe>
+    </section>
+    <section>
+      <h2>Proposition <strong>Fable</strong> — parcours vertical séquentiel</h2>
+      <iframe src="seance-1-verticale.html" title="Prototype de parcours vertical"></iframe>
+    </section>
+  </main>
+  <script>
+    const main = document.getElementById("panes");
+    document.querySelectorAll(".modes button").forEach(button => button.addEventListener("click", () => {
+      document.querySelectorAll(".modes button").forEach(b => b.classList.remove("active"));
+      button.classList.add("active");
+      main.className = button.dataset.mode === "duo" ? "" : button.dataset.mode;
+    }));
+  </script>
+</body>
+</html>
