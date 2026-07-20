@@ -41,3 +41,10 @@
 .hub-summary h2{margin-top:0}
 @media(max-width:650px){.code-mode-row{grid-template-columns:1fr}.real-view{min-height:220px}.view-toggle .btn{width:100%}.solution-mask{left:.6rem;right:.6rem;bottom:4.4rem}.help-steps{grid-template-columns:1fr}.code-help-head{flex-direction:column}.code-help-head .btn{width:100%}}
 @media print{.view-toggle,.component-nav,.attempt-note,.representation-help,.solution-mask,.code-help,.code-run-console,.help-button,#runCodeV3{display:none!important}.real-view.hidden,.view-panel.hidden{display:none!important}}
+
+/* ---- Récupération d'un ancien brouillon (migration C++ v5) ---- */
+.python-recovery{margin:.2rem 0 .9rem;padding:.85rem .95rem;border:1px solid #b8871a;border-radius:13px;background:#241b08;color:#fef3c7;line-height:1.5}
+.python-recovery p{margin:0 0 .5rem}
+.python-recovery details{margin:.4rem 0}
+.python-recovery summary{cursor:pointer;font-weight:800;color:#fde68a}
+.python-recovery pre{margin:.5rem 0 0;padding:.7rem;border:1px solid #6d5717;border-radius:9px;background:#120d03;color:#f5f5dc;white-space:pre-wrap;font:.85rem/1.4 Consolas,"Courier New",monospace}

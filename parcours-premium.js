@@ -24,78 +24,78 @@
       correction:"L’humidité du sol varie progressivement : le capteur produit une tension analogique, puis l’ADC/CAN de l’Arduino la convertit en valeur numérique. En C++ Arduino, analogRead(A0) rend explicite l’entrée analogique utilisée. La sortie D6 commande le relais avec deux états logiques : LOW = 0 pour l’arrêt et HIGH = 1 pour la marche."
     },
     {
-      id:2,title:"Calibrer un seuil",accent:"#c084fc",story:"Une valeur isolée ne suffit pas. L’équipe réalise plusieurs mesures en sol sec et humide afin de déterminer un seuil pertinent.",
+      id:2,languageShort:"C++ Arduino",languageTitle:"programme C++ Arduino",languageAria:"Programme C++ Arduino de la séance",title:"Calibrer un seuil",accent:"#c084fc",story:"Une valeur isolée ne suffit pas. L’équipe réalise plusieurs mesures en sol sec et humide afin de déterminer un seuil pertinent.",
       objective:"Convertir une valeur ADC en tension, analyser plusieurs mesures et justifier un seuil d’humidité.",
       chips:["ADC / CAN","Calibration","Seuil","Tableau de mesures"],
       tasks:["Relever cinq valeurs en sol sec et cinq en sol humide.","Convertir une valeur ADC en tension avec V ≈ valeur ÷ (2ⁿ − 1) × Vref.","Calculer les moyennes des deux séries.","Choisir un seuil situé entre les deux groupes et le justifier."],
       algorithm:[["MESURER","Relever plusieurs valeurs dans chaque état du sol.","#60a5fa"],["CONVERTIR","Retrouver la tension correspondant à chaque valeur ADC.","#c084fc"],["COMPARER","Comparer les moyennes du sol sec et du sol humide.","#facc15"],["DÉCIDER","Choisir un seuil à vérifier par de nouveaux essais.","#fb923c"]],
-      code:"# Définir un seuil modifiable\nseuil_humidite = 35\n\n# Lire puis comparer la mesure\nhumidite = lire_humidite()\nif humidite < seuil_humidite:\n    afficher(\"Sol sec\")\nelse:\n    afficher(\"Sol humide\")\nstop()",
+      code:"#include <Arduino.h>\n\nconst int PIN_HUMIDITE_SOL = A0;\nconst int PIN_LUMIERE = A1;\nconst int PIN_NIVEAU_EAU = A2;\nconst int PIN_RELAIS_POMPE = 6;\n\nconst int SEUIL_HUMIDITE = 560;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(PIN_RELAIS_POMPE, OUTPUT);\n  digitalWrite(PIN_RELAIS_POMPE, LOW);\n}\n\nvoid loop() {\n  int humidite = analogRead(PIN_HUMIDITE_SOL);\n\n  Serial.print(\"Humidité : \");\n  Serial.println(humidite);\n\n  if (humidite < SEUIL_HUMIDITE) {\n    Serial.println(\"Sol sec\");\n  } else {\n    Serial.println(\"Sol humide\");\n  }\n\n  digitalWrite(PIN_RELAIS_POMPE, LOW);\n  delay(1000);\n}",
       tests:["Les deux séries de mesures sont complètes.","Le calcul de tension est correctement appliqué.","Le seuil choisi est situé entre les groupes sec et humide."],
       question:"Comment as-tu choisi le seuil à partir des mesures et de la conversion ADC ? Cite tes valeurs et justifie ta décision.",
       correction:"Pour une résolution de n bits, la valeur maximale est 2ⁿ − 1. En 10 bits avec Vref = 5 V, 600 correspond à 600 ÷ 1023 × 5 ≈ 2,93 V. Le seuil brut doit se situer entre les mesures sèches et humides, puis être vérifié expérimentalement."
     },
     {
-      id:3,title:"Analyser les chaînes",accent:"#facc15",story:"Le capteur fonctionne. Il faut comprendre comment l’information circule et comment l’énergie atteint la pompe à travers le relais.",
+      id:3,languageShort:"C++ Arduino",languageTitle:"programme C++ Arduino",languageAria:"Programme C++ Arduino de la séance",title:"Analyser les chaînes",accent:"#facc15",story:"Le capteur fonctionne. Il faut comprendre comment l’information circule et comment l’énergie atteint la pompe à travers le relais.",
       objective:"Identifier les chaînes d’information et d’énergie, puis commander la pompe si le sol est sec.",
       chips:["Chaîne d’information","Chaîne d’énergie","Relais","Pompe"],
       tasks:["Associer acquérir, traiter et communiquer aux bons constituants.","Associer alimenter, distribuer, convertir, transmettre et agir.","Distinguer les blocs fonctionnels des fils de liaison.","Commander la pompe pendant trois secondes si le sol est sec."],
       algorithm:[["ACQUÉRIR","Le capteur mesure l’humidité.","#60a5fa"],["TRAITER","L’Arduino compare la mesure au seuil.","#facc15"],["DISTRIBUER","Le relais autorise ou coupe l’énergie de la pompe.","#fb923c"],["CONVERTIR / AGIR","La pompe transforme l’énergie électrique en circulation d’eau.","#4ade80"]],
-      code:"seuil_humidite = 35\nhumidite = lire_humidite()\n\n# Traiter la donnée et commander la sortie logique\nif humidite < seuil_humidite:\n    arroser(3)\nelse:\n    stop()",
+      code:"#include <Arduino.h>\n\nconst int PIN_HUMIDITE_SOL = A0;\nconst int PIN_LUMIERE = A1;\nconst int PIN_NIVEAU_EAU = A2;\nconst int PIN_RELAIS_POMPE = 6;\n\nconst int SEUIL_HUMIDITE = 560;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(PIN_RELAIS_POMPE, OUTPUT);\n  digitalWrite(PIN_RELAIS_POMPE, LOW);\n}\n\nvoid loop() {\n  int humidite = analogRead(PIN_HUMIDITE_SOL);\n  Serial.print(\"Humidité : \");\n  Serial.println(humidite);\n\n  if (humidite < SEUIL_HUMIDITE) {\n    digitalWrite(PIN_RELAIS_POMPE, HIGH);\n    delay(3000);\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  } else {\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  }\n\n  delay(1000);\n}",
       tests:["La chaîne d’information est correctement identifiée.","La chaîne d’énergie est correctement identifiée.","Le programme commande trois secondes d’arrosage lorsque le sol est sec."],
       question:"Décris les deux chaînes en citant les constituants réels et explique comment les fils sont représentés dans une chaîne fonctionnelle.",
       correction:"Chaîne d’information : capteur → Arduino → affichage ou alerte. Chaîne d’énergie : alimentation séparée → relais → pompe → tuyau → sol. Les fils existent physiquement, mais ils sont généralement représentés par des liaisons ou des flèches dans une chaîne fonctionnelle simplifiée."
     },
     {
-      id:4,title:"Protéger la pompe",accent:"#fb7185",story:"La pompe ne doit jamais fonctionner à vide. Un second capteur surveille le réservoir et une alerte prévient l’utilisateur.",
+      id:4,languageShort:"C++ Arduino",languageTitle:"programme C++ Arduino",languageAria:"Programme C++ Arduino de la séance",title:"Protéger la pompe",accent:"#fb7185",story:"La pompe ne doit jamais fonctionner à vide. Un second capteur surveille le réservoir et une alerte prévient l’utilisateur.",
       objective:"Autoriser l’arrosage uniquement si le sol est sec ET si le niveau du réservoir est suffisant.",
       chips:["Sécurité","A2","Opérateur AND","Alerte"],
       tasks:["Lire l’humidité et le niveau du réservoir.","Donner la priorité à la protection contre la marche à vide.","Relier les deux conditions avec and.","Déclencher une alerte si le réservoir est trop bas."],
       algorithm:[["ACQUÉRIR","Lire l’humidité A0 et le niveau A2.","#60a5fa"],["SÉCURISER","Vérifier d’abord que le réservoir contient assez d’eau.","#fb7185"],["COMPARER","Tester sol sec ET niveau suffisant.","#facc15"],["AGIR / ALERTER","Arroser ou arrêter et avertir l’utilisateur.","#4ade80"]],
-      code:"seuil_humidite = 35\nseuil_reservoir = 20\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\n\nif humidite < seuil_humidite and reservoir >= seuil_reservoir:\n    arroser(3)\nelse:\n    stop()\n\nif reservoir < seuil_reservoir:\n    alerter(\"Réservoir vide\")",
+      code:"#include <Arduino.h>\n\nconst int PIN_HUMIDITE_SOL = A0;\nconst int PIN_LUMIERE = A1;\nconst int PIN_NIVEAU_EAU = A2;\nconst int PIN_RELAIS_POMPE = 6;\n\nconst int SEUIL_HUMIDITE = 560;\nconst int SEUIL_RESERVOIR = 350;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(PIN_RELAIS_POMPE, OUTPUT);\n  digitalWrite(PIN_RELAIS_POMPE, LOW);\n}\n\nvoid loop() {\n  int humidite = analogRead(PIN_HUMIDITE_SOL);\n  int niveauEau = analogRead(PIN_NIVEAU_EAU);\n\n  if (niveauEau < SEUIL_RESERVOIR) {\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n    Serial.println(\"Réservoir vide\");\n  } else if (humidite < SEUIL_HUMIDITE && niveauEau >= SEUIL_RESERVOIR) {\n    digitalWrite(PIN_RELAIS_POMPE, HIGH);\n    delay(3000);\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  } else {\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  }\n\n  delay(1000);\n}",
       tests:["Réservoir plein : l’arrosage est autorisé si le sol est sec.","Réservoir vide : la pompe reste arrêtée.","Une alerte apparaît lorsque le niveau est insuffisant."],
-      question:"Quel risque technique est évité ? Explique pourquoi l’opérateur logique and est indispensable.",
-      correction:"L’opérateur and impose que le sol soit sec ET que le niveau d’eau soit suffisant. Si l’une des deux conditions est fausse, la pompe reste arrêtée. Cette sécurité évite la marche à vide et l’échauffement de la pompe."
+      question:"Quel risque technique est évité ? Explique pourquoi l’opérateur logique && (ET) est indispensable.",
+      correction:"En C++ Arduino, l’opérateur && impose que le sol soit sec ET que le niveau d’eau soit suffisant. Si l’une des deux conditions est fausse, la pompe reste arrêtée. Cette sécurité évite la marche à vide et l’échauffement de la pompe."
     },
     {
-      id:5,title:"Économiser l’eau",accent:"#4ade80",story:"Un seuil unique peut provoquer des démarrages répétés. L’équipe cherche à réduire la consommation d’eau et l’usure de la pompe.",
+      id:5,languageShort:"C++ Arduino",languageTitle:"programme C++ Arduino",languageAria:"Programme C++ Arduino de la séance",title:"Économiser l’eau",accent:"#4ade80",story:"Un seuil unique peut provoquer des démarrages répétés. L’équipe cherche à réduire la consommation d’eau et l’usure de la pompe.",
       objective:"Employer deux seuils, limiter la durée d’arrosage et interpréter les résultats des essais.",
       chips:["Hystérésis","Économie d’eau","Durée limitée","Essais"],
-      tasks:["Définir un seuil de démarrage et un seuil d’arrêt.","Limiter chaque arrosage à deux ou trois secondes.","Observer les oscillations autour d’un seuil unique.","Expliquer comment l’hystérésis réduit les commutations."],
+      tasks:["Définir un seuil de démarrage et un seuil d’arrêt.","Limiter chaque arrosage à deux secondes.","Observer les oscillations autour d’un seuil unique.","Expliquer comment l’hystérésis réduit les commutations."],
       algorithm:[["PARAMÉTRER","Définir un seuil bas et un seuil haut.","#c084fc"],["MESURER","Lire l’humidité et le niveau du réservoir.","#60a5fa"],["DÉCIDER","Utiliser l’hystérésis pour éviter les redémarrages répétés.","#fb923c"],["ÉCONOMISER","Limiter la durée et le nombre d’arrosages.","#4ade80"]],
-      code:"seuil_humidite = 30\nseuil_arret = 42\nseuil_reservoir = 20\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\n\nif humidite < seuil_humidite and reservoir >= seuil_reservoir:\n    arroser(2)\nelif humidite > seuil_arret:\n    stop()\nelse:\n    stop()",
-      tests:["Le seuil de démarrage est inférieur au seuil d’arrêt.","La durée d’arrosage ne dépasse pas trois secondes.","Le réservoir reste pris en compte."],
+      code:"#include <Arduino.h>\n\nconst int PIN_HUMIDITE_SOL = A0;\nconst int PIN_LUMIERE = A1;\nconst int PIN_NIVEAU_EAU = A2;\nconst int PIN_RELAIS_POMPE = 6;\n\nconst int SEUIL_HUMIDITE = 520;\nconst int SEUIL_ARRET = 650;\nconst int SEUIL_RESERVOIR = 350;\n\n// État MÉMORISÉ entre deux passages dans loop() : c'est l'hystérésis.\nbool demandeArrosage = false;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(PIN_RELAIS_POMPE, OUTPUT);\n  digitalWrite(PIN_RELAIS_POMPE, LOW);\n}\n\nvoid loop() {\n  int humidite = analogRead(PIN_HUMIDITE_SOL);\n  int niveauEau = analogRead(PIN_NIVEAU_EAU);\n\n  Serial.print(\"Humidité : \");\n  Serial.println(humidite);\n\n  if (niveauEau < SEUIL_RESERVOIR) {\n    demandeArrosage = false;\n  } else if (humidite < SEUIL_HUMIDITE) {\n    demandeArrosage = true;\n  } else if (humidite > SEUIL_ARRET) {\n    demandeArrosage = false;\n  }\n  // Entre les deux seuils : demandeArrosage conserve sa valeur.\n\n  if (demandeArrosage) {\n    digitalWrite(PIN_RELAIS_POMPE, HIGH);\n    delay(2000);\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  } else {\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  }\n\n  delay(1000);\n}",
+      tests:["Le seuil de démarrage est inférieur au seuil d’arrêt.","Chaque impulsion d’arrosage dure au plus deux secondes.","Le réservoir reste pris en compte."],
       question:"Explique l’hystérésis et montre comment elle réduit les démarrages, la consommation d’eau et l’usure.",
-      correction:"L’hystérésis utilise deux seuils différents : le système démarre sous le seuil bas et ne considère le sol suffisamment humide qu’au-dessus du seuil haut. L’écart entre les deux évite les changements rapides d’état autour d’une seule valeur."
+      correction:"L’hystérésis utilise deux seuils ET une mémoire : la variable globale bool demandeArrosage conserve la demande entre deux passages dans loop(). Elle devient vraie sous le seuil bas, fausse au-dessus du seuil haut, et garde sa valeur entre les deux : c’est cette mémorisation qui évite les redémarrages répétés autour d’une seule valeur. Le réservoir reste prioritaire."
     },
     {
-      id:6,title:"Décider avec trois données",accent:"#60a5fa",story:"Le jardin reçoit parfois un fort ensoleillement. L’équipe ajoute la luminosité comme troisième information de décision.",
+      id:6,languageShort:"C++ Arduino",languageTitle:"programme C++ Arduino",languageAria:"Programme C++ Arduino de la séance",title:"Décider avec trois données",accent:"#60a5fa",story:"Le jardin reçoit parfois un fort ensoleillement. L’équipe ajoute la luminosité comme troisième information de décision.",
       objective:"Construire une décision multicritère avec humidité, niveau du réservoir et luminosité.",
       chips:["A0","A1","A2","Décision multicritère"],
       tasks:["Lire les trois capteurs.","Définir trois seuils modifiables.","Relier les critères avec des opérateurs logiques.","Justifier l’intérêt et les limites de la luminosité."],
       algorithm:[["ACQUÉRIR","Lire humidité, luminosité et niveau.","#60a5fa"],["COMPARER","Comparer chaque mesure à son seuil.","#facc15"],["DÉCIDER","Autoriser l’arrosage seulement si les critères retenus sont satisfaits.","#fb923c"],["AGIR","Arroser brièvement ou rester arrêté.","#4ade80"]],
-      code:"seuil_humidite = 35\nseuil_reservoir = 20\nseuil_lumiere = 70\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\nlumiere = lire_lumiere()\n\nif humidite < seuil_humidite and reservoir >= seuil_reservoir and lumiere < seuil_lumiere:\n    arroser(2)\nelse:\n    stop()",
+      code:"#include <Arduino.h>\n\nconst int PIN_HUMIDITE_SOL = A0;\nconst int PIN_LUMIERE = A1;\nconst int PIN_NIVEAU_EAU = A2;\nconst int PIN_RELAIS_POMPE = 6;\n\nconst int SEUIL_HUMIDITE = 520;\nconst int SEUIL_RESERVOIR = 350;\nconst int SEUIL_LUMIERE = 700;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(PIN_RELAIS_POMPE, OUTPUT);\n  digitalWrite(PIN_RELAIS_POMPE, LOW);\n}\n\nvoid loop() {\n  int humidite = analogRead(PIN_HUMIDITE_SOL);\n  int lumiere = analogRead(PIN_LUMIERE);\n  int niveauEau = analogRead(PIN_NIVEAU_EAU);\n\n  Serial.println(humidite);\n  Serial.println(lumiere);\n  Serial.println(niveauEau);\n\n  if (humidite < SEUIL_HUMIDITE && niveauEau >= SEUIL_RESERVOIR && lumiere < SEUIL_LUMIERE) {\n    digitalWrite(PIN_RELAIS_POMPE, HIGH);\n    delay(2000);\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  } else {\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  }\n\n  delay(1000);\n}",
       tests:["Les trois grandeurs sont lues.","Les trois seuils sont modifiables.","La décision tient compte des trois comparaisons."],
       question:"Pourquoi la luminosité peut-elle être utile sans mesurer directement le besoin en eau ? Donne aussi une limite.",
       correction:"La luminosité peut éviter un arrosage en plein soleil lorsque l’évaporation est forte. Cependant, elle ne mesure pas directement l’humidité du sol : elle ne doit donc pas remplacer le capteur d’humidité, mais seulement compléter la décision."
     },
     {
-      id:7,title:"Améliorer la durabilité",accent:"#34d399",story:"Le capteur d’humidité peut se corroder ou dériver. L’équipe doit comparer plusieurs solutions et rendre le système plus maintenable.",
+      id:7,languageShort:"C++ Arduino",languageTitle:"programme C++ Arduino",languageAria:"Programme C++ Arduino de la séance",title:"Améliorer la durabilité",accent:"#34d399",story:"Le capteur d’humidité peut se corroder ou dériver. L’équipe doit comparer plusieurs solutions et rendre le système plus maintenable.",
       objective:"Recalibrer un nouveau capteur et justifier un choix durable, réparable et maintenable.",
       chips:["Durabilité","Maintenance","Capteur capacitif","Réparabilité"],
       tasks:["Comparer un capteur résistif et un capteur capacitif.","Recalibrer les valeurs sèches et humides.","Conserver les sécurités du système.","Justifier le choix avec des critères de durabilité et de coût."],
       algorithm:[["DIAGNOSTIQUER","Identifier la dérive ou la corrosion du capteur.","#fb7185"],["REMPLACER","Installer un capteur plus durable si nécessaire.","#34d399"],["CALIBRER","Relever les nouvelles valeurs de référence.","#c084fc"],["VALIDER","Vérifier que les sécurités et les décisions restent correctes.","#4ade80"]],
-      code:"seuil_humidite = 38\nseuil_reservoir = 20\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\n\nif humidite < seuil_humidite and reservoir >= seuil_reservoir:\n    arroser(2)\nelse:\n    stop()",
+      code:"#include <Arduino.h>\n\nconst int PIN_HUMIDITE_SOL = A0;\nconst int PIN_LUMIERE = A1;\nconst int PIN_NIVEAU_EAU = A2;\nconst int PIN_RELAIS_POMPE = 6;\n\nconst int SEUIL_HUMIDITE = 590;\nconst int SEUIL_RESERVOIR = 350;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(PIN_RELAIS_POMPE, OUTPUT);\n  digitalWrite(PIN_RELAIS_POMPE, LOW);\n}\n\nvoid loop() {\n  int humidite = analogRead(PIN_HUMIDITE_SOL);\n  int niveauEau = analogRead(PIN_NIVEAU_EAU);\n\n  Serial.println(humidite);\n  Serial.println(niveauEau);\n\n  if (niveauEau < SEUIL_RESERVOIR) {\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  } else if (humidite < SEUIL_HUMIDITE && niveauEau >= SEUIL_RESERVOIR) {\n    digitalWrite(PIN_RELAIS_POMPE, HIGH);\n    delay(2000);\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  } else {\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  }\n\n  delay(1000);\n}",
       tests:["Le nouveau capteur est recalibré.","La sécurité du réservoir est conservée.","Le choix technique est justifié par au moins trois critères."],
       question:"Compare les capteurs résistif et capacitif, puis justifie celui que tu retiens pour un jardin durable.",
       correction:"Le capteur résistif est peu coûteux mais ses électrodes se corrodent plus facilement. Le capteur capacitif est généralement plus durable et stable, mais il coûte davantage et doit lui aussi être calibré. Le choix dépend du coût, de la durée de vie, de la maintenance et de la réparabilité."
     },
     {
-      id:8,title:"Défi ingénieur",accent:"#fb923c",story:"L’équipe doit maintenant réunir toutes les fonctions dans un prototype final, le tester et défendre ses choix.",
+      id:8,languageShort:"C++ Arduino",languageTitle:"programme C++ Arduino",languageAria:"Programme C++ Arduino de la séance",title:"Défi ingénieur",accent:"#fb923c",story:"L’équipe doit maintenant réunir toutes les fonctions dans un prototype final, le tester et défendre ses choix.",
       objective:"Produire le programme final, un protocole de tests complet et une justification technique argumentée.",
       chips:["Synthèse","Prototype final","Protocole de tests","Validation"],
       tasks:["Programmer la sécurité prioritaire et les trois capteurs.","Prévoir arrêt, alerte et arrosage court.","Tester les situations normales, limites et défaillantes.","Présenter les résultats, les limites et une amélioration."],
       algorithm:[["ACQUÉRIR","Lire toutes les mesures utiles.","#60a5fa"],["SÉCURISER","Traiter d’abord le réservoir vide et les valeurs incohérentes.","#fb7185"],["DÉCIDER","Appliquer les seuils et la logique multicritère.","#fb923c"],["AGIR / COMMUNIQUER","Arroser, arrêter, alerter et afficher les résultats.","#4ade80"]],
-      code:"seuil_humidite = 35\nseuil_reservoir = 20\nseuil_lumiere = 70\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\nlumiere = lire_lumiere()\n\nif reservoir < seuil_reservoir:\n    stop()\n    alerter(\"Réservoir vide\")\nelif humidite < seuil_humidite and lumiere < seuil_lumiere:\n    arroser(2)\nelse:\n    stop()\n\nafficher(humidite, reservoir, lumiere)",
+      code:"#include <Arduino.h>\n\nconst int PIN_HUMIDITE_SOL = A0;\nconst int PIN_LUMIERE = A1;\nconst int PIN_NIVEAU_EAU = A2;\nconst int PIN_RELAIS_POMPE = 6;\n\nconst int SEUIL_HUMIDITE = 520;\nconst int SEUIL_RESERVOIR = 350;\nconst int SEUIL_LUMIERE = 700;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(PIN_RELAIS_POMPE, OUTPUT);\n  digitalWrite(PIN_RELAIS_POMPE, LOW);\n}\n\nvoid loop() {\n  int humidite = analogRead(PIN_HUMIDITE_SOL);\n  int lumiere = analogRead(PIN_LUMIERE);\n  int niveauEau = analogRead(PIN_NIVEAU_EAU);\n\n  Serial.println(humidite);\n  Serial.println(lumiere);\n  Serial.println(niveauEau);\n\n  if (niveauEau < SEUIL_RESERVOIR) {\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n    Serial.println(\"Réservoir vide\");\n  } else if (humidite < SEUIL_HUMIDITE && lumiere < SEUIL_LUMIERE) {\n    digitalWrite(PIN_RELAIS_POMPE, HIGH);\n    delay(2000);\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  } else {\n    digitalWrite(PIN_RELAIS_POMPE, LOW);\n  }\n\n  delay(1000);\n}",
       tests:["Réservoir vide : arrêt et alerte.","Sol sec, eau disponible et lumière acceptable : arrosage court.","Sol humide ou forte lumière : pompe arrêtée.","Une valeur incohérente est signalée dans le protocole."],
       question:"Présente ton prototype final, le protocole de tests, les résultats obtenus, une limite de la simulation et l’amélioration prioritaire.",
       correction:"La sécurité du réservoir doit être testée avant toute commande d’arrosage. Le programme lit les trois capteurs, applique des seuils justifiés, limite la durée de fonctionnement et conserve un arrêt explicite. Le protocole doit inclure les cas normaux, les cas limites et au moins une défaillance."
@@ -290,7 +290,19 @@
   }
   function renderScore(){const value=total();document.getElementById("totalScore").textContent=`${value.toFixed(value%1?1:0)} / 20`;document.getElementById("heroScore").textContent=value.toFixed(value%1?1:0)}
   function persist(saved=false){
-    current.code=editor.value;current.answer=answer.value;current.tests=tests.map(i=>i.checked);current.scores=scoreInputs.map(i=>Number(i.value)||0);if(saved)current.saved=true;state.sessions[session.id]=current;saveState(state);renderScore();
+    current.code=editor.value;current.answer=answer.value;current.tests=tests.map(i=>i.checked);current.scores=scoreInputs.map(i=>Number(i.value)||0);if(saved)current.saved=true;
+    /* Écriture NON destructive : on relit le stockage au moment d'écrire, puis on ne
+       remplace que les champs possédés par ce module. Les données écrites entre-temps
+       par d'autres modules (QCM, montage réel, mode Mission…) sont conservées. */
+    const fresh=loadState();
+    fresh.profile=fresh.profile||state.profile;
+    fresh.sessions=fresh.sessions||{};
+    const owned={code:current.code,answer:current.answer,tests:current.tests,scores:current.scores,correction:current.correction};
+    if(saved)owned.saved=true;
+    if(current.codeVersion)owned.codeVersion=current.codeVersion;
+    fresh.sessions[session.id]=Object.assign({},fresh.sessions[session.id],owned);
+    state.sessions=fresh.sessions;
+    saveState(fresh);renderScore();
   }
   function codeCheckTemplate(label,ok,detail){
     return `<li class="${ok?'ok':'missing'}"><strong>${label}</strong><span>${detail}</span></li>`;
@@ -344,7 +356,12 @@
 
   document.getElementById("resetSession").addEventListener("click",()=>{
     if(!window.confirm("Réinitialiser toutes les réponses de cette séance ?"))return;
-    state.sessions[session.id]={code:session.code,answer:"",tests:[],scores:[0,0,0,0,0],correction:false};saveState(state);location.reload();
+    /* Réinitialisation limitée à LA séance courante, sans écraser les autres séances
+       ni les données étrangères écrites après le chargement de la page. */
+    const fresh=loadState();
+    fresh.sessions=fresh.sessions||{};
+    fresh.sessions[session.id]={code:session.code,answer:"",tests:[],scores:[0,0,0,0,0],correction:false};
+    saveState(fresh);location.reload();
   });
 
   renderHighlight();syncScroll();renderScore();

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Aperçu — les huit algorigrammes ultra premium</title>
+  <link rel="icon" href="data:,">
+  <style>
+    body { margin: 0; background: #050914; color: #f7fbff; font-family: Inter, system-ui, sans-serif; padding: 1.2rem; }
+    h1 { font-size: 1.25rem; }
+    p.note { color: #a8bdca; max-width: 860px; line-height: 1.5; }
+    section { margin: 1.6rem auto; max-width: 920px; border: 1px solid #20364b; border-radius: 18px; background: #07131f; padding: 1rem 1.2rem; }
+    h2 { color: #a5f3fc; font-size: 1.05rem; }
+    .ag-svg { display: block; width: 100%; height: auto; }
+    .ag-note { margin: .8rem 0 0; padding: .6rem .8rem; border-left: 4px solid #facc15; border-radius: 8px; background: #1c1809; color: #fde68a; font-size: .85rem; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <h1>Les huit algorigrammes ultra premium</h1>
+  <p class="note">Chaque algorigramme est généré depuis sa spécification, elle-même fidèle au programme C++ de référence du mode Mission. Les couleurs des formes reprennent celles de l'algorithme coloré de la séance. SVG responsive : la même image sert l'ordinateur, la tablette et le téléphone.</p>
+  <div id="mount"></div>
+  <script src="algorigramme-premium.js"></script>
+  <script src="algorigramme-data.js"></script>
+  <script>
+    const titres = { 1: "Observer les signaux", 2: "Calibrer un seuil", 3: "Analyser les chaînes", 4: "Protéger la pompe", 5: "Économiser l'eau — vraie hystérésis", 6: "Décider avec trois données", 7: "Améliorer la durabilité", 8: "Défi ingénieur" };
+    const mount = document.getElementById("mount");
+    for (let n = 1; n <= 8; n++) {
+      const section = document.createElement("section");
+      section.innerHTML = `<h2>Séance ${n} — ${titres[n]}</h2>${window.TechnoQuestAlgorigramme.render(n)}<p class="ag-note">${window.TechnoQuestAlgorigramme.spec(n).note}</p>`;
+      mount.appendChild(section);
+    }
+  </script>
+</body>
+</html>

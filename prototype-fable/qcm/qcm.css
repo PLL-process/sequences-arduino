@@ -1,0 +1,173 @@
+/* TechnoQuest — styles du moteur QCM commun et des infobulles accessibles. */
+
+/* ---------- Conteneur ---------- */
+.qcm-root {
+  margin: 1.2rem 0;
+  padding: 1.05rem 1.1rem;
+  border: 1px solid var(--line, #20364b);
+  border-radius: 18px;
+  background: linear-gradient(145deg, rgba(14, 28, 45, .96), rgba(7, 17, 29, .98));
+  color: var(--text, #f7fbff);
+}
+.qcm-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.qcm-head h2 { margin: 0; }
+.qcm-head p { margin: .3rem 0 0; color: var(--muted, #a8bdca); }
+.qcm-score {
+  margin: 0;
+  padding: .6rem .9rem;
+  border: 1px solid #6d5717;
+  border-radius: 12px;
+  background: #2b2209;
+  color: #fde68a;
+  font-size: 1.05rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.qcm-consigne {
+  margin: .8rem 0;
+  padding: .7rem .85rem;
+  border-left: 4px solid #22d3ee;
+  border-radius: 9px;
+  background: #07131f;
+  color: #d9edf6;
+  line-height: 1.5;
+}
+.qcm-groupe { margin: 1rem 0 .6rem; color: #a5f3fc; font-size: 1rem; }
+.qcm-groupe span, .qcm-extension summary span { color: #7dd3fc; font-size: .8rem; font-weight: 800; margin-left: .4rem; }
+.qcm-liste { display: grid; gap: .8rem; }
+.qcm-extension { margin-top: 1rem; border: 1px solid var(--line, #20364b); border-radius: 14px; background: #071523; }
+.qcm-extension > summary { padding: .75rem .95rem; cursor: pointer; color: #cfe8f3; font-weight: 800; }
+.qcm-extension > .qcm-liste { padding: 0 .8rem .8rem; }
+
+/* ---------- Questions ---------- */
+.qcm-question {
+  margin: 0;
+  padding: .85rem .9rem;
+  border: 1px solid var(--line, #20364b);
+  border-radius: 13px;
+  background: #07131f;
+  /* Un fieldset impose min-width:min-content par défaut : une instruction C++
+     insécable élargirait toute la page sur mobile. */
+  min-inline-size: auto;
+  min-width: 0;
+}
+.qcm-question legend .qcm-libelle,
+.qcm-choice span,
+.qcm-correction p,
+.qcm-correction li { overflow-wrap: anywhere; }
+.qcm-question legend { display: flex; gap: .55rem; align-items: flex-start; padding: 0 .3rem; line-height: 1.45; font-weight: 700; }
+.qcm-badge {
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  min-width: 2.2rem;
+  padding: .2rem .4rem;
+  border-radius: 8px;
+  background: #123246;
+  color: #7dd3fc;
+  font-weight: 900;
+  font-size: .8rem;
+}
+.qcm-choice {
+  display: flex;
+  gap: .6rem;
+  align-items: flex-start;
+  margin: .4rem 0 0;
+  padding: .55rem .65rem;
+  border: 1px solid transparent;
+  border-radius: 9px;
+  background: #04111c;
+  color: #dbe9ef;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.qcm-choice input { margin-top: .25rem; }
+.qcm-choice:hover, .qcm-choice:focus-within { border-color: #2d4c62; }
+.qcm-question.correct { border-color: #2d8b58; }
+.qcm-question.incorrect { border-color: #9f3146; }
+.qcm-choice-bonne { border-color: #4ade80 !important; background: rgba(74, 222, 128, .1); }
+.qcm-choice-bonne::after { content: " ✓"; color: #86efac; font-weight: 900; }
+.qcm-choice-erreur { border-color: #fb7185 !important; background: rgba(251, 113, 133, .09); }
+.qcm-choice-erreur::after { content: " ✗"; color: #fda4af; font-weight: 900; }
+
+/* ---------- Correction exhaustive (après validation seulement) ---------- */
+.qcm-correction {
+  margin-top: .7rem;
+  padding: .75rem .85rem;
+  border: 1px solid #6d5717;
+  border-radius: 11px;
+  background: #171307;
+  color: #f5ecd3;
+  line-height: 1.55;
+  display: grid;
+  gap: .45rem;
+}
+.qcm-correction[hidden] { display: none; }
+.qcm-correction p { margin: 0; }
+.qcm-cor-bonne strong { color: #86efac; }
+.qcm-cor-autres strong { color: #fda4af; }
+.qcm-cor-autres ul { margin: .3rem 0 0; padding-left: 1.1rem; display: grid; gap: .3rem; }
+.qcm-cor-autres em { color: #fecdd3; font-style: normal; font-weight: 700; }
+.qcm-cor-jardin strong { color: #7dd3fc; }
+.qcm-cor-autre strong { color: #c4b5fd; }
+.qcm-cor-retenir { padding: .5rem .65rem; border-left: 4px solid #facc15; border-radius: 7px; background: #1c1809; }
+.qcm-cor-retenir strong { color: #fde68a; }
+
+/* ---------- Actions ---------- */
+.qcm-actions { display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; margin-top: 1rem; }
+.qcm-save-note { color: var(--muted, #a8bdca); font-size: .8rem; }
+#qcmValidate:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ---------- Infobulles accessibles ---------- */
+.terme-technique {
+  font-style: normal;
+  border-bottom: 1px dotted #7dd3fc;
+  cursor: help;
+  position: relative;
+}
+.terme-technique:focus-visible { outline: 2px solid #22d3ee; outline-offset: 2px; border-radius: 3px; }
+.infobulle {
+  position: absolute;
+  z-index: 60;
+  max-width: min(340px, 86vw);
+  padding: .6rem .75rem;
+  border: 1px solid #22d3ee;
+  border-radius: 10px;
+  background: #041825;
+  color: #e6f6fd;
+  font-size: .82rem;
+  font-weight: 500;
+  line-height: 1.5;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .5);
+}
+.infobulle[hidden] { display: none; }
+
+/* ---------- Glossaire ---------- */
+.glossaire {
+  margin: 1rem 0;
+  border: 1px solid var(--line, #20364b);
+  border-radius: 14px;
+  background: #071523;
+  color: var(--text, #f7fbff);
+}
+.glossaire > summary { padding: .8rem 1rem; cursor: pointer; color: #cfe8f3; font-weight: 800; }
+.glossaire dl { margin: 0; padding: .2rem 1rem 1rem; display: grid; gap: .55rem; }
+.glossaire dt { color: #7dd3fc; font-weight: 800; }
+.glossaire dd { margin: .1rem 0 0 0; color: #dbe9ef; line-height: 1.5; }
+
+/* ---------- Impression ---------- */
+@media print {
+  .qcm-actions, .qcm-save-note { display: none !important; }
+  .qcm-root, .qcm-question, .qcm-correction, .glossaire { border-color: #999; background: #fff; color: #000; }
+  .qcm-extension, .glossaire { display: block; }
+  .qcm-extension > summary { display: none; }
+  .glossaire[open] > summary { display: block; }
+  .glossaire dl { display: grid; }
+  .infobulle { display: none !important; }
+}
+
+/* ---------- Mobile ---------- */
+@media (max-width: 650px) {
+  .qcm-head { flex-direction: column; }
+  .qcm-actions .btn { flex: 1 1 auto; }
+}

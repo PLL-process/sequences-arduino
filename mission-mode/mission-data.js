@@ -350,35 +350,45 @@ ${isGuided ? mission.guidedLoop : mission.standardLoop}
         { id: "decision", label: "Hystérésis", steps: ["thresholdHumidity", "thresholdStop", "compareStop"] },
         { id: "safety", label: "Eau économisée", steps: ["delayPump", "pumpStop"] }
       ],
-      guidedIntro: "Complète les deux seuils et la logique d'hystérésis.",
+      guidedIntro: "Complète les deux seuils et la demande MÉMORISÉE de l'hystérésis.",
       standardIntro: "Programme deux seuils, la sécurité réservoir et un arrosage court.",
       expertContract: "Utiliser deux seuils, conserver A2 et limiter chaque arrosage à deux secondes.",
-      guidedConstants: "\nconst int SEUIL_HUMIDITE = 520;\nconst int SEUIL_ARRET = ____;\nconst int SEUIL_RESERVOIR = 350;\n",
-      standardConstants: "\nconst int SEUIL_HUMIDITE = 520;\nconst int SEUIL_ARRET = ____;\nconst int SEUIL_RESERVOIR = 350;\n",
-      expertConstants: "\nconst int SEUIL_HUMIDITE = 520;\nconst int SEUIL_ARRET = 650;\nconst int SEUIL_RESERVOIR = 350;\n",
-      referenceConstants: "const int SEUIL_HUMIDITE = 520;\nconst int SEUIL_ARRET = 650;\nconst int SEUIL_RESERVOIR = 350;",
+      guidedConstants: "\nconst int SEUIL_HUMIDITE = 520;\nconst int SEUIL_ARRET = ____;\nconst int SEUIL_RESERVOIR = 350;\n\n// MÉMORISER entre deux passages dans loop() : la demande d'arrosage.\nbool demandeArrosage = false;\n",
+      standardConstants: "\nconst int SEUIL_HUMIDITE = 520;\nconst int SEUIL_ARRET = ____;\nconst int SEUIL_RESERVOIR = 350;\n\nbool demandeArrosage = false;\n",
+      expertConstants: "\nconst int SEUIL_HUMIDITE = 520;\nconst int SEUIL_ARRET = 650;\nconst int SEUIL_RESERVOIR = 350;\n\nbool demandeArrosage = false;\n",
+      referenceConstants: "const int SEUIL_HUMIDITE = 520;\nconst int SEUIL_ARRET = 650;\nconst int SEUIL_RESERVOIR = 350;\n\n// État MÉMORISÉ entre deux passages dans loop() : c'est l'hystérésis.\nbool demandeArrosage = false;",
       guidedLoop: `  // Lire humidite et niveauEau.
 
-  // Si le réservoir est trop bas, arrêter.
+  // Si le réservoir est trop bas : demandeArrosage = false; (priorité sécurité).
 
-  // Sinon, si humidite est sous le seuil bas, arroser 2 s.
+  // Sinon, si humidite est sous le seuil bas : demandeArrosage = true;
 
-  // Sinon, si humidite dépasse le seuil haut, arrêter.
+  // Sinon, si humidite dépasse le seuil haut : demandeArrosage = false;
 
-  // Sinon, rester à l'arrêt pour économiser l'eau.
+  // Entre les deux seuils : ne rien écrire, la demande est MÉMORISÉE.
+
+  // Si demandeArrosage est vraie : impulsion de 2 s (HIGH, delay, LOW).
+
+  // Sinon : garder la pompe arrêtée.
 `,
-      standardLoop: `  // Lire A0 et A2, puis appliquer l'hystérésis et limiter l'arrosage à 2 s.
+      standardLoop: `  // Lire A0 et A2, mettre à jour demandeArrosage (hystérésis mémorisée,
+  // réservoir prioritaire), puis commander une impulsion limitée à 2 s.
 `,
       referenceLoop: `  int humidite = analogRead(PIN_HUMIDITE_SOL);
   int niveauEau = analogRead(PIN_NIVEAU_EAU);
 
   if (niveauEau < SEUIL_RESERVOIR) {
-    digitalWrite(PIN_RELAIS_POMPE, LOW);
+    demandeArrosage = false;
   } else if (humidite < SEUIL_HUMIDITE && niveauEau >= SEUIL_RESERVOIR) {
+    demandeArrosage = true;
+  } else if (humidite > SEUIL_ARRET) {
+    demandeArrosage = false;
+  }
+  // Entre les deux seuils : demandeArrosage conserve sa valeur.
+
+  if (demandeArrosage) {
     digitalWrite(PIN_RELAIS_POMPE, HIGH);
     delay(2000);
-    digitalWrite(PIN_RELAIS_POMPE, LOW);
-  } else if (humidite > SEUIL_ARRET) {
     digitalWrite(PIN_RELAIS_POMPE, LOW);
   } else {
     digitalWrite(PIN_RELAIS_POMPE, LOW);

@@ -42,8 +42,8 @@
 
     if (!hero || !twinCard || !editorCard || !testsCard) return;
 
-    /* ---------- Définition des cinq parties ------------------------------- */
-    const TOTAL = 5;
+    /* ---------- Définition des six parties -------------------------------- */
+    const TOTAL = 6;
     const PARTS = [
       { n: 1, id: "partie-1", title: "Découvrir la mission",
         goal: "Comprendre la situation de départ et l’objectif de la séance.",
@@ -51,14 +51,17 @@
       { n: 2, id: "partie-2", title: "Observer le système",
         goal: "Lancer le jumeau numérique et repérer les constituants concernés.",
         transition: "Tu as observé le système. Découvre maintenant l’algorithme qui organise les actions de cette séance." },
-      { n: 3, id: "partie-3", title: "Comprendre l’algorithme",
-        goal: "Lire les actions de la séance dans l’ordre, de haut en bas.",
+      { n: 3, id: "partie-3", title: "Lire l’algorithme coloré et son algorigramme",
+        goal: "Suivre les actions de la séance, leur traduction graphique et leur lien avec le C++.",
         transition: "Tu connais le déroulement des actions. Complète maintenant le programme dans le mode Mission." },
-      { n: 4, id: "partie-4", title: "Programmer et exécuter",
-        goal: "Compléter le programme avec le niveau d’aide de ton choix, puis l’exécuter.",
+      { n: 4, id: "partie-4", title: "Écrire le programme C++ Arduino",
+        goal: "Compléter le sketch complet avec le niveau d’aide de ton choix, puis l’exécuter.",
         transition: "Ton programme s’exécute : vérifie point par point qu’il répond au protocole de la séance." },
       { n: 5, id: "partie-5", title: "Tester et interpréter",
         goal: "Cocher le protocole de vérification et rédiger la réponse argumentée.",
+        transition: "Termine la séance en vérifiant ce que tu as retenu." },
+      { n: 6, id: "partie-6", title: "QCM de fin de séance",
+        goal: "Vingt questions notées sur 20, puis la correction détaillée.",
         transition: "" }
     ];
 
@@ -155,8 +158,16 @@
       "<strong>Consigne d’observation :</strong> lance la démonstration, suis le trajet des signaux entre les constituants, puis arrête la simulation avant de poursuivre."));
     body(2).appendChild(twinCard);
 
-    /* ==================== PARTIE 3 — Comprendre =========================== */
-    if (algoCard) body(3).appendChild(algoCard);
+    /* ============ PARTIE 3 — Algorithme coloré et algorigramme ============ */
+    if (algoCard) {
+      const subA = el("h3", "fv-sub", "A. Lire l’algorithme coloré");
+      body(3).appendChild(subA);
+      body(3).appendChild(algoCard);
+    }
+    const partie3B = window.TechnoQuestPartie3?.algorigramme(sessionId);
+    if (partie3B) body(3).appendChild(partie3B);
+    const partie3C = window.TechnoQuestPartie3?.correspondance(sessionId);
+    if (partie3C) body(3).appendChild(partie3C);
 
     /* ==================== PARTIE 4 — Programmer =========================== */
     const missionButton = document.getElementById("missionActivate");
@@ -188,6 +199,12 @@
       rubricFold.appendChild(rubricFoldBody);
       body(5).appendChild(rubricFold);
     }
+
+    /* ==================== PARTIE 6 — QCM ================================== */
+    const qcmRoot = document.getElementById("qcmEngineRoot");
+    if (qcmRoot) body(6).appendChild(qcmRoot);
+    const glossaire = document.getElementById("glossaireTechnique");
+    if (glossaire) body(6).appendChild(glossaire);
 
     /* Retirer les conteneurs de grille devenus vides (conteneurs seulement). */
     grids.forEach(grid => {

@@ -719,3 +719,47 @@ body.fv-vertical .session-shell {
 @media (prefers-reduced-motion: reduce) {
   .fv-rail a, .fv-continue { transition: none; }
 }
+
+/* ---------- Partie 3 v2 : algorigramme premium et correspondance ------------- */
+.ag-wrap { border: 1px solid var(--line); border-radius: 14px; background: #04111c; padding: .6rem; }
+.ag-svg { display: block; width: 100%; height: auto; }
+.ag-note {
+  margin: .7rem 0;
+  padding: .6rem .8rem;
+  border-left: 4px solid #facc15;
+  border-radius: 8px;
+  background: #1c1809;
+  color: #fde68a;
+  font-size: .85rem;
+  line-height: 1.5;
+}
+.fv-correspondance { display: grid; gap: .4rem; }
+.fv-corr-table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+.fv-corr-table th {
+  text-align: left;
+  padding: .5rem .6rem;
+  color: #a5f3fc;
+  border-bottom: 1px solid var(--line);
+  font-size: .78rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.fv-corr-table td { padding: .5rem .6rem; border-bottom: 1px solid #12283a; color: #dbe9ef; vertical-align: top; line-height: 1.45; }
+.fv-corr-table code { display: inline-block; padding: .18rem .45rem; border-radius: 6px; background: #020b09; color: #effff5; font-size: .8rem; }
+.fv-corr-action {
+  display: inline-block;
+  padding: .3rem .6rem;
+  border: 1px solid var(--c);
+  border-radius: 999px;
+  color: var(--c);
+  font-weight: 900;
+  font-size: .74rem;
+  letter-spacing: .05em;
+}
+@media (max-width: 650px) {
+  .fv-corr-table thead { display: none; }
+  .fv-corr-table tr { display: grid; gap: .2rem; padding: .5rem 0; border-bottom: 1px solid #12283a; }
+  .fv-corr-table td { border: none; padding: .1rem .2rem; }
+}
+/* En-tête de carte redondant quand le moteur QCM remplace l'ancien QCM S1. */
+.fv-part-body .s1-card:has(#qcmEngineRoot) > .s1-card-head { display: none; }

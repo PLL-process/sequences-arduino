@@ -56,11 +56,11 @@
       { n: 2, id: "partie-2", title: "Observer le système",
         goal: "Lancer le jumeau numérique et repérer capteurs, Arduino, relais et pompe.",
         transition: "Tu as observé les capteurs, l’Arduino et la pompe. Découvre maintenant comment le programme organise ces actions." },
-      { n: 3, id: "partie-3", title: "Comprendre le programme Arduino",
-        goal: "Relier la structure du programme, l’algorithme et son algorigramme.",
+      { n: 3, id: "partie-3", title: "Lire l’algorithme coloré et son algorigramme",
+        goal: "Suivre les actions de la séance, leur traduction graphique et leur lien avec le C++.",
         transition: "Tu connais maintenant la structure et le déroulement du programme. Complète-le dans le mode Mission." },
-      { n: 4, id: "partie-4", title: "Programmer en mode Mission",
-        goal: "Écrire le programme C++ pas à pas, avec le niveau d’aide de ton choix.",
+      { n: 4, id: "partie-4", title: "Écrire le programme C++ Arduino",
+        goal: "Compléter le sketch complet, avec le niveau d’aide de ton choix.",
         transition: "Ton programme est écrit : vérifie maintenant qu’il fait exactement ce qui est attendu." },
       { n: 5, id: "partie-5", title: "Tester et interpréter",
         goal: "Exécuter la vérification simulée, cocher le protocole et argumenter.",
@@ -225,7 +225,7 @@
     /* ==================== PARTIE 3 — Comprendre =========================== */
     /* A. Structure du programme (représentation visuelle, sans le mot « algorigramme ») */
     body(3).appendChild(el("div", "fv-structure", `
-      <h3 class="fv-sub">A. La structure du programme</h3>
+      <h3 class="fv-sub">Avant de lire : la structure du programme</h3>
       <div class="fv-structure-grid">
         <article><em aria-hidden="true">📚</em><strong>Bibliothèques et constantes</strong><span>En haut du programme : <code>#include</code> et les noms donnés aux broches (<code>PIN_HUMIDITE_SOL</code>…).</span></article>
         <article><em aria-hidden="true">1️⃣</em><strong>setup( ) — une seule fois</strong><span>Exécutée au démarrage : elle prépare la communication série, les broches et l’état sûr.</span></article>
@@ -240,7 +240,7 @@
 
     /* B. Algorithme textuel — verbes d'action, volontairement non numérotés */
     body(3).appendChild(el("div", "fv-algo-text", `
-      <h3 class="fv-sub">B. L’algorithme du programme, en français</h3>
+      <h3 class="fv-sub">A. Lire l’algorithme coloré</h3>
       <p class="fv-note">Ces actions correspondent exactement au programme de la séance. Elles ne sont pas numérotées : les grands numéros sont réservés aux sept parties de la page.</p>
       <div class="fv-verbes">
         <span style="--v:#fb7185">INITIALISER</span><i>→</i>
@@ -261,37 +261,11 @@
         <li><strong style="color:#facc15">RECOMMENCER</strong> — laisser loop() reprendre automatiquement au début.</li>
       </ul>`));
 
-    /* C. Algorigramme fidèle au programme réel — aucune décision inventée */
-    body(3).appendChild(el("div", "fv-flow", `
-      <h3 class="fv-sub">C. L’algorigramme de la séance</h3>
-      <div class="fv-flowchart" role="img" aria-label="Algorigramme : début, initialiser, puis boucle lire et mémoriser, afficher, maintenir la pompe arrêtée, attendre, et retour à lire">
-        <div class="fv-node fv-oval">DÉBUT</div>
-        <div class="fv-arrow" aria-hidden="true">↓</div>
-        <div class="fv-node fv-rect">INITIALISER<small>setup( ) — une seule fois</small></div>
-        <div class="fv-arrow" aria-hidden="true">↓</div>
-        <div class="fv-loop-zone">
-          <div class="fv-loop-label">loop( ) — répétée en continu</div>
-          <div class="fv-node fv-rect" id="fvNodeLire">LIRE ET MÉMORISER<small>analogRead sur A0, A1, A2</small></div>
-          <div class="fv-arrow" aria-hidden="true">↓</div>
-          <div class="fv-node fv-io">AFFICHER<small>Serial.print / Serial.println</small></div>
-          <div class="fv-arrow" aria-hidden="true">↓</div>
-          <div class="fv-node fv-rect">MAINTENIR LA POMPE ARRÊTÉE<small>digitalWrite(…, LOW)</small></div>
-          <div class="fv-arrow" aria-hidden="true">↓</div>
-          <div class="fv-node fv-rect">ATTENDRE<small>delay(1000)</small></div>
-          <div class="fv-return" aria-hidden="true"><span>↺ retour à LIRE</span></div>
-        </div>
-      </div>
-      <div class="fv-legende">
-        <h4>Légende</h4>
-        <ul>
-          <li><i class="fv-l-oval"></i> Ovale : début ou fin</li>
-          <li><i class="fv-l-rect"></i> Rectangle : traitement</li>
-          <li><i class="fv-l-io"></i> Parallélogramme : entrée ou sortie</li>
-          <li><i class="fv-l-diam"></i> Losange : décision conditionnelle</li>
-          <li><i class="fv-l-arrow">→</i> Flèche : ordre d’exécution</li>
-        </ul>
-        <p class="fv-note">Le losange n’est pas utilisé dans cette séance : le programme ne contient encore aucune condition <code>if</code>. Le rebouclage de <code>loop()</code> est représenté par une flèche de retour, pas par une décision.</p>
-      </div>`));
+    /* B. Algorigramme ultra premium + C. correspondance avec le C++ */
+    const partie3B = window.TechnoQuestPartie3?.algorigramme(1);
+    if (partie3B) body(3).appendChild(partie3B);
+    const partie3C = window.TechnoQuestPartie3?.correspondance(1);
+    if (partie3C) body(3).appendChild(partie3C);
 
     const algoFold = el("details", "fv-fold");
     algoFold.innerHTML = "<summary>Documentation détaillée : les étapes du programme une par une</summary>";

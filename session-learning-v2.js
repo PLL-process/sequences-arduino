@@ -16,51 +16,12 @@
       guided: "const int RELAIS_POMPE = 6;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(RELAIS_POMPE, OUTPUT);\n}\n\nvoid loop() {\n  // 1 ACQUÉRIR : lire le capteur A0\n  // Indice : analogRead(A0) lit explicitement A0.\n  // 2 MÉMORISER : ranger la valeur dans la variable humidite\n  int humidite = _______________;\n\n  // 3 COMMUNIQUER : afficher la valeur mesurée\n  // Indice : utilise Serial.println(...)\n  ____________________________;\n\n  // 4 SÉCURISER : maintenir la pompe arrêtée\n  digitalWrite(RELAIS_POMPE, LOW);\n}",
       standard: "const int RELAIS_POMPE = 6;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(RELAIS_POMPE, OUTPUT);\n}\n\nvoid loop() {\n  // 1 ACQUÉRIR : lire le capteur A0\n  // 2 MÉMORISER : stocker la mesure dans humidite\n  int humidite = __________________;\n\n  // 3 COMMUNIQUER : afficher humidite\n  ________________________________;\n\n  // 4 SÉCURISER : arrêter la pompe\n  ________________________________;\n}",
       expert: "const int RELAIS_POMPE = 6;\n\nvoid setup() {\n  Serial.begin(9600);\n  pinMode(RELAIS_POMPE, OUTPUT);\n}\n\nvoid loop() {\n  // Lire A0, afficher la mesure, garder D6 à LOW.\n}\n"
-    },
-    2: {
-      old: "# Définir un seuil modifiable\nseuil_humidite = 35\n\n# Lire puis comparer la mesure\nhumidite = lire_humidite()\nif humidite < seuil_humidite:\n    afficher(\"Sol sec\")\nelse:\n    afficher(\"Sol humide\")\nstop()",
-      guided: "# Choisis le seuil à partir de tes mesures\nseuil_humidite = ____\nhumidite = lire_humidite()\n\nif humidite < seuil_humidite:\n    afficher(\"Sol sec\")\nelse:\n    afficher(\"Sol humide\")\n\nstop()",
-      standard: "# Définis un seuil, lis A0 puis affiche l’état du sol.\nseuil_humidite = ____\n\n# À compléter\n",
-      expert: "# Contrat : utiliser les mesures de calibration pour classer le sol sec ou humide.\n"
-    },
-    3: {
-      old: "seuil_humidite = 35\nhumidite = lire_humidite()\n\n# Traiter la donnée et commander la sortie logique\nif humidite < seuil_humidite:\n    arroser(3)\nelse:\n    stop()",
-      guided: "seuil_humidite = 35\nhumidite = lire_humidite()\n\nif __________________________:\n    arroser(3)\nelse:\n    __________",
-      standard: "# Lire l’humidité puis arroser 3 s uniquement si le sol est sec.\nseuil_humidite = 35\n",
-      expert: "# Contrat : commander la pompe 3 s si le sol est sec, sinon garantir l’arrêt.\n"
-    },
-    4: {
-      old: "seuil_humidite = 35\nseuil_reservoir = 20\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\n\nif humidite < seuil_humidite and reservoir >= seuil_reservoir:\n    arroser(3)\nelse:\n    stop()\n\nif reservoir < seuil_reservoir:\n    alerter(\"Réservoir vide\")",
-      guided: "seuil_humidite = 35\nseuil_reservoir = 20\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\n\nif __________________ and __________________:\n    arroser(3)\nelse:\n    stop()\n\nif __________________:\n    alerter(\"Réservoir vide\")",
-      standard: "# Lire A0 et A2. Donner la priorité à la sécurité du réservoir.\nseuil_humidite = 35\nseuil_reservoir = 20\n",
-      expert: "# Contrat : arroser seulement si le sol est sec ET le niveau suffisant ; sinon arrêter et alerter si nécessaire.\n"
-    },
-    5: {
-      old: "seuil_humidite = 30\nseuil_arret = 42\nseuil_reservoir = 20\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\n\nif humidite < seuil_humidite and reservoir >= seuil_reservoir:\n    arroser(2)\nelif humidite > seuil_arret:\n    stop()\nelse:\n    stop()",
-      guided: "seuil_humidite = 30\nseuil_arret = ____\nseuil_reservoir = 20\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\n\n# Complète la décision avec les deux seuils\n",
-      standard: "# Programmer une hystérésis et limiter l’arrosage à 2 s.\nseuil_humidite = 30\nseuil_arret = 42\nseuil_reservoir = 20\n",
-      expert: "# Contrat : utiliser deux seuils, conserver la sécurité du réservoir et limiter chaque arrosage à 2 s.\n"
-    },
-    6: {
-      old: "seuil_humidite = 35\nseuil_reservoir = 20\nseuil_lumiere = 70\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\nlumiere = lire_lumiere()\n\nif humidite < seuil_humidite and reservoir >= seuil_reservoir and lumiere < seuil_lumiere:\n    arroser(2)\nelse:\n    stop()",
-      guided: "seuil_humidite = 35\nseuil_reservoir = 20\nseuil_lumiere = 70\n\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\nlumiere = lire_lumiere()\n\nif __________________ and __________________ and __________________:\n    arroser(2)\nelse:\n    stop()",
-      standard: "# Lire A0, A1 et A2 puis construire une décision multicritère.\nseuil_humidite = 35\nseuil_reservoir = 20\nseuil_lumiere = 70\n",
-      expert: "# Contrat : arroser 2 s seulement si les trois critères choisis sont satisfaits.\n"
-    },
-    7: {
-      old: "seuil_humidite = 38\nseuil_reservoir = 20\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\n\nif humidite < seuil_humidite and reservoir >= seuil_reservoir:\n    arroser(2)\nelse:\n    stop()",
-      guided: "# Valeur à déterminer après la nouvelle calibration\nseuil_humidite = ____\nseuil_reservoir = 20\n\n# Complète le programme en conservant la sécurité du réservoir\n",
-      standard: "# Recalibrer le capteur puis conserver la sécurité du réservoir.\nseuil_humidite = ____\nseuil_reservoir = 20\n",
-      expert: "# Contrat : intégrer le nouveau seuil de calibration sans supprimer les sécurités.\n"
-    },
-    8: {
-      old: "seuil_humidite = 35\nseuil_reservoir = 20\nseuil_lumiere = 70\nhumidite = lire_humidite()\nreservoir = lire_reservoir()\nlumiere = lire_lumiere()\n\nif reservoir < seuil_reservoir:\n    stop()\n    alerter(\"Réservoir vide\")\nelif humidite < seuil_humidite and lumiere < seuil_lumiere:\n    arroser(2)\nelse:\n    stop()\n\nafficher(humidite, reservoir, lumiere)",
-      guided: "seuil_humidite = 35\nseuil_reservoir = 20\nseuil_lumiere = 70\n\n# 1. Lire les trois capteurs\n# 2. Traiter d’abord le réservoir vide\n# 3. Décider d’arroser ou non\n# 4. Afficher les mesures\n",
-      standard: "# Construire le programme final sécurisé à partir du cahier des charges.\nseuil_humidite = 35\nseuil_reservoir = 20\nseuil_lumiere = 70\n",
-      expert: "# Contrat final : sécurité prioritaire, trois capteurs, arrosage court, alerte et affichage.\n"
     }
   }[id];
 
+  /* Séances 2 à 8 : les squelettes sont désormais gérés en C++ Arduino par
+     session-code-v3.js (alignés sur le mode Mission). Ce module conserve la
+     ligne « Niveau d'aide », la bascule schéma/réel et la garde de correction. */
   const editor = document.getElementById("codeEditor");
   const stage = document.getElementById("twinStage");
   const correctionButton = document.getElementById("showCorrection");
@@ -76,12 +37,19 @@
   current.attemptedV2 = Boolean(current.attemptedV2);
 
   const saveState = () => {
-    state.sessions[id] = current;
-    localStorage.setItem(storageKey, JSON.stringify(state));
+    /* Écriture non destructive : relecture au moment d'écrire pour ne pas écraser
+       les données ajoutées par d'autres modules depuis le chargement de la page. */
+    let fresh = {};
+    try { fresh = JSON.parse(localStorage.getItem(storageKey) || "{}"); } catch (error) { fresh = {}; }
+    fresh.sessions = fresh.sessions || {};
+    fresh.sessions[id] = Object.assign({}, fresh.sessions[id], current);
+    state.sessions = fresh.sessions;
+    localStorage.setItem(storageKey, JSON.stringify(fresh));
   };
 
   let resetting = false;
   const setStarter = mode => {
+    if (!data) return; /* squelettes délégués à session-code-v3.js */
     resetting = true;
     current.learningMode = mode;
     current.attemptedV2 = false;
@@ -93,17 +61,19 @@
     resetting = false;
   };
 
-  const normalized = editor.value.replace(/\r/g, "").trim();
-  const oldNormalized = (Array.isArray(data.old) ? data.old : [data.old]).map(value => value.replace(/\r/g, "").trim());
-  const versionChanged = data.version && current.learningV2Version !== data.version;
-  if (!current.learningV2 || oldNormalized.includes(normalized) || !normalized || (versionChanged && !current.attemptedV2)) {
-    current.learningV2 = true;
-    if (data.version) current.learningV2Version = data.version;
-    setStarter(current.learningMode);
-  } else {
-    if (data.version) current.learningV2Version = data.version;
-    current.attemptedV2 = true;
-    saveState();
+  if (data) {
+    const normalized = editor.value.replace(/\r/g, "").trim();
+    const oldNormalized = (Array.isArray(data.old) ? data.old : [data.old]).map(value => value.replace(/\r/g, "").trim());
+    const versionChanged = data.version && current.learningV2Version !== data.version;
+    if (!current.learningV2 || oldNormalized.includes(normalized) || !normalized || (versionChanged && !current.attemptedV2)) {
+      current.learningV2 = true;
+      if (data.version) current.learningV2Version = data.version;
+      setStarter(current.learningMode);
+    } else {
+      if (data.version) current.learningV2Version = data.version;
+      current.attemptedV2 = true;
+      saveState();
+    }
   }
 
   const editorCard = editor.closest(".card-body");

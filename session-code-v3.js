@@ -1,4 +1,10 @@
-/* TechnoQuest — modèles incomplets, aide progressive et exécution pédagogique. */
+/* TechnoQuest — éditeur classique : sketchs C++ Arduino complets, vérification,
+   exécution pédagogique et protection des anciens brouillons.
+   Depuis la migration « cpp-arduino-v5 », les séances 2 à 8 utilisent le même
+   C++ Arduino que le mode Mission (mission-mode/mission-data.js) : mêmes
+   broches, mêmes constantes, mêmes seuils ADC, mêmes programmes de référence.
+   Convention relais du projet : LOW = repos (pompe arrêtée), HIGH = activé —
+   à confirmer avec le module relais réellement utilisé. */
 "use strict";
 (() => {
   const id = Number(document.body.dataset.session || 0);
@@ -7,262 +13,605 @@
   const stage = document.getElementById("twinStage");
   if (!editor || !stage) return;
 
-  const VERSION = "2026-07-cpp-arduino-v4";
+  const VERSION = "2026-07-cpp-arduino-v5";
+
+  /* ---- Briques communes, identiques au mode Mission ---- */
+  const PINS = `const int PIN_HUMIDITE_SOL = A0;
+const int PIN_LUMIERE = A1;
+const int PIN_NIVEAU_EAU = A2;
+const int PIN_RELAIS_POMPE = 6;`;
+
+  const SETUP = `void setup() {
+  Serial.begin(9600);
+  pinMode(PIN_RELAIS_POMPE, OUTPUT);
+  digitalWrite(PIN_RELAIS_POMPE, LOW);
+}`;
+
+  const sketch = (title, constants, loopBody, intro) => `// ${title}
+${intro ? `// ${intro}\n` : ""}
+#include <Arduino.h>
+
+${PINS}
+${constants ? `\n${constants}\n` : ""}
+${SETUP}
+
+void loop() {
+${loopBody}
+}`;
+
+  /* ---- Modèles par séance : sketch TOUJOURS complet (constantes, setup(),
+     loop(), accolades) ; seules les zones ____ sont à remplacer. ---- */
   const models = {
     1: {
-      guided: `const int RELAIS_POMPE = 6;
-
-void setup() {
-  Serial.begin(9600);
-  pinMode(RELAIS_POMPE, OUTPUT);
-}
-
-void loop() {
-  // 1 ACQUÉRIR : lire le capteur d’humidité branché sur A0
-  // Indice : analogRead(A0) lit explicitement l’entrée analogique A0.
-  // 2 MÉMORISER : ranger la valeur dans la variable humidite
+      guided: sketch("Séance 1 — Observer les signaux", "",
+`  // 1 ACQUÉRIR : lire le capteur d'humidité branché sur A0.
+  // Indice : analogRead(PIN_HUMIDITE_SOL) lit l'entrée analogique A0.
+  // 2 MÉMORISER : ranger la valeur dans la variable humidite.
   int humidite = _______________;
 
-  // 3 COMMUNIQUER : afficher la valeur mesurée
-  // Indice : affiche la variable avec Serial.println(...)
+  // 3 COMMUNIQUER : afficher la valeur mesurée.
+  // Indice : Serial.println(...) affiche puis revient à la ligne.
   ____________________________;
 
-  // 4 SÉCURISER : maintenir la pompe arrêtée pendant l’observation
-  digitalWrite(RELAIS_POMPE, LOW);
-}`,
-      standard: `const int RELAIS_POMPE = 6;
+  // 4 SÉCURISER : maintenir la pompe arrêtée pendant l'observation.
+  digitalWrite(PIN_RELAIS_POMPE, LOW);
 
-void setup() {
-  Serial.begin(9600);
-  pinMode(RELAIS_POMPE, OUTPUT);
-}
-
-void loop() {
-  // Lire A0 puis mémoriser la mesure dans humidite.
+  // 5 ATTENDRE une seconde avant la mesure suivante.
+  delay(1000);`, "Sketch complet : complète uniquement les zones ____ ."),
+      standard: sketch("Séance 1 — Observer les signaux", "",
+`  // Lire A0 puis mémoriser la mesure dans humidite.
   int humidite = __________________;
 
   // Afficher la valeur mémorisée.
   ________________________________;
 
-  // Maintenir la pompe arrêtée pendant l’observation.
-  digitalWrite(RELAIS_POMPE, LOW);
-}`,
-      expert: `const int RELAIS_POMPE = 6;
+  // Maintenir la pompe arrêtée puis attendre une seconde.
+  digitalWrite(PIN_RELAIS_POMPE, LOW);
+  delay(1000);`),
+      expert: sketch("Séance 1 — Observer les signaux", "",
+`  // Mission : lire A0, afficher la mesure, garder D6 à LOW, attendre 1 s.`),
+      reference: sketch("Séance 1 — Observer les signaux", "",
+`  int humidite = analogRead(PIN_HUMIDITE_SOL);
 
-void setup() {
-  Serial.begin(9600);
-  pinMode(RELAIS_POMPE, OUTPUT);
-}
-
-void loop() {
-  // Mission : lire A0, afficher la mesure et garder D6 à LOW.
-}`,
-      reference: `const int RELAIS_POMPE = 6;
-
-void setup() {
-  Serial.begin(9600);
-  pinMode(RELAIS_POMPE, OUTPUT);
-}
-
-void loop() {
-  // 1 ACQUÉRIR : lire le capteur A0
-  // 2 MÉMORISER : ranger la valeur dans la variable humidite
-  int humidite = analogRead(A0);
-
-  // 3 COMMUNIQUER : afficher la valeur mesurée
   Serial.println(humidite);
 
-  // 4 SÉCURISER : maintenir la pompe arrêtée
-  digitalWrite(RELAIS_POMPE, LOW);
-}`
+  digitalWrite(PIN_RELAIS_POMPE, LOW);
+  delay(1000);`)
     },
     2: {
-      guided: `# Déterminer un seuil à partir des mesures en sol sec et humide.
-seuil_humidite = 35
+      guided: sketch("Séance 2 — Calibrer un seuil",
+`// Seuil issu de TA calibration : valeur ADC entre 0 et 1023.
+const int SEUIL_HUMIDITE = ____;`,
+`  // ACQUÉRIR / MÉMORISER : lire A0 et ranger la valeur.
+  int humidite = ____________________;
 
-# Lire le capteur d’humidité branché sur A0.
+  // COMMUNIQUER : afficher la mesure.
+  Serial.print("Humidité : ");
+  ______________________________;
 
-# Comparer la mesure au seuil et afficher « Sol sec » ou « Sol humide ».
+  // COMPARER : sol sec ou sol humide ?
+  if (___________________________) {
+    Serial.println("Sol sec");
+  } else {
+    Serial.println("Sol humide");
+  }
 
-# Maintenir la pompe arrêtée pendant la calibration.
-`,
-      standard: `# Définir le seuil retenu, lire A0, comparer puis afficher l’état du sol.
-seuil_humidite = 35
-`,
-      expert: `# Mission : classer le sol à partir de A0 et du seuil issu de la calibration.
-`,
-      reference: `seuil_humidite = 35
-humidite = lire_humidite(A0)
-if humidite < seuil_humidite:
-    afficher("Sol sec")
-else:
-    afficher("Sol humide")
-stop()`
+  // SÉCURISER : pompe arrêtée pendant la calibration.
+  digitalWrite(PIN_RELAIS_POMPE, LOW);
+
+  // ATTENDRE une seconde.
+  delay(1000);`, "Sketch complet : complète uniquement les zones ____ ."),
+      standard: sketch("Séance 2 — Calibrer un seuil",
+`const int SEUIL_HUMIDITE = ____;`,
+`  // Lire A0, afficher la mesure, comparer au seuil,
+  // afficher "Sol sec" ou "Sol humide", sécuriser puis attendre.
+  int humidite = ____________________;
+
+  ______________________________;
+
+  if (___________________________) {
+    ______________________________;
+  } else {
+    ______________________________;
+  }
+
+  digitalWrite(PIN_RELAIS_POMPE, LOW);
+  delay(1000);`),
+      expert: sketch("Séance 2 — Calibrer un seuil",
+`const int SEUIL_HUMIDITE = 560;`,
+`  // Mission : classer le sol avec le seuil issu de la calibration,
+  // afficher la mesure et l'état, garder la pompe arrêtée, attendre 1 s.`),
+      reference: sketch("Séance 2 — Calibrer un seuil",
+`const int SEUIL_HUMIDITE = 560;`,
+`  int humidite = analogRead(PIN_HUMIDITE_SOL);
+
+  Serial.print("Humidité : ");
+  Serial.println(humidite);
+
+  if (humidite < SEUIL_HUMIDITE) {
+    Serial.println("Sol sec");
+  } else {
+    Serial.println("Sol humide");
+  }
+
+  digitalWrite(PIN_RELAIS_POMPE, LOW);
+  delay(1000);`)
     },
     3: {
-      guided: `seuil_humidite = 35
+      guided: sketch("Séance 3 — Analyser les chaînes",
+`const int SEUIL_HUMIDITE = 560;`,
+`  // ACQUÉRIR / MÉMORISER : lire l'information du capteur A0.
+  int humidite = ____________________;
 
-# Lire l’humidité sur A0 et la mémoriser.
+  // COMMUNIQUER : afficher la mesure.
+  Serial.print("Humidité : ");
+  Serial.println(humidite);
 
-# Si le sol est sec, arroser pendant 3 secondes.
-# Sinon, arrêter explicitement la pompe.
-`,
-      standard: `# Lire A0 puis commander la pompe 3 s uniquement si le sol est sec.
-seuil_humidite = 35
-`,
-      expert: `# Mission : commander la pompe 3 s si le sol est sec, sinon garantir l’arrêt.
-`,
-      reference: `seuil_humidite = 35
-humidite = lire_humidite(A0)
-if humidite < seuil_humidite:
-    arroser(3)
-else:
-    stop()`
+  // TRAITER puis DISTRIBUER : si le sol est sec, le relais D6
+  // laisse passer l'énergie vers la pompe pendant 3 secondes.
+  if (___________________________) {
+    digitalWrite(PIN_RELAIS_POMPE, ____);
+    delay(3000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    // SÉCURISER : sinon, garantir l'arrêt.
+    ______________________________;
+  }
+
+  // ATTENDRE une seconde.
+  delay(1000);`, "Sketch complet : complète uniquement les zones ____ ."),
+      standard: sketch("Séance 3 — Analyser les chaînes",
+`const int SEUIL_HUMIDITE = 560;`,
+`  // Lire A0, afficher, puis arroser 3 s seulement si le sol est sec.
+  int humidite = ____________________;
+
+  Serial.print("Humidité : ");
+  Serial.println(humidite);
+
+  if (___________________________) {
+    ______________________________;
+    ______________________________;
+    ______________________________;
+  } else {
+    ______________________________;
+  }
+
+  delay(1000);`),
+      expert: sketch("Séance 3 — Analyser les chaînes",
+`const int SEUIL_HUMIDITE = 560;`,
+`  // Mission : commander la pompe 3 s si le sol est sec (D6 à HIGH),
+  // sinon garantir l'arrêt (D6 à LOW). Afficher la mesure. Attendre 1 s.`),
+      reference: sketch("Séance 3 — Analyser les chaînes",
+`const int SEUIL_HUMIDITE = 560;`,
+`  int humidite = analogRead(PIN_HUMIDITE_SOL);
+  Serial.print("Humidité : ");
+  Serial.println(humidite);
+
+  if (humidite < SEUIL_HUMIDITE) {
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(3000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`)
     },
     4: {
-      guided: `seuil_humidite = 35
-seuil_reservoir = 20
+      guided: sketch("Séance 4 — Protéger la pompe",
+`const int SEUIL_HUMIDITE = 560;
+const int SEUIL_RESERVOIR = 350;`,
+`  // ACQUÉRIR / MÉMORISER : lire l'humidité A0 et le niveau A2.
+  int humidite = ____________________;
+  int niveauEau = ____________________;
 
-# Lire l’humidité sur A0 et le niveau du réservoir sur A2.
+  // SÉCURISER d'abord : le réservoir est-il trop bas ?
+  if (niveauEau < SEUIL_RESERVOIR) {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+    Serial.println("Réservoir vide");
+  }
+  // COMPARER : sol sec ET niveau suffisant ?
+  else if (_____________________ && _____________________) {
+    // AGIR : arroser 3 secondes.
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(3000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
 
-# Arroser seulement si le sol est sec ET si le niveau est suffisant.
+  // ATTENDRE une seconde.
+  delay(1000);`, "Sketch complet : complète uniquement les zones ____ ."),
+      standard: sketch("Séance 4 — Protéger la pompe",
+`const int SEUIL_HUMIDITE = 560;
+const int SEUIL_RESERVOIR = 350;`,
+`  // Lire A0 et A2. Tester D'ABORD le réservoir (arrêt + alerte),
+  // puis arroser 3 s seulement si sol sec ET niveau suffisant.
+  int humidite = ____________________;
+  int niveauEau = ____________________;
 
-# Sinon arrêter. Si le réservoir est trop bas, afficher une alerte.
-`,
-      standard: `# Lire A0 et A2. Donner la priorité à la sécurité du réservoir.
-seuil_humidite = 35
-seuil_reservoir = 20
-`,
-      expert: `# Mission : sol sec ET niveau suffisant ; sinon arrêt et alerte si nécessaire.
-`,
-      reference: `seuil_humidite = 35
-seuil_reservoir = 20
-humidite = lire_humidite(A0)
-reservoir = lire_reservoir(A2)
-if humidite < seuil_humidite and reservoir >= seuil_reservoir:
-    arroser(3)
-else:
-    stop()
-if reservoir < seuil_reservoir:
-    alerter("Réservoir vide")`
+  if (____________________________) {
+    ______________________________;
+    ______________________________;
+  } else if (_____________________ && _____________________) {
+    ______________________________;
+    ______________________________;
+    ______________________________;
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`),
+      expert: sketch("Séance 4 — Protéger la pompe",
+`const int SEUIL_HUMIDITE = 560;
+const int SEUIL_RESERVOIR = 350;`,
+`  // Mission : priorité au réservoir (arrêt + alerte série),
+  // sinon arroser 3 s si sol sec ET niveau suffisant, sinon arrêt. Attendre 1 s.`),
+      reference: sketch("Séance 4 — Protéger la pompe",
+`const int SEUIL_HUMIDITE = 560;
+const int SEUIL_RESERVOIR = 350;`,
+`  int humidite = analogRead(PIN_HUMIDITE_SOL);
+  int niveauEau = analogRead(PIN_NIVEAU_EAU);
+
+  if (niveauEau < SEUIL_RESERVOIR) {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+    Serial.println("Réservoir vide");
+  } else if (humidite < SEUIL_HUMIDITE && niveauEau >= SEUIL_RESERVOIR) {
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(3000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`)
     },
     5: {
-      guided: `seuil_humidite = 30
-seuil_arret = 42
-seuil_reservoir = 20
+      guided: sketch("Séance 5 — Économiser l'eau",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_ARRET = ____;
+const int SEUIL_RESERVOIR = 350;
 
-# Lire l’humidité sur A0 et le niveau sur A2.
+// MÉMORISER entre deux passages dans loop() : la demande d'arrosage.
+bool demandeArrosage = false;`,
+`  // ACQUÉRIR : lire l'humidité A0 et le niveau A2.
+  int humidite = ____________________;
+  int niveauEau = ____________________;
 
-# Utiliser les deux seuils pour éviter les démarrages répétés.
+  // DÉCIDER avec hystérésis : la demande est MÉMORISÉE.
+  if (niveauEau < SEUIL_RESERVOIR) {
+    // SÉCURISER : réservoir insuffisant, arrêt immédiat.
+    demandeArrosage = false;
+  } else if (humidite < SEUIL_HUMIDITE) {
+    // Sous le seuil bas : demander l'arrosage.
+    demandeArrosage = ____;
+  } else if (humidite > SEUIL_ARRET) {
+    // Au-dessus du seuil haut : annuler la demande.
+    demandeArrosage = ____;
+  }
+  // Entre les deux seuils : demandeArrosage garde sa valeur précédente.
 
-# Limiter chaque arrosage à 2 secondes et conserver l’arrêt sûr.
-`,
-      standard: `# Programmer une hystérésis, lire A0 et A2 et limiter l’arrosage à 2 s.
-seuil_humidite = 30
-seuil_arret = 42
-seuil_reservoir = 20
-`,
-      expert: `# Mission : hystérésis, sécurité du réservoir et arrosage limité à 2 s.
-`,
-      reference: `seuil_humidite = 30
-seuil_arret = 42
-seuil_reservoir = 20
-humidite = lire_humidite(A0)
-reservoir = lire_reservoir(A2)
-if humidite < seuil_humidite and reservoir >= seuil_reservoir:
-    arroser(2)
-elif humidite > seuil_arret:
-    stop()
-else:
-    stop()`
+  // AGIR : une impulsion courte si la demande est active.
+  if (demandeArrosage) {
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(2000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  // ATTENDRE une seconde.
+  delay(1000);`, "Sketch complet : complète uniquement les zones ____ ."),
+      standard: sketch("Séance 5 — Économiser l'eau",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_ARRET = ____;
+const int SEUIL_RESERVOIR = 350;
+
+bool demandeArrosage = false;`,
+`  // Lire A0 et A2, mettre à jour demandeArrosage avec l'hystérésis
+  // (réservoir prioritaire), puis commander une impulsion de 2 s.
+  int humidite = ____________________;
+  int niveauEau = ____________________;
+
+  if (____________________________) {
+    demandeArrosage = false;
+  } else if (_____________________) {
+    demandeArrosage = true;
+  } else if (_____________________) {
+    demandeArrosage = false;
+  }
+
+  if (demandeArrosage) {
+    ______________________________;
+    ______________________________;
+    ______________________________;
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`),
+      expert: sketch("Séance 5 — Économiser l'eau",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_ARRET = 650;
+const int SEUIL_RESERVOIR = 350;
+
+bool demandeArrosage = false;`,
+`  // Mission : hystérésis MÉMORISÉE (démarrage sous 520, arrêt au-dessus de 650,
+  // conservation entre les deux), réservoir prioritaire, impulsion de 2 s max.`),
+      reference: sketch("Séance 5 — Économiser l'eau",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_ARRET = 650;
+const int SEUIL_RESERVOIR = 350;
+
+// État MÉMORISÉ entre deux passages dans loop() : c'est l'hystérésis.
+bool demandeArrosage = false;`,
+`  int humidite = analogRead(PIN_HUMIDITE_SOL);
+  int niveauEau = analogRead(PIN_NIVEAU_EAU);
+
+  Serial.print("Humidité : ");
+  Serial.println(humidite);
+
+  if (niveauEau < SEUIL_RESERVOIR) {
+    demandeArrosage = false;
+  } else if (humidite < SEUIL_HUMIDITE) {
+    demandeArrosage = true;
+  } else if (humidite > SEUIL_ARRET) {
+    demandeArrosage = false;
+  }
+  // Entre les deux seuils : demandeArrosage conserve sa valeur.
+
+  if (demandeArrosage) {
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(2000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`)
     },
     6: {
-      guided: `seuil_humidite = 35
-seuil_reservoir = 20
-seuil_lumiere = 70
+      guided: sketch("Séance 6 — Décider avec trois données",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_RESERVOIR = 350;
+const int SEUIL_LUMIERE = 700;`,
+`  // ACQUÉRIR / MÉMORISER : lire les trois capteurs.
+  int humidite = ____________________;
+  int lumiere = ____________________;
+  int niveauEau = ____________________;
 
-# Lire l’humidité sur A0, la lumière sur A1 et le niveau sur A2.
+  // COMMUNIQUER : afficher les trois mesures.
+  Serial.println(humidite);
+  Serial.println(lumiere);
+  Serial.println(niveauEau);
 
-# Construire une décision qui relie les trois comparaisons.
+  // DÉCIDER : les trois critères doivent être vrais ensemble.
+  if (_____________________ && _____________________ && _____________________) {
+    // AGIR : arroser 2 secondes.
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(2000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    // SÉCURISER : rester à l'arrêt.
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
 
-# Arroser 2 secondes ou maintenir la pompe arrêtée.
-`,
-      standard: `# Lire A0, A1 et A2 puis construire une décision multicritère.
-seuil_humidite = 35
-seuil_reservoir = 20
-seuil_lumiere = 70
-`,
-      expert: `# Mission : décider avec A0, A1 et A2 tout en conservant l’état sûr.
-`,
-      reference: `seuil_humidite = 35
-seuil_reservoir = 20
-seuil_lumiere = 70
-humidite = lire_humidite(A0)
-lumiere = lire_lumiere(A1)
-reservoir = lire_reservoir(A2)
-if humidite < seuil_humidite and reservoir >= seuil_reservoir and lumiere < seuil_lumiere:
-    arroser(2)
-else:
-    stop()`
+  // ATTENDRE une seconde.
+  delay(1000);`, "Sketch complet : complète uniquement les zones ____ ."),
+      standard: sketch("Séance 6 — Décider avec trois données",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_RESERVOIR = 350;
+const int SEUIL_LUMIERE = 700;`,
+`  // Lire A0, A1 et A2, afficher les trois mesures,
+  // puis arroser 2 s seulement si les trois critères sont vrais.
+  int humidite = ____________________;
+  int lumiere = ____________________;
+  int niveauEau = ____________________;
+
+  ______________________________;
+  ______________________________;
+  ______________________________;
+
+  if (_____________________ && _____________________ && _____________________) {
+    ______________________________;
+    ______________________________;
+    ______________________________;
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`),
+      expert: sketch("Séance 6 — Décider avec trois données",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_RESERVOIR = 350;
+const int SEUIL_LUMIERE = 700;`,
+`  // Mission : arroser 2 s seulement si humidité, réservoir et lumière
+  // valident ensemble la décision. Afficher les trois mesures. Attendre 1 s.`),
+      reference: sketch("Séance 6 — Décider avec trois données",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_RESERVOIR = 350;
+const int SEUIL_LUMIERE = 700;`,
+`  int humidite = analogRead(PIN_HUMIDITE_SOL);
+  int lumiere = analogRead(PIN_LUMIERE);
+  int niveauEau = analogRead(PIN_NIVEAU_EAU);
+
+  Serial.println(humidite);
+  Serial.println(lumiere);
+  Serial.println(niveauEau);
+
+  if (humidite < SEUIL_HUMIDITE && niveauEau >= SEUIL_RESERVOIR && lumiere < SEUIL_LUMIERE) {
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(2000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`)
     },
     7: {
-      guided: `# Inscrire le seuil obtenu après la nouvelle calibration.
-seuil_humidite = 38
-seuil_reservoir = 20
+      guided: sketch("Séance 7 — Améliorer la durabilité",
+`// Nouveau seuil obtenu après recalibration du capteur remplacé.
+const int SEUIL_HUMIDITE = ____;
+const int SEUIL_RESERVOIR = 350;`,
+`  // ACQUÉRIR : lire le nouveau capteur A0 et le niveau A2.
+  int humidite = ____________________;
+  int niveauEau = ____________________;
 
-# Lire le nouveau capteur sur A0 et le niveau sur A2.
+  // COMMUNIQUER : afficher pour vérifier la recalibration.
+  Serial.println(humidite);
+  Serial.println(niveauEau);
 
-# Conserver la sécurité du réservoir et l’arrêt explicite.
-`,
-      standard: `# Recalibrer A0 puis conserver la sécurité fournie par A2.
-seuil_humidite = 38
-seuil_reservoir = 20
-`,
-      expert: `# Mission : intégrer le nouveau seuil sans supprimer les sécurités.
-`,
-      reference: `seuil_humidite = 38
-seuil_reservoir = 20
-humidite = lire_humidite(A0)
-reservoir = lire_reservoir(A2)
-if humidite < seuil_humidite and reservoir >= seuil_reservoir:
-    arroser(2)
-else:
-    stop()`
+  // SÉCURISER d'abord : réservoir insuffisant → arrêt.
+  if (niveauEau < SEUIL_RESERVOIR) {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+  // COMPARER avec le seuil recalibré, puis AGIR brièvement.
+  else if (_____________________ && niveauEau >= SEUIL_RESERVOIR) {
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(2000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  // ATTENDRE une seconde.
+  delay(1000);`, "Sketch complet : complète uniquement les zones ____ ."),
+      standard: sketch("Séance 7 — Améliorer la durabilité",
+`const int SEUIL_HUMIDITE = ____;
+const int SEUIL_RESERVOIR = 350;`,
+`  // Lire A0 recalibré et A2, afficher, conserver la sécurité réservoir,
+  // arroser 2 s seulement si le sol est sec.
+  int humidite = ____________________;
+  int niveauEau = ____________________;
+
+  ______________________________;
+  ______________________________;
+
+  if (____________________________) {
+    ______________________________;
+  } else if (_____________________ && _____________________) {
+    ______________________________;
+    ______________________________;
+    ______________________________;
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`),
+      expert: sketch("Séance 7 — Améliorer la durabilité",
+`const int SEUIL_HUMIDITE = 590;
+const int SEUIL_RESERVOIR = 350;`,
+`  // Mission : intégrer le seuil recalibré sans supprimer la sécurité A2,
+  // limiter l'arrosage à 2 s, afficher les mesures. Attendre 1 s.`),
+      reference: sketch("Séance 7 — Améliorer la durabilité",
+`const int SEUIL_HUMIDITE = 590;
+const int SEUIL_RESERVOIR = 350;`,
+`  int humidite = analogRead(PIN_HUMIDITE_SOL);
+  int niveauEau = analogRead(PIN_NIVEAU_EAU);
+
+  Serial.println(humidite);
+  Serial.println(niveauEau);
+
+  if (niveauEau < SEUIL_RESERVOIR) {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else if (humidite < SEUIL_HUMIDITE && niveauEau >= SEUIL_RESERVOIR) {
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(2000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`)
     },
     8: {
-      guided: `seuil_humidite = 35
-seuil_reservoir = 20
-seuil_lumiere = 70
+      guided: sketch("Séance 8 — Défi ingénieur",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_RESERVOIR = 350;
+const int SEUIL_LUMIERE = 700;`,
+`  // ACQUÉRIR : lire les trois capteurs du prototype final.
+  int humidite = ____________________;
+  int lumiere = ____________________;
+  int niveauEau = ____________________;
 
-# 1. Lire A0, A1 et A2.
+  // COMMUNIQUER : afficher les trois mesures.
+  Serial.println(humidite);
+  Serial.println(lumiere);
+  Serial.println(niveauEau);
 
-# 2. Traiter d’abord le cas du réservoir vide.
+  // SÉCURISER d'abord : réservoir vide → arrêt + alerte.
+  if (____________________________) {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+    Serial.println("Réservoir vide");
+  }
+  // DÉCIDER : sol sec ET lumière acceptable → AGIR 2 s.
+  else if (_____________________ && _____________________) {
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(2000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
 
-# 3. Décider d’arroser brièvement ou d’arrêter.
+  // ATTENDRE une seconde.
+  delay(1000);`, "Sketch complet : complète uniquement les zones ____ ."),
+      standard: sketch("Séance 8 — Défi ingénieur",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_RESERVOIR = 350;
+const int SEUIL_LUMIERE = 700;`,
+`  // Programme final : lire les trois capteurs, afficher,
+  // réservoir prioritaire (arrêt + alerte), décision, arrosage 2 s.
+  int humidite = ____________________;
+  int lumiere = ____________________;
+  int niveauEau = ____________________;
 
-# 4. Afficher les trois mesures et produire une alerte si nécessaire.
-`,
-      standard: `# Construire le programme final sécurisé à partir du cahier des charges.
-seuil_humidite = 35
-seuil_reservoir = 20
-seuil_lumiere = 70
-`,
-      expert: `# Mission finale : sécurité prioritaire, trois capteurs, arrosage court, alerte et affichage.
-`,
-      reference: `seuil_humidite = 35
-seuil_reservoir = 20
-seuil_lumiere = 70
-humidite = lire_humidite(A0)
-lumiere = lire_lumiere(A1)
-reservoir = lire_reservoir(A2)
-if reservoir < seuil_reservoir:
-    stop()
-    alerter("Réservoir vide")
-elif humidite < seuil_humidite and lumiere < seuil_lumiere:
-    arroser(2)
-else:
-    stop()
-afficher(humidite, reservoir, lumiere)`
+  ______________________________;
+  ______________________________;
+  ______________________________;
+
+  if (____________________________) {
+    ______________________________;
+    ______________________________;
+  } else if (_____________________ && _____________________) {
+    ______________________________;
+    ______________________________;
+    ______________________________;
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`),
+      expert: sketch("Séance 8 — Défi ingénieur",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_RESERVOIR = 350;
+const int SEUIL_LUMIERE = 700;`,
+`  // Mission finale : sécurité prioritaire (alerte série), trois capteurs,
+  // décision multicritère, arrosage court, affichages. Attendre 1 s.`),
+      reference: sketch("Séance 8 — Défi ingénieur",
+`const int SEUIL_HUMIDITE = 520;
+const int SEUIL_RESERVOIR = 350;
+const int SEUIL_LUMIERE = 700;`,
+`  int humidite = analogRead(PIN_HUMIDITE_SOL);
+  int lumiere = analogRead(PIN_LUMIERE);
+  int niveauEau = analogRead(PIN_NIVEAU_EAU);
+
+  Serial.println(humidite);
+  Serial.println(lumiere);
+  Serial.println(niveauEau);
+
+  if (niveauEau < SEUIL_RESERVOIR) {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+    Serial.println("Réservoir vide");
+  } else if (humidite < SEUIL_HUMIDITE && lumiere < SEUIL_LUMIERE) {
+    digitalWrite(PIN_RELAIS_POMPE, HIGH);
+    delay(2000);
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  } else {
+    digitalWrite(PIN_RELAIS_POMPE, LOW);
+  }
+
+  delay(1000);`)
     }
   };
   const model = models[id];
@@ -291,126 +640,230 @@ afficher(humidite, reservoir, lumiere)`
     });
   };
 
-  const shouldRefresh = current.learningV2Version !== VERSION && !current.attemptedV2;
-  const legacySession1 = id === 1 && /\b(?:lire_humidite|afficher|stop)\s*\(/.test(editor.value);
-  if (!editor.value.trim() || legacySession1 || shouldRefresh || (/_{3,}/.test(editor.value) && !current.attemptedV2)) setStarter(mode());
-  else current = writeSession({ learningV2Version: VERSION });
+  /* ---- Migration protectrice des anciens brouillons (pseudo-Python) ----
+     Règles : un squelette non commencé est migré silencieusement ; une
+     tentative commencée est ARCHIVÉE dans une sauvegarde de récupération
+     versionnée avant de charger le squelette C++ ; un brouillon C++ existant
+     n'est jamais remplacé. */
+  const looksPython = source => /\blire_(?:humidite|lumiere|reservoir)\s*\(|\barroser\s*\(|\belif\b|^\s*#(?!include)|\bif\b[^\n{]*:\s*$/m.test(String(source || ""));
+  const looksCpp = source => /void\s+setup\s*\(\s*\)/.test(String(source || "")) && /void\s+loop\s*\(\s*\)/.test(String(source || ""));
+
+  const oldCode = String(editor.value || current.code || "");
+  const pythonDraft = looksPython(oldCode) && !looksCpp(oldCode);
+  if (pythonDraft && current.attemptedV2) {
+    /* Tentative commencée en pseudo-Python : archiver AVANT tout remplacement. */
+    const recovery = {
+      code: oldCode,
+      savedAt: new Date().toISOString(),
+      fromVersion: current.learningV2Version || "pseudo-python",
+      toVersion: VERSION,
+      resolved: false
+    };
+    current = writeSession({ recoveryPython: recovery });
+    setStarter(mode());
+  } else if (!oldCode.trim() || (pythonDraft && !current.attemptedV2) || (current.learningV2Version !== VERSION && !current.attemptedV2) || (/_{3,}/.test(oldCode) && !current.attemptedV2)) {
+    /* Vide, squelette non commencé ou version dépassée sans tentative : migration silencieuse. */
+    setStarter(mode());
+  } else {
+    /* Brouillon C++ commencé : conservé tel quel. */
+    current = writeSession({ learningV2Version: VERSION });
+  }
 
   const correctionPre = document.querySelector("#correctionPanel pre");
   if (correctionPre) correctionPre.textContent = model.reference;
 
-  const select = document.getElementById("codeModeV2");
-  select?.addEventListener("change", event => {
-    event.stopImmediatePropagation();
-    const selected = event.target.value;
-    current = readState().sessions?.[id] || current;
-    if (current.attemptedV2 && !window.confirm("Changer de niveau d’aide remplacera la tentative actuelle. Continuer ?")) {
-      event.target.value = current.learningMode || "guided";
-      return;
-    }
-    setStarter(selected);
-  }, true);
+  /* Les boutons sont CLONÉS pour retirer les écouteurs installés par les
+     couches précédentes : ce module devient l'unique gestionnaire. */
+  const originalSelect = document.getElementById("codeModeV2");
+  if (originalSelect) {
+    const select = originalSelect.cloneNode(true);
+    originalSelect.replaceWith(select);
+    select.value = current.learningMode || "guided";
+    select.addEventListener("change", () => {
+      current = readState().sessions?.[id] || current;
+      if (current.attemptedV2 && !window.confirm("Changer de niveau d’aide remplacera la tentative actuelle par un nouveau squelette C++. Continuer ?")) {
+        select.value = current.learningMode || "guided";
+        return;
+      }
+      setStarter(select.value);
+    });
+    const row = select.closest(".code-mode-row");
+    const note = row?.querySelector("span");
+    if (note) note.textContent = "Guidé : sketch complet commenté · Standard : consignes courtes · Autonome : cahier des charges. Les ____ sont à remplacer.";
+  }
 
-  document.getElementById("restoreCode")?.addEventListener("click", event => {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    current = readState().sessions?.[id] || current;
-    if (current.attemptedV2 && !window.confirm("Restaurer le modèle incomplet et effacer la tentative actuelle ?")) return;
-    setStarter(mode());
-  }, true);
+  const originalRestore = document.getElementById("restoreCode");
+  if (originalRestore) {
+    const restore = originalRestore.cloneNode(true);
+    originalRestore.replaceWith(restore);
+    restore.textContent = "↺ Restaurer le squelette C++";
+    restore.addEventListener("click", () => {
+      current = readState().sessions?.[id] || current;
+      if (current.attemptedV2 && !window.confirm("Restaurer le squelette C++ incomplet et effacer la tentative actuelle ?")) return;
+      setStarter(mode());
+    });
+  }
 
   const markAttempt = () => { current = writeSession({ code: editor.value, attemptedV2: true, learningV2Version: VERSION }); };
 
+  /* ---- Panneau de récupération d'un ancien brouillon Python ---- */
+  const editorCard = editor.closest(".card-body");
+  const savedRecovery = readState().sessions?.[id]?.recoveryPython;
+  if (editorCard && savedRecovery && !savedRecovery.resolved && !document.getElementById("pythonRecoveryV5")) {
+    const panel = document.createElement("section");
+    panel.id = "pythonRecoveryV5";
+    panel.className = "python-recovery";
+    panel.innerHTML = `
+      <p><strong>Ton ancien brouillon a été conservé.</strong> La séance utilise désormais le C++ Arduino :
+      un nouveau squelette a été chargé, et ton ancienne version (pseudo-code) reste récupérable ci-dessous.</p>
+      <details><summary>Voir l'ancien brouillon conservé</summary><pre></pre></details>
+      <div class="demo-controls">
+        <button type="button" class="btn" data-recovery-copy>Copier l'ancien brouillon</button>
+        <button type="button" class="btn" data-recovery-resolve>J'ai récupéré ce dont j'avais besoin</button>
+      </div>`;
+    panel.querySelector("pre").textContent = savedRecovery.code;
+    const modeRow = editorCard.querySelector(".code-mode-row");
+    (modeRow || editorCard.firstChild).insertAdjacentElement ? (modeRow ? modeRow.insertAdjacentElement("beforebegin", panel) : editorCard.prepend(panel)) : editorCard.prepend(panel);
+    panel.querySelector("[data-recovery-copy]").addEventListener("click", async event => {
+      try { await navigator.clipboard.writeText(savedRecovery.code); event.target.textContent = "Copié ✓"; }
+      catch { event.target.textContent = "Sélectionne le texte ci-dessus puis copie-le"; }
+    });
+    panel.querySelector("[data-recovery-resolve]").addEventListener("click", () => {
+      const state = readState();
+      if (state.sessions?.[id]?.recoveryPython) {
+        state.sessions[id].recoveryPython.resolved = true;
+        localStorage.setItem(storageKey, JSON.stringify(state));
+      }
+      panel.remove();
+    });
+  }
+
+  /* ---- Aide progressive C++ par séance ---- */
   const helpBySession = {
-    1: `<p class="help-intro"><strong>But :</strong> écrire un premier programme Arduino C++ qui lit A0, affiche la mesure et garde la pompe arrêtée.</p>
+    1: `<p class="help-intro"><strong>But :</strong> écrire un premier sketch Arduino C++ qui lit A0, affiche la mesure et garde la pompe arrêtée.</p>
       <div class="help-steps">
-        <article style="--help:#facc15"><span>0</span><h4>SQUELETTE</h4><p><code>const int RELAIS_POMPE = 6;</code> nomme la broche D6. <code>setup()</code> se lance une fois ; <code>loop()</code> se répète.</p></article>
-        <article style="--help:#60a5fa"><span>1</span><h4>ACQUÉRIR</h4><p><code>analogRead(A0)</code> lit explicitement le capteur d’humidité branché sur l’entrée analogique A0.</p></article>
-        <article style="--help:#c084fc"><span>2</span><h4>MÉMORISER</h4><p>La ligne doit créer une variable entière : <code>int humidite = ...;</code>. Le point-virgule termine l’instruction.</p></article>
-        <article style="--help:#67e8f9"><span>3</span><h4>COMMUNIQUER</h4><p><code>Serial.println(humidite);</code> envoie la valeur vers le moniteur série de la simulation.</p></article>
-        <article style="--help:#fb7185"><span>4</span><h4>SÉCURISER</h4><p><code>digitalWrite(RELAIS_POMPE, LOW);</code> impose l’état sûr : D6 reste à 0 et la pompe reste arrêtée.</p></article>
+        <article style="--help:#facc15"><span>0</span><h4>SQUELETTE</h4><p><code>const int PIN_RELAIS_POMPE = 6;</code> nomme la broche D6. <code>setup()</code> se lance une fois ; <code>loop()</code> se répète.</p></article>
+        <article style="--help:#60a5fa"><span>1</span><h4>ACQUÉRIR</h4><p><code>analogRead(PIN_HUMIDITE_SOL)</code> lit le capteur d'humidité branché sur l'entrée analogique A0.</p></article>
+        <article style="--help:#c084fc"><span>2</span><h4>MÉMORISER</h4><p>La ligne doit créer une variable entière : <code>int humidite = ...;</code>. Le point-virgule termine l'instruction.</p></article>
+        <article style="--help:#67e8f9"><span>3</span><h4>COMMUNIQUER</h4><p><code>Serial.println(humidite);</code> envoie la valeur vers le Moniteur Série.</p></article>
+        <article style="--help:#fb7185"><span>4</span><h4>SÉCURISER</h4><p><code>digitalWrite(PIN_RELAIS_POMPE, LOW);</code> impose l'état sûr : D6 reste à 0 et la pompe reste arrêtée.</p></article>
       </div>
-      <h4>Exemple de transfert sur une autre entrée — ne pas recopier tel quel</h4>
-      <pre>int luminosite = analogRead(A1);\nSerial.println(luminosite);\ndigitalWrite(RELAIS_POMPE, LOW);</pre>
-      <p><strong>À toi d’adapter :</strong> l’éditeur demande l’humidité branchée sur <strong>A0</strong>. Les blancs comme <code>____</code> ne sont pas du code : efface-les, puis remplace-les par les instructions C++.</p>
-      <details><summary>Repères Arduino C++</summary><ul><li><code>Serial.begin(9600);</code> prépare l’affichage série.</li><li><code>pinMode(RELAIS_POMPE, OUTPUT);</code> déclare D6 comme sortie.</li><li><code>analogRead(A0);</code> lit une entrée analogique.</li><li><code>Serial.println(variable);</code> affiche une variable.</li><li><code>digitalWrite(RELAIS_POMPE, LOW);</code> coupe le relais.</li></ul></details>`,
-    2: `<p>Lis l’humidité sur <code>A0</code>, compare-la au seuil choisi à partir des mesures, affiche l’état du sol et conserve la pompe arrêtée pendant la calibration.</p>`,
-    3: `<p>Compare la mesure de <code>A0</code> au seuil. <code>arroser(3)</code> commande trois secondes d’arrosage ; <code>stop()</code> garantit l’arrêt dans l’autre cas.</p>`,
-    4: `<p>Lis l’humidité sur <code>A0</code> et le niveau sur <code>A2</code>. L’opérateur <code>and</code> exige que les deux conditions soient vraies.</p>`,
-    5: `<p>L’hystérésis emploie un seuil de démarrage et un seuil d’arrêt. Conserve <code>A0</code>, la sécurité de <code>A2</code> et un arrosage court.</p>`,
-    6: `<p><code>A0</code> mesure l’humidité, <code>A1</code> la lumière et <code>A2</code> le niveau. Relie les trois comparaisons.</p>`,
-    7: `<p>Utilise le seuil issu de la nouvelle calibration, la lecture explicite de <code>A0</code> et la sécurité du niveau sur <code>A2</code>.</p>`,
-    8: `<p>Traite d’abord le réservoir vide, lis les trois capteurs, limite l’arrosage, conserve un arrêt explicite et affiche les mesures.</p>`
+      <p><strong>À toi d'adapter :</strong> les blancs <code>____</code> ne sont pas du code : efface-les, puis remplace-les par les instructions C++.</p>`,
+    2: `<p>Lis A0 avec <code>analogRead(PIN_HUMIDITE_SOL)</code>, range la valeur dans <code>int humidite</code>, affiche-la avec <code>Serial.println(humidite);</code>, puis compare-la au seuil : <code>if (humidite &lt; SEUIL_HUMIDITE) { … } else { … }</code>. Le seuil est une valeur ADC entre 0 et 1023 issue de ta calibration.</p>`,
+    3: `<p>La décision <code>if (humidite &lt; SEUIL_HUMIDITE)</code> relie la chaîne d'information à la chaîne d'énergie : <code>digitalWrite(PIN_RELAIS_POMPE, HIGH);</code> active le relais, <code>delay(3000);</code> limite l'arrosage à trois secondes, puis <code>digitalWrite(PIN_RELAIS_POMPE, LOW);</code> garantit l'arrêt.</p>`,
+    4: `<p>Teste D'ABORD le réservoir : <code>if (niveauEau &lt; SEUIL_RESERVOIR)</code>. L'opérateur <code>&amp;&amp;</code> (ET logique) exige ensuite que les deux conditions soient vraies : <code>humidite &lt; SEUIL_HUMIDITE &amp;&amp; niveauEau &gt;= SEUIL_RESERVOIR</code>.</p>`,
+    5: `<p>L'hystérésis MÉMORISE une demande entre deux passages dans <code>loop()</code> grâce à la variable globale <code>bool demandeArrosage</code> : vraie sous le seuil bas, fausse au-dessus du seuil haut, conservée entre les deux. Le réservoir garde la priorité et l'impulsion reste limitée à 2 s.</p>`,
+    6: `<p>Trois lectures (<code>A0</code>, <code>A1</code>, <code>A2</code>), trois affichages, puis une décision qui relie les trois critères avec <code>&amp;&amp;</code> : humidité basse ET réservoir suffisant ET lumière acceptable.</p>`,
+    7: `<p>Le capteur remplacé impose un nouveau seuil calibré dans <code>const int SEUIL_HUMIDITE</code>. La sécurité du réservoir (<code>niveauEau &lt; SEUIL_RESERVOIR</code> → arrêt) reste prioritaire.</p>`,
+    8: `<p>Ordre imposé : lire, afficher, tester D'ABORD le réservoir (arrêt + <code>Serial.println("Réservoir vide");</code>), sinon décider avec <code>humidite &lt; SEUIL_HUMIDITE &amp;&amp; lumiere &lt; SEUIL_LUMIERE</code>, arroser 2 s, sinon rester à l'arrêt.</p>`
   };
 
-  const stripComments = code => code.split("\n").map(line => line.replace(/\/\/.*$/, "").replace(/#.*$/, "")).join("\n");
+  /* ---- Vérification C++ ---- */
+  const stripComments = code => code.split("\n").map(line => line.replace(/\/\/.*$/, "")).join("\n");
   const checkProgram = code => {
     const source = stripComments(code);
     const errors = [];
-    const cppHumidity = source.match(/\bint\s+([A-Za-z_]\w*)\s*=\s*analogRead\s*\(\s*A0\s*\)\s*;/);
-    const humidity = source.match(/([A-Za-z_]\w*)\s*=\s*lire_humidite\s*\(\s*A0\s*\)/);
-    const light = source.match(/([A-Za-z_]\w*)\s*=\s*lire_lumiere\s*\(\s*A1\s*\)/);
-    const reservoir = source.match(/([A-Za-z_]\w*)\s*=\s*lire_reservoir\s*\(\s*A2\s*\)/);
     const has = pattern => pattern.test(source);
-    const readHumidity = () => { if (!humidity) errors.push("Je ne trouve pas la lecture explicite du capteur d’humidité sur A0."); };
-    const readLight = () => { if (!light) errors.push("Je ne trouve pas la lecture explicite du capteur de lumière sur A1."); };
-    const readReservoir = () => { if (!reservoir) errors.push("Je ne trouve pas la lecture explicite du niveau sur A2."); };
-    const requireStop = () => { if (!has(/\bstop\s*\(\s*\)/)) errors.push("L’état sûr stop() manque."); };
-    const requireWater = () => { if (!has(/\barroser\s*\(\s*[23]\s*\)/)) errors.push("Je ne trouve pas un arrosage limité à 2 ou 3 secondes."); };
     if (!source.trim()) errors.push("Le programme ne contient encore aucune instruction.");
     if (has(/_{3,}/)) errors.push("Les blancs ____ ne sont pas du code : efface-les et remplace-les par tes instructions C++.");
-    if (has(/lire_(?:humidite|lumiere|reservoir)\s*\(\s*\)/)) errors.push("Indique la broche entre parenthèses.");
-    if (id === 1) {
-      if (!has(/\bconst\s+int\s+RELAIS_POMPE\s*=\s*6\s*;/)) errors.push("Déclare la broche du relais : const int RELAIS_POMPE = 6;");
-      if (!has(/\bvoid\s+setup\s*\(\s*\)\s*\{/)) errors.push("Ajoute le bloc void setup() { ... }.");
-      if (!has(/\bSerial\s*\.\s*begin\s*\(\s*9600\s*\)\s*;/)) errors.push("Dans setup(), initialise l’affichage avec Serial.begin(9600);");
-      if (!has(/\bpinMode\s*\(\s*RELAIS_POMPE\s*,\s*OUTPUT\s*\)\s*;/)) errors.push("Dans setup(), déclare D6 en sortie avec pinMode(RELAIS_POMPE, OUTPUT);");
-      if (!has(/\bvoid\s+loop\s*\(\s*\)\s*\{/)) errors.push("Ajoute le bloc void loop() { ... }.");
-      if (!cppHumidity) errors.push("Dans loop(), lis A0 avec : int humidite = analogRead(A0);");
-      if (cppHumidity && !new RegExp(`\\bSerial\\s*\\.\\s*println\\s*\\(\\s*${cppHumidity[1]}\\s*\\)\\s*;`).test(source)) errors.push(`Affiche la variable ${cppHumidity[1]} avec Serial.println(${cppHumidity[1]});`);
-      if (!has(/\bdigitalWrite\s*\(\s*(?:RELAIS_POMPE|6)\s*,\s*LOW\s*\)\s*;/)) errors.push("Garde la pompe arrêtée avec digitalWrite(RELAIS_POMPE, LOW);");
+    /* Résidus de l'ancien pseudo-Python : message explicite. */
+    if (/\blire_(?:humidite|lumiere|reservoir)\s*\(|\barroser\s*\(|\belif\b|\bif\b[^\n{]*:\s*$/m.test(source)) {
+      errors.push("Syntaxe Python détectée (lire_…, arroser, elif, « if … : »). Cette séance s'écrit en C++ Arduino : utilise analogRead, digitalWrite, if (…) { }.");
     }
-    if (id === 2) { readHumidity(); if (!has(/seuil_humidite\s*=\s*\d+/)) errors.push("Définis seuil_humidite."); if (!has(/\bif\b/) || !has(/\belse\s*:/)) errors.push("La comparaison if / else est incomplète."); if (!has(/\bafficher\s*\(/)) errors.push("Il manque l’affichage."); requireStop(); }
-    if (id === 3) { readHumidity(); if (!has(/seuil_humidite\s*=\s*\d+/)) errors.push("Définis seuil_humidite."); if (!has(/\bif\b/)) errors.push("Il manque la décision if."); requireWater(); requireStop(); }
-    if (id === 4) { readHumidity(); readReservoir(); if (!has(/\band\b/)) errors.push("Relie les conditions avec and."); requireWater(); requireStop(); if (!has(/\balerter\s*\(/)) errors.push("Il manque l’alerte."); }
-    if (id === 5) { readHumidity(); readReservoir(); if (!has(/seuil_humidite\s*=\s*\d+/) || !has(/seuil_arret\s*=\s*\d+/)) errors.push("Les deux seuils doivent être numériques."); requireWater(); requireStop(); }
-    if (id === 6) { readHumidity(); readLight(); readReservoir(); if ((source.match(/\band\b/g) || []).length < 2) errors.push("La décision doit relier les trois critères."); requireWater(); requireStop(); }
-    if (id === 7) { readHumidity(); readReservoir(); if (!has(/seuil_humidite\s*=\s*\d+/)) errors.push("Inscris le seuil calibré."); if (!has(/\band\b/)) errors.push("Conserve la sécurité du réservoir."); requireStop(); }
-    if (id === 8) { readHumidity(); readLight(); readReservoir(); requireWater(); requireStop(); if (!has(/\balerter\s*\(/)) errors.push("Il manque l’alerte."); if (!has(/\bafficher\s*\(/)) errors.push("Il manque l’affichage final."); }
+    /* Structure C++ commune. */
+    if (!has(/\bvoid\s+setup\s*\(\s*\)\s*\{/)) errors.push("Ajoute le bloc void setup() { ... }.");
+    if (!has(/\bvoid\s+loop\s*\(\s*\)\s*\{/)) errors.push("Ajoute le bloc void loop() { ... }.");
+    if (!has(/\bSerial\s*\.\s*begin\s*\(\s*9600\s*\)\s*;/)) errors.push("Dans setup(), initialise le Moniteur Série avec Serial.begin(9600);");
+    if (!has(/\bpinMode\s*\(\s*PIN_RELAIS_POMPE\s*,\s*OUTPUT\s*\)\s*;/)) errors.push("Dans setup(), déclare D6 en sortie avec pinMode(PIN_RELAIS_POMPE, OUTPUT);");
+    if (!has(/\bdigitalWrite\s*\(\s*PIN_RELAIS_POMPE\s*,\s*LOW\s*\)\s*;/)) errors.push("L'état sûr digitalWrite(PIN_RELAIS_POMPE, LOW); manque.");
+    if (!has(/\bdelay\s*\(\s*1000\s*\)\s*;/)) errors.push("Ajoute delay(1000); pour attendre une seconde entre deux passages dans loop().");
+    const braces = (source.match(/\{/g) || []).length - (source.match(/\}/g) || []).length;
+    if (braces !== 0) errors.push(`Les accolades ne sont pas équilibrées (${braces > 0 ? "il manque des }" : "il y a trop de }"}).`);
+    /* Lectures typées. */
+    const readVar = pin => source.match(new RegExp(`\\bint\\s+([A-Za-z_]\\w*)\\s*=\\s*analogRead\\s*\\(\\s*${pin}\\s*\\)\\s*;`));
+    const humidity = readVar("(?:PIN_HUMIDITE_SOL|A0)");
+    const light = readVar("(?:PIN_LUMIERE|A1)");
+    const reservoir = readVar("(?:PIN_NIVEAU_EAU|A2)");
+    const needHumidity = () => { if (!humidity) errors.push("Lis A0 dans une variable typée : int humidite = analogRead(PIN_HUMIDITE_SOL);"); };
+    const needLight = () => { if (!light) errors.push("Lis A1 dans une variable typée : int lumiere = analogRead(PIN_LUMIERE);"); };
+    const needReservoir = () => { if (!reservoir) errors.push("Lis A2 dans une variable typée : int niveauEau = analogRead(PIN_NIVEAU_EAU);"); };
+    const needThreshold = name => { if (!has(new RegExp(`\\bconst\\s+int\\s+${name}\\s*=\\s*\\d+\\s*;`))) errors.push(`Définis la constante const int ${name} = …; (valeur ADC).`); };
+    const needPulse = seconds => {
+      if (!has(/\bdigitalWrite\s*\(\s*PIN_RELAIS_POMPE\s*,\s*HIGH\s*\)\s*;/)) errors.push("L'activation du relais digitalWrite(PIN_RELAIS_POMPE, HIGH); manque.");
+      if (!has(new RegExp(`\\bdelay\\s*\\(\\s*${seconds * 1000}\\s*\\)\\s*;`))) errors.push(`Limite l'arrosage avec delay(${seconds * 1000}); (${seconds} secondes).`);
+    };
+    const needIf = () => { if (!has(/\bif\s*\(/)) errors.push("Il manque la décision if (…) { … }."); };
+    const needAnd = count => { if ((source.match(/&&/g) || []).length < count) errors.push(`Relie les conditions avec l'opérateur && (ET logique)${count > 1 ? ` — ${count} attendus` : ""}.`); };
+    const needAlert = () => { if (!has(/\bSerial\s*\.\s*println\s*\(\s*"R[ée]servoir vide"\s*\)\s*;/)) errors.push('Ajoute l\'alerte Serial.println("Réservoir vide");'); };
+    const needShow = count => { if ((source.match(/\bSerial\s*\.\s*print(?:ln)?\s*\(/g) || []).length < count) errors.push(`Affiche les mesures avec Serial.print / Serial.println (au moins ${count} affichages).`); };
+
+    if (id === 1) { needHumidity(); if (humidity && !new RegExp(`\\bSerial\\s*\\.\\s*println\\s*\\(\\s*${humidity[1]}\\s*\\)\\s*;`).test(source)) errors.push(`Affiche la variable ${humidity[1]} avec Serial.println(${humidity[1]});`); }
+    if (id === 2) { needHumidity(); needThreshold("SEUIL_HUMIDITE"); needIf(); if (!has(/\belse\b/)) errors.push("La comparaison if / else est incomplète."); needShow(2); }
+    if (id === 3) { needHumidity(); needThreshold("SEUIL_HUMIDITE"); needIf(); needPulse(3); needShow(1); }
+    if (id === 4) { needHumidity(); needReservoir(); needThreshold("SEUIL_HUMIDITE"); needThreshold("SEUIL_RESERVOIR"); needIf(); needAnd(1); needPulse(3); needAlert(); }
+    if (id === 5) {
+      needHumidity(); needReservoir(); needThreshold("SEUIL_HUMIDITE"); needThreshold("SEUIL_ARRET"); needThreshold("SEUIL_RESERVOIR");
+      if (!has(/\bbool\s+demandeArrosage\s*=\s*(?:false|true)\s*;/)) errors.push("Déclare l'état mémorisé de l'hystérésis : bool demandeArrosage = false; (en dehors de loop()).");
+      if (!has(/demandeArrosage\s*=\s*true\s*;/)) errors.push("Sous le seuil bas, active la demande : demandeArrosage = true;");
+      if (!has(/demandeArrosage\s*=\s*false\s*;/)) errors.push("Au-dessus du seuil haut (et si réservoir insuffisant), annule la demande : demandeArrosage = false;");
+      if (!has(/\bif\s*\(\s*demandeArrosage\s*\)/)) errors.push("Commande la pompe d'après l'état mémorisé : if (demandeArrosage) { … }.");
+      needPulse(2);
+    }
+    if (id === 6) { needHumidity(); needLight(); needReservoir(); needThreshold("SEUIL_HUMIDITE"); needThreshold("SEUIL_RESERVOIR"); needThreshold("SEUIL_LUMIERE"); needIf(); needAnd(2); needPulse(2); needShow(3); }
+    if (id === 7) { needHumidity(); needReservoir(); needThreshold("SEUIL_HUMIDITE"); needThreshold("SEUIL_RESERVOIR"); needIf(); needAnd(1); needPulse(2); needShow(2); }
+    if (id === 8) { needHumidity(); needLight(); needReservoir(); needThreshold("SEUIL_HUMIDITE"); needThreshold("SEUIL_RESERVOIR"); needThreshold("SEUIL_LUMIERE"); needIf(); needAnd(1); needPulse(2); needAlert(); needShow(4); }
     return { errors, source };
   };
 
+  /* ---- Exécution pédagogique sur les valeurs ADC du jumeau ---- */
+  const SENSORS = { humidity: 642, light: 518, water: 781 };
+  const readConst = (source, name, fallback) => Number(source.match(new RegExp(`\\bconst\\s+int\\s+${name}\\s*=\\s*(\\d+)`))?.[1]) || fallback;
   const simulate = source => {
-    const humidity = id === 1 ? 35 : 28, reservoir = 75, light = 62;
-    const number = name => Number(source.match(new RegExp(`${name}\\s*=\\s*(\\d+)`))?.[1]);
-    const low = number("seuil_humidite") || 35, high = number("seuil_arret") || 42;
-    const minTank = number("seuil_reservoir") || 20, maxLight = number("seuil_lumiere") || 70;
+    const low = readConst(source, "SEUIL_HUMIDITE", 560);
+    const high = readConst(source, "SEUIL_ARRET", 650);
+    const minTank = readConst(source, "SEUIL_RESERVOIR", 350);
+    const maxLight = readConst(source, "SEUIL_LUMIERE", 700);
+    const h = SENSORS.humidity, l = SENSORS.light, w = SENSORS.water;
+    const pulse = /delay\s*\(\s*3000\s*\)/.test(source) ? 3 : 2;
     let action = "Pompe arrêtée — D6 = LOW";
-    if ([3,4,5,6,7,8].includes(id) && humidity < low && reservoir >= minTank && (![6,8].includes(id) || light < maxLight)) action = `Arrosage autorisé — D6 = HIGH pendant ${/arroser\s*\(\s*3/.test(source) ? 3 : 2} s`;
-    if (id === 5 && humidity >= low && humidity <= high) action = "Zone d’hystérésis — pompe arrêtée pour cet essai";
-    return { humidity, reservoir, light, action };
+    let alt = "";
+    const dry = Math.max(0, low - 80);
+    if (id >= 3) {
+      const wateringNow =
+        id === 3 ? h < low :
+        id === 4 ? (w >= minTank && h < low) :
+        id === 5 ? (w >= minTank && h < low) :
+        id === 6 ? (h < low && w >= minTank && l < maxLight) :
+        id === 7 ? (w >= minTank && h < low) :
+        (w >= minTank && h < low && l < maxLight);
+      if (wateringNow) action = `Arrosage autorisé — D6 = HIGH pendant ${pulse} s puis retour à LOW`;
+      if (id === 4 || id === 8) { if (w < minTank) action = "Réservoir vide — arrêt et alerte série"; }
+      if (id === 5 && h >= low && h <= high) action = "Entre les deux seuils — demandeArrosage conserve son état (hystérésis)";
+      if (!wateringNow) alt = `Avec un sol plus sec (par exemple A0 = ${dry} < ${low}), la pompe serait activée ${pulse} s.`;
+    }
+    if (id === 2) alt = h < low ? "Sol sec affiché (mesure sous le seuil)." : `Sol humide affiché (A0 = ${h} ≥ ${low}). Avec A0 = ${dry}, « Sol sec » serait affiché.`;
+    return { h, l, w, action, alt };
   };
 
-  const editorCard = editor.closest(".card-body");
   const actionRow = editorCard?.querySelector(".demo-controls");
   ["runCode", "showProgramHelp", "codeRunStatus", "programHelpPanel"].forEach(controlId => {
     document.getElementById(controlId)?.remove();
   });
   if (actionRow && !document.getElementById("runCodeV3")) {
     const run = document.createElement("button");
-    run.id = "runCodeV3"; run.type = "button"; run.className = "btn primary"; run.textContent = "▶ Exécuter le programme";
+    run.id = "runCodeV3"; run.type = "button"; run.className = "btn primary"; run.textContent = "▶ Vérifier et exécuter";
     const help = document.createElement("button");
     help.id = "openHelpV3"; help.type = "button"; help.className = "btn help-button"; help.textContent = "Aide"; help.setAttribute("aria-expanded", "false");
     actionRow.prepend(help); actionRow.prepend(run);
 
     const consoleBox = document.createElement("pre");
     consoleBox.id = "codeRunConsoleV3"; consoleBox.className = "code-run-console"; consoleBox.setAttribute("aria-live", "polite");
-    consoleBox.textContent = "Prêt. L’exécution pédagogique vérifie les instructions reconnues par le simulateur.";
+    consoleBox.textContent = "Prêt. La vérification contrôle la structure C++ ; la compilation réelle se fait dans l'IDE Arduino.";
     actionRow.insertAdjacentElement("afterend", consoleBox);
 
     const panel = document.createElement("section");
     panel.id = "codeHelpV3"; panel.className = "code-help hidden";
-    panel.innerHTML = `<div class="code-help-head"><div><p class="eyebrow">Aide progressive</p><h3>Comprendre sans recevoir la solution</h3></div><button type="button" class="btn" data-close-help>Fermer</button></div>${helpBySession[id]}`;
+    panel.innerHTML = `<div class="code-help-head"><div><p class="eyebrow">Aide progressive</p><h3>Aide d'écriture C++ Arduino pas à pas</h3></div><button type="button" class="btn" data-close-help>Fermer</button></div>${helpBySession[id]}`;
     consoleBox.insertAdjacentElement("afterend", panel);
     const toggleHelp = show => { panel.classList.toggle("hidden", !show); help.setAttribute("aria-expanded", String(show)); if (show) panel.scrollIntoView({ behavior: "smooth", block: "nearest" }); };
     help.addEventListener("click", () => toggleHelp(panel.classList.contains("hidden")));
@@ -429,9 +882,25 @@ afficher(humidite, reservoir, lumiere)`
       stage.classList.toggle("running", values.action.includes("HIGH"));
       stage.classList.add("code-valid"); setTimeout(() => stage.classList.remove("code-valid"), 1600);
       consoleBox.className = "code-run-console success";
-      consoleBox.textContent = `Exécution pédagogique réussie.\nA0 humidité = ${values.humidity} %\nA1 lumière = ${values.light} %\nA2 réservoir = ${values.reservoir} %\n${values.action}`;
+      consoleBox.textContent = `Vérification C++ réussie — exécution pédagogique :\nA0 humidité = ${values.h}\nA1 lumière = ${values.l}\nA2 niveau d'eau = ${values.w}\n${values.action}${values.alt ? `\n${values.alt}` : ""}\nCompile ensuite ce sketch dans l'IDE Arduino pour la carte réelle.`;
       const status = document.getElementById("demoStatus");
-      if (status) status.textContent = `Programme exécuté : ${values.action}.`;
+      if (status) status.textContent = `Programme vérifié : ${values.action}.`;
+    });
+  }
+
+  /* ---- Téléchargement du sketch .ino (éditeur classique) ---- */
+  if (actionRow && !document.getElementById("downloadInoV5")) {
+    const download = document.createElement("button");
+    download.id = "downloadInoV5"; download.type = "button"; download.className = "btn";
+    download.textContent = "Télécharger le sketch .ino";
+    actionRow.appendChild(download);
+    download.addEventListener("click", () => {
+      const names = { 1: "Seance_1_Observer_Signaux", 2: "Seance_2_Calibrer_Seuil", 3: "Seance_3_Chaines", 4: "Seance_4_Proteger_Pompe", 5: "Seance_5_Economiser_Eau", 6: "Seance_6_Trois_Donnees", 7: "Seance_7_Durabilite", 8: "Seance_8_Defi_Ingenieur" };
+      const blob = new Blob([editor.value], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url; link.download = `${names[id] || `Seance_${id}`}.ino`;
+      document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url);
     });
   }
 })();
