@@ -1,6 +1,16 @@
 # TechnoQuest – Jardin connecté
 
-Projet pédagogique de technologie destiné en priorité à la **classe de 4e**, dans le cadre du **programme de technologie du cycle 4 publié au BO n° 9 du 29 février 2024**. Il associe un jumeau numérique interactif, une programmation Python pédagogique et des manipulations réelles avec Arduino Uno R4 Minima et modules Grove.
+Projet pédagogique de technologie destiné en priorité à la **classe de 4e**, dans le cadre du **programme de technologie du cycle 4 publié au BO n° 9 du 29 février 2024**. Il associe un jumeau numérique interactif, une programmation **C++ Arduino** et des manipulations réelles avec Arduino Uno R4 Minima et modules Grove.
+
+## Liens officiels à transmettre aux élèves
+
+Les URL stables à communiquer aux élèves pour le parcours et chaque séance sont regroupées dans :
+
+- [`LIENS_ELEVES.md`](LIENS_ELEVES.md)
+
+Lien direct de la séance 3 :
+
+- https://pll-process.github.io/sequences-arduino/seance-3.html
 
 ## Problématique
 
