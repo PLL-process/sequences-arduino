@@ -15,6 +15,8 @@
     .modes { display:flex; gap:.4rem; }
     .modes button { padding:.5rem .8rem; border:1px solid var(--line); border-radius:10px; background:#102438; color:#fff; font-weight:700; cursor:pointer; }
     .modes button.active { border-color:var(--cyan); background:#0b3441; }
+    select { padding:.5rem .6rem; border:1px solid var(--line); border-radius:10px; background:#102438; color:#fff; font-weight:700; }
+    .sr-only { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); }
     main { flex:1; display:grid; grid-template-columns:1fr 1fr; gap:2px; background:var(--line); min-height:0; }
     main.solo-actuel { grid-template-columns:1fr 0fr; }
     main.solo-proto { grid-template-columns:0fr 1fr; }
@@ -27,7 +29,18 @@
 </head>
 <body>
   <header>
-    <h1>Séance 1 — comparaison</h1>
+    <h1>Comparaison</h1>
+    <label for="sessionSelect" class="sr-only">Choisir la séance</label>
+    <select id="sessionSelect" aria-label="Choisir la séance">
+      <option value="1" selected>Séance 1 — Observer les signaux</option>
+      <option value="2">Séance 2 — Calibrer un seuil</option>
+      <option value="3">Séance 3 — Analyser les chaînes</option>
+      <option value="4">Séance 4 — Protéger la pompe</option>
+      <option value="5">Séance 5 — Économiser l’eau</option>
+      <option value="6">Séance 6 — Décider avec trois données</option>
+      <option value="7">Séance 7 — Améliorer la durabilité</option>
+      <option value="8">Séance 8 — Défi ingénieur</option>
+    </select>
     <p class="hint">Les deux versions utilisent les mêmes scripts et les mêmes sauvegardes locales : le travail de l’élève apparaît dans les deux. Recharger la page après avoir travaillé dans un volet pour rafraîchir l’autre.</p>
     <div class="modes" role="group" aria-label="Affichage">
       <button type="button" data-mode="duo" class="active">Côte à côte</button>
@@ -37,12 +50,12 @@
   </header>
   <main id="panes">
     <section>
-      <h2>Version <strong>actuelle</strong> — seance-1.html</h2>
-      <iframe src="../seance-1.html" title="Version actuelle de la séance 1"></iframe>
+      <h2>Version <strong>actuelle</strong> — <span id="labelActuel">seance-1.html</span></h2>
+      <iframe id="frameActuel" src="../seance-1.html" title="Version actuelle de la séance"></iframe>
     </section>
     <section>
       <h2>Proposition <strong>Fable</strong> — parcours vertical séquentiel</h2>
-      <iframe src="seance-1-verticale.html" title="Prototype de parcours vertical"></iframe>
+      <iframe id="frameProto" src="seance-1-verticale.html" title="Prototype de parcours vertical"></iframe>
     </section>
   </main>
   <script>
@@ -52,6 +65,12 @@
       button.classList.add("active");
       main.className = button.dataset.mode === "duo" ? "" : button.dataset.mode;
     }));
+    document.getElementById("sessionSelect").addEventListener("change", event => {
+      const n = event.target.value;
+      document.getElementById("frameActuel").src = `../seance-${n}.html`;
+      document.getElementById("frameProto").src = `seance-${n}-verticale.html`;
+      document.getElementById("labelActuel").textContent = `seance-${n}.html`;
+    });
   </script>
 </body>
 </html>

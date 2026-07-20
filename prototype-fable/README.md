@@ -142,6 +142,30 @@ sans toucher à la moindre logique :
   déplie à l'impression) ; les questions d'observation fonctionnent en
   accordéon (une seule ouverte à la fois).
 
+## Révision 3 — extension du parcours vertical aux séances 2 à 8
+
+À la demande de la revue, les séances 2 à 8 reçoivent le même traitement, avec
+un orchestrateur générique (`parcours-vertical-2a8.js`) et sept pages
+`seance-2-verticale.html` … `seance-8-verticale.html`. Ces séances n'ayant ni
+section « montage réel » ni QCM, leur parcours comporte **cinq parties** :
+Découvrir la mission → Observer le système → Comprendre l'algorithme →
+Programmer et exécuter → Tester et interpréter (repère « Partie X sur 5 »).
+
+Mêmes conventions que la séance 1 : pastilles réservées aux parties, rail
+compact sur mobile, en-tête mobile réduit, mode Mission en « Parcours
+recommandé », éditeur classique en « Alternative » repliée, barème replié,
+parties refermables. Les contenus pédagogiques des séances 2 à 8 ne sont pas
+réécrits : leurs cartes existantes (jumeau, algorithme coloré, éditeur avec
+exécution pédagogique, protocole, barème) sont déplacées telles quelles, et
+l'exécution du programme reste dans la carte éditeur (elle anime le jumeau et
+doit rester proche de lui). `comparaison.html` gagne un sélecteur de séance
+1 à 8.
+
+Vérifications : les sept pages rendent leurs cinq parties dans l'ordre, sans
+erreur JavaScript ni défilement horizontal ; sur la séance 2 (câblage identique
+aux suivantes) : démonstration du jumeau, exécution pédagogique, aller-retour
+mode Mission, restitution de l'éditeur dans son pli.
+
 ## Les composants réutilisables (séances 2 à 8)
 
 `seance-verticale.css` définit un jeu de classes indépendantes de la séance :
@@ -160,6 +184,9 @@ le losange de décision **uniquement** parce qu'un `if` réel existe alors dans
 le programme. Les contenus pédagogiques des séances 2 à 8 ne sont pas réécrits.
 
 ## Fichiers créés (liste exacte)
+
+- `prototype-fable/parcours-vertical-2a8.js`
+- `prototype-fable/seance-2-verticale.html` … `prototype-fable/seance-8-verticale.html` (7 pages)
 
 - `prototype-fable/seance-1-verticale.html`
 - `prototype-fable/parcours-vertical.js`
